@@ -13,18 +13,6 @@ from litex.build.sim.config import SimConfig
 
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
-from litex.soc.interconnect import stream
-
-from liteeth.phy.model import LiteEthPHYModel
-from liteeth.mac import LiteEthMAC
-from liteeth.core.arp import LiteEthARP
-from liteeth.core.ip import LiteEthIP
-from liteeth.core.udp import LiteEthUDP
-from liteeth.core.icmp import LiteEthICMP
-from liteeth.core import LiteEthUDPIPCore
-from liteeth.frontend.etherbone import LiteEthEtherbone
-from liteeth.frontend.stream import LiteEthStream2UDPTX
-from liteeth.common import convert_ip
 
 from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax
 
