@@ -45,6 +45,7 @@ _io = [
         Subsignal("tdi", Pins(1)),
         Subsignal("tdo", Pins(1)),
         Subsignal("reset", Pins(1)),
+        Subsignal("drck", Pins(1)),
     ),
 ]
 
