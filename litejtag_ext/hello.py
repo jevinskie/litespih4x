@@ -11,7 +11,6 @@ class TickerZeroToMax(Module):
     def __init__(self, pads: Record, max_cnt: int):
         self.counter = counter = Signal(max=max_cnt)
         self.tick = tick = Signal()
-        print(pads)
         assert counter.nbits <= pads.counter.nbits
 
         self.comb += pads.tick.eq(tick)
@@ -69,7 +68,8 @@ class JTAGHello(Module):
     def __init__(self, jtag_clk: Signal, jtag_rst: Signal, pads: Record):
         self.clock_domains.cd_jtag = ClockDomain()
 
-        self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
+        # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
+        self.hello_code = sr = Signal(32, reset=0xAA00FF55)
         self.buf = buf = Signal()
 
         self.comb += [
@@ -78,12 +78,12 @@ class JTAGHello(Module):
             # self.cd_jtag.clk.eq(ClockSignal('jtag')),
             pads.drck.eq(jtag_clk),
             pads.reset.eq(jtag_rst),
-            # pads.tdo.eq(sr[31]),
-            pads.tdo.eq(buf),
+            pads.tdo.eq(sr[0]),
+            # pads.tdo.eq(buf),
         ]
         self.sync.jtag += [
-            # sr.eq(Cat(sr[1:], pads.tdi)),
-            buf.eq(~pads.tdi),
+            sr.eq(Cat(sr[1:], pads.tdi)),
+            # buf.eq(~pads.tdi),
         ]
 
         # # #
