@@ -54,7 +54,7 @@ class BenchSoC(SoCCore):
         ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=8192,
-                                                     clock_domain="jtag",
+                                                     clock_domain="sys",
                                                      csr_csv="analyzer.csv")
 
         # LEDs -------------------------------------------------------------------------------------

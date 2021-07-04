@@ -2,4 +2,5 @@ build/
 prog/
 csr.csv
 analyzer.csv
+dump.vcd
 
