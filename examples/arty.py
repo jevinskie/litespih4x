@@ -43,6 +43,17 @@ class BenchSoC(SoCCore):
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
 
+        # scope ------------------------------------------------------------------------------------
+        from litescope import LiteScopeAnalyzer
+        analyzer_signals = [
+            *self.jtag_phy._signals,
+            *self.jtag_hello._signals,
+        ]
+        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
+                                                     depth=8192,
+                                                     clock_domain="jtag",
+                                                     csr_csv="analyzer.csv")
+
         # LEDs -------------------------------------------------------------------------------------
         from litex.soc.cores.led import LedChaser
         self.submodules.leds = LedChaser(
