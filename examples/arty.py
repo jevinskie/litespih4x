@@ -45,9 +45,12 @@ class BenchSoC(SoCCore):
 
         # scope ------------------------------------------------------------------------------------
         from litescope import LiteScopeAnalyzer
+        phy_sigs = self.jtag_phy._signals
+        hello_sigs = set(self.jtag_hello._signals)
+        hello_sigs.remove(self.jtag_hello.hello_code)
         analyzer_signals = [
-            *self.jtag_phy._signals,
-            *self.jtag_hello._signals,
+            *phy_sigs,
+            *hello_sigs,
         ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=8192,
