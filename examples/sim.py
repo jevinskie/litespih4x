@@ -14,7 +14,8 @@ from litex.build.sim.config import SimConfig
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax
+from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
+
 
 # IOs ----------------------------------------------------------------------------------------------
 
@@ -35,7 +36,14 @@ _io = [
         Subsignal("counter_a", Pins(32)),
         Subsignal("tick_b", Pins(1)),
         Subsignal("counter_b", Pins(32)),
-     ),
+    ),
+    ("jtag_clk", 0, Pins(1)),
+    ("jtag_hello", 0,
+        Subsignal("tck", Pins(1)),
+        Subsignal("tms", Pins(1)),
+        Subsignal("tdi", Pins(1)),
+        Subsignal("tdo", Pins(1)),
+    ),
 ]
 
 # Platform -----------------------------------------------------------------------------------------
@@ -43,6 +51,7 @@ _io = [
 class Platform(SimPlatform):
     def __init__(self):
         SimPlatform.__init__(self, "SIM", _io)
+
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
@@ -53,7 +62,7 @@ class BenchSoC(SoCCore):
 
         # SoCMini ----------------------------------------------------------------------------------
         SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
-            ident          = "LiteEth stream Simulation",
+            ident          = "LiteJTAG Simulation",
             ident_version  = True
         )
 
@@ -64,14 +73,14 @@ class BenchSoC(SoCCore):
         self.submodules.ticker_a = TickerZeroToMax(self.platform.request("ticker_zero_to_max"), max_cnt=15)
         # Ticker B
         self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
+        # JTAG Hello
+        self.submodules.jtag_hello = JTAGHello(self.platform.request("jtag_clk"), self.platform.request("jtag_hello"))
 
         if sim_debug:
             platform.add_debug(self, reset=1 if trace_reset_on else 0)
         else:
             self.comb += platform.trace.eq(1)
 
-        # SRAM -------------------------------------------------------------------------------------
-        # self.add_ram("sram", 0x20000000, 0x1000)
 
 # Main ---------------------------------------------------------------------------------------------
 
@@ -96,6 +105,7 @@ def main():
 
     sim_config = SimConfig()
     sim_config.add_clocker("sys_clk", freq_hz=1e6)
+    sim_config.add_clocker("jtag_clk", freq_hz=1e6//16)
 
     soc     = BenchSoC(sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
     builder = Builder(soc, csr_csv="csr.csv")
