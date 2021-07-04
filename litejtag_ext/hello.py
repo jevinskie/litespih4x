@@ -70,6 +70,7 @@ class JTAGHello(Module):
         self.clock_domains.cd_jtag = ClockDomain()
 
         self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
+        self.buf = buf = Signal()
 
         self.comb += [
             ClockSignal('jtag').eq(pads.tck),
@@ -77,10 +78,12 @@ class JTAGHello(Module):
             # self.cd_jtag.clk.eq(ClockSignal('jtag')),
             pads.tck.eq(jtag_clk),
             pads.reset.eq(jtag_rst),
-            pads.tdo.eq(sr[31]),
+            # pads.tdo.eq(sr[31]),
+            pads.tdo.eq(buf),
         ]
         self.sync.jtag += [
-            sr.eq(Cat(sr[1:], pads.tdi)),
+            # sr.eq(Cat(sr[1:], pads.tdi)),
+            buf.eq(~pads.tdi),
         ]
 
         # # #

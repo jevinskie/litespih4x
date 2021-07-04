@@ -38,11 +38,13 @@ _io = [
         Subsignal("counter_b", Pins(32)),
     ),
     ("jtag_clk", 0, Pins(1)),
+    ("jtag_rst", 0, Pins(1)),
     ("jtag_hello", 0,
         Subsignal("tck", Pins(1)),
         Subsignal("tms", Pins(1)),
         Subsignal("tdi", Pins(1)),
         Subsignal("tdo", Pins(1)),
+        Subsignal("reset", Pins(1)),
     ),
 ]
 
@@ -74,7 +76,10 @@ class BenchSoC(SoCCore):
         # Ticker B
         self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
         # JTAG Hello
-        self.submodules.jtag_hello = JTAGHello(self.platform.request("jtag_clk"), self.platform.request("jtag_hello"))
+        jtag_pads = self.platform.request("jtag_hello")
+        jtag_clk = self.platform.request("jtag_clk")
+        jtag_rst = self.platform.request("jtag_rst")
+        self.submodules.jtag_hello = JTAGHello(jtag_clk, jtag_rst, jtag_pads)
 
         if sim_debug:
             platform.add_debug(self, reset=1 if trace_reset_on else 0)
