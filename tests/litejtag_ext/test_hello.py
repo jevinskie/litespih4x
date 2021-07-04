@@ -1,4 +1,4 @@
-from litejtag_ext import __version__
+from litejtag_ext.hello import JTAGHello
 
 
 def test_version():
