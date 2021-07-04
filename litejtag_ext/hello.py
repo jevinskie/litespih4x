@@ -72,8 +72,9 @@ class JTAGHello(Module):
         self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
 
         self.comb += [
+            ClockSignal('jtag').eq(pads.tck),
+            # self.cd_jtag.clk.eq(ClockSignal('jtag')),
             pads.tck.eq(jtag_clk),
-            self.cd_jtag.clk.eq(ClockSignal()),
             pads.tdo.eq(sr[31]),
         ]
         self.sync.jtag += [
