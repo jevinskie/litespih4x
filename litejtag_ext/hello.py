@@ -82,7 +82,11 @@ class JTAGHello(Module):
             # pads.tdo.eq(buf),
         ]
         self.sync.jtag += [
-            sr.eq(Cat(sr[1:], pads.tdi)),
+            If(pads.shift,
+                sr.eq(Cat(sr[1:], pads.tdi)),
+            ).Else(
+                sr.eq(sr.reset),
+            ),
             # buf.eq(~pads.tdi),
         ]
 

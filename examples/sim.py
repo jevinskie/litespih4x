@@ -46,7 +46,8 @@ _io = [
         Subsignal("tdo", Pins(1)),
         Subsignal("reset", Pins(1)),
         Subsignal("drck", Pins(1)),
-    ),
+        Subsignal("shift", Pins(1)),
+     ),
 ]
 
 # Platform -----------------------------------------------------------------------------------------
@@ -81,6 +82,7 @@ class BenchSoC(SoCCore):
         jtag_clk = self.platform.request("jtag_clk")
         jtag_rst = self.platform.request("jtag_rst")
         self.submodules.jtag_hello = JTAGHello(jtag_clk, jtag_rst, jtag_pads)
+        self.comb += jtag_pads.shift.eq(1)
 
         if sim_debug:
             platform.add_debug(self, reset=1 if trace_reset_on else 0)
