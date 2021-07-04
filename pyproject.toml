@@ -27,36 +27,36 @@ pp-ez = "^0.2.0"
 bitstring = "^3.1.7"
 attrs = "^21.2.0"
 
-litedram = { path = "../litedram" }
-liteeth = { path = "../liteeth" }
-litehyperbus = { path = "../litehyperbus" }
-liteiclink = { path = "../liteiclink" }
-litejesd204b = { path = "../litejesd204b" }
-litepcie = { path = "../litepcie" }
-litesata = { path = "../litesata" }
-litescope = { path = "../litescope" }
-litesdcard = { path = "../litesdcard" }
-litespi = { path = "../litespi" }
-litevideo = { path = "../litevideo" }
-litex = { path = "../litex" }
-litex-boards = { path = "../litex-boards" }
-migen = { path = "../migen" }
-nmigen = { path = "../nmigen" }
-pythondata-cpu-blackparrot = { path = "../pythondata-cpu-blackparrot" }
-pythondata-cpu-cv32e40p = { path = "../pythondata-cpu-cv32e40p" }
-pythondata-cpu-lm32 = { path = "../pythondata-cpu-lm32" }
-pythondata-cpu-microwatt = { path = "../pythondata-cpu-microwatt" }
-pythondata-cpu-minerva = { path = "../pythondata-cpu-minerva" }
-pythondata-cpu-mor1kx = { path = "../pythondata-cpu-mor1kx" }
-pythondata-cpu-picorv32 = { path = "../pythondata-cpu-picorv32" }
-pythondata-cpu-rocket = { path = "../pythondata-cpu-rocket" }
-pythondata-cpu-serv = { path = "../pythondata-cpu-serv" }
-pythondata-cpu-vexriscv = { path = "../pythondata-cpu-vexriscv" }
-pythondata-cpu-vexriscv-smp = { path = "../pythondata-cpu-vexriscv-smp" }
-pythondata-misc-opentitan = { path = "../pythondata-misc-opentitan" }
-pythondata-misc-tapcfg = { path = "../pythondata-misc-tapcfg" }
-pythondata-misc-usb_ohci = { path = "../pythondata-misc-usb_ohci" }
-pythondata-software-compiler_rt = { path = "../pythondata-software-compiler_rt" }
+litedram = { path = "../litedram", develop = true }
+liteeth = { path = "../liteeth", develop = true }
+litehyperbus = { path = "../litehyperbus", develop = true }
+liteiclink = { path = "../liteiclink", develop = true }
+litejesd204b = { path = "../litejesd204b", develop = true }
+litepcie = { path = "../litepcie", develop = true }
+litesata = { path = "../litesata", develop = true }
+litescope = { path = "../litescope", develop = true }
+litesdcard = { path = "../litesdcard", develop = true }
+litespi = { path = "../litespi", develop = true }
+litevideo = { path = "../litevideo", develop = true }
+litex = { path = "../litex", develop = true }
+litex-boards = { path = "../litex-boards", develop = true }
+migen = { path = "../migen", develop = true }
+nmigen = { path = "../nmigen", develop = true }
+pythondata-cpu-blackparrot = { path = "../pythondata-cpu-blackparrot", develop = true }
+pythondata-cpu-cv32e40p = { path = "../pythondata-cpu-cv32e40p", develop = true }
+pythondata-cpu-lm32 = { path = "../pythondata-cpu-lm32", develop = true }
+pythondata-cpu-microwatt = { path = "../pythondata-cpu-microwatt", develop = true }
+pythondata-cpu-minerva = { path = "../pythondata-cpu-minerva", develop = true }
+pythondata-cpu-mor1kx = { path = "../pythondata-cpu-mor1kx", develop = true }
+pythondata-cpu-picorv32 = { path = "../pythondata-cpu-picorv32", develop = true }
+pythondata-cpu-rocket = { path = "../pythondata-cpu-rocket", develop = true }
+pythondata-cpu-serv = { path = "../pythondata-cpu-serv", develop = true }
+pythondata-cpu-vexriscv = { path = "../pythondata-cpu-vexriscv", develop = true }
+pythondata-cpu-vexriscv-smp = { path = "../pythondata-cpu-vexriscv-smp", develop = true }
+pythondata-misc-opentitan = { path = "../pythondata-misc-opentitan", develop = true }
+pythondata-misc-tapcfg = { path = "../pythondata-misc-tapcfg", develop = true }
+pythondata-misc-usb_ohci = { path = "../pythondata-misc-usb_ohci", develop = true }
+pythondata-software-compiler_rt = { path = "../pythondata-software-compiler_rt", develop = true }
 cocotb = "^1.5.2"
 cocotb-coverage = "^1.1.0"
 
