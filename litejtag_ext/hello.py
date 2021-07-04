@@ -73,10 +73,10 @@ class JTAGHello(Module):
         self.buf = buf = Signal()
 
         self.comb += [
-            ClockSignal('jtag').eq(pads.tck),
+            ClockSignal('jtag').eq(pads.drck),
             ResetSignal('jtag').eq(pads.reset),
             # self.cd_jtag.clk.eq(ClockSignal('jtag')),
-            pads.tck.eq(jtag_clk),
+            pads.drck.eq(jtag_clk),
             pads.reset.eq(jtag_rst),
             # pads.tdo.eq(sr[31]),
             pads.tdo.eq(buf),
