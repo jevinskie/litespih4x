@@ -38,7 +38,7 @@ class BenchSoC(SoCCore):
         # JTAG Hello -------------------------------------------------------------------------------
         self.clock_domains.cd_jtag = ClockDomain()
         self.submodules.jtag_phy = S7JTAG(chain=1)
-        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tck, self.jtag_phy.reset, self.jtag_phy)
+        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.drck, self.jtag_phy.reset, self.jtag_phy)
 
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
@@ -47,7 +47,7 @@ class BenchSoC(SoCCore):
         from litescope import LiteScopeAnalyzer
         phy_sigs = self.jtag_phy._signals
         hello_sigs = set(self.jtag_hello._signals)
-        hello_sigs.remove(self.jtag_hello.hello_code)
+        # hello_sigs.remove(self.jtag_hello.hello_code)
         analyzer_signals = [
             *phy_sigs,
             *hello_sigs,
