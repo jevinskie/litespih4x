@@ -1,0 +1,78 @@
+[tool.poetry]
+name = "litejtag-ext"
+version = "0.1.0"
+description = ""
+authors = ["Jevin Sweval <jevinsweval@gmail.com>"]
+
+[tool.poe.tasks]
+test = "pytest"
+test-v = "pytest -vvvv"
+test-vv = "pytest -vvvv --capture=tee-sys"
+print-reg = "poetry run ./examples/jtag_hello_max10_dev_kit.py"
+ipython = "poetry run ipython"
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+testpaths = [
+    "tests",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+rich = "^10.4.0"
+pretty-errors = "^1.2.23"
+pprintpp = "^0.4.0"
+pp-ez = "^0.2.0"
+bitstring = "^3.1.7"
+attrs = "^21.2.0"
+
+# litedram = { path = "../litedram" }
+liteeth = { path = "../liteeth" }
+# litehyperbus = { path = "../litehyperbus" }
+liteiclink = { path = "../liteiclink" }
+# litejesd204b = { path = "../litejesd204b" }
+# litepcie = { path = "../litepcie" }
+# litesata = { path = "../litesata" }
+litescope = { path = "../litescope" }
+# litesdcard = { path = "../litesdcard" }
+litespi = { path = "../litespi" }
+# litevideo = { path = "../litevideo" }
+litex = { path = "../litex" }
+litex-boards = { path = "../litex-boards" }
+migen = { path = "../migen" }
+nmigen = { path = "../nmigen" }
+# pythondata-cpu-blackparrot = { path = "../pythondata-cpu-blackparrot" }
+# pythondata-cpu-cv32e40p = { path = "../pythondata-cpu-cv32e40p" }
+# pythondata-cpu-lm32 = { path = "../pythondata-cpu-lm32" }
+# pythondata-cpu-microwatt = { path = "../pythondata-cpu-microwatt" }
+pythondata-cpu-minerva = { path = "../pythondata-cpu-minerva" }
+# pythondata-cpu-mor1kx = { path = "../pythondata-cpu-mor1kx" }
+pythondata-cpu-picorv32 = { path = "../pythondata-cpu-picorv32" }
+# pythondata-cpu-rocket = { path = "../pythondata-cpu-rocket" }
+pythondata-cpu-serv = { path = "../pythondata-cpu-serv" }
+pythondata-cpu-vexriscv = { path = "../pythondata-cpu-vexriscv" }
+# pythondata-cpu-vexriscv-smp = { path = "../pythondata-cpu-vexriscv-smp" }
+# pythondata-misc-opentitan = { path = "../pythondata-misc-opentitan" }
+pythondata-misc-tapcfg = { path = "../pythondata-misc-tapcfg" }
+# pythondata-misc-usb_ohci = { path = "../pythondata-misc-usb_ohci" }
+pythondata-software-compiler_rt = { path = "../pythondata-software-compiler_rt" }
+cocotb = "^1.5.2"
+cocotb-coverage = "^1.1.0"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pytest-sugar = "^0.9.4"
+pytest-mock = "^3.6.1"
+tox = "^3.23.1"
+pytest-clarity = "^0.3.0-alpha.0"
+pytest-pycharm = "^0.7.0"
+pytest-randomly = "^3.8.0"
+pytest-cov = "^2.11.1"
+poethepoet = "^0.10.0"
+mypy = "^0.812"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
