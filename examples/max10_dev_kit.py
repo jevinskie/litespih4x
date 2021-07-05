@@ -9,8 +9,8 @@ import argparse
 
 from migen import *
 
-from litex_boards.platforms import digilent_arty as arty
-from litex_boards.targets.digilent_arty import _CRG
+from litex_boards.platforms import altera_max10_dev_kit
+from litex_boards.targets.altera_max10_dev_kit import _CRG
 
 from litex.soc.cores.clock import *
 from litex.soc.interconnect.csr import *
@@ -24,16 +24,16 @@ from litex.soc.cores.jtag import JTAGPHY, MAX10JTAG
 
 class BenchSoC(SoCCore):
     def __init__(self, sys_clk_freq=int(50e6)):
-        platform = arty.Platform(variant='a7-100')
+        platform = altera_max10_dev_kit.Platform()
 
         # SoCMini ----------------------------------------------------------------------------------
         SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
-            ident          = "LiteJTAG Hello on Arty",
+            ident          = "LiteJTAG Hello on MAX10",
             ident_version  = True
         )
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq, with_mapped_flash=False)
+        self.submodules.crg = _CRG(platform, sys_clk_freq)
 
         # JTAG Hello -------------------------------------------------------------------------------
         self.clock_domains.cd_jtag = ClockDomain()
@@ -66,7 +66,7 @@ class BenchSoC(SoCCore):
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="LiteJTAG Hello on Arty")
+    parser = argparse.ArgumentParser(description="LiteJTAG Hello on MAX10")
     parser.add_argument("--build",       action="store_true", help="Build bitstream")
     parser.add_argument("--load",        action="store_true", help="Load bitstream")
     args = parser.parse_args()
