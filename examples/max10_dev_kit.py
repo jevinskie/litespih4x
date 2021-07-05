@@ -36,8 +36,22 @@ class BenchSoC(SoCCore):
         self.submodules.crg = _CRG(platform, sys_clk_freq)
 
         # JTAG Hello -------------------------------------------------------------------------------
+        self.platform.add_reserved_jtag_decls()
         self.clock_domains.cd_jtag = ClockDomain()
-        self.submodules.jtag_phy = MAX10JTAG(chain=1)
+        rtms = self.platform.request("altera_reserved_tms")
+        rtck = self.platform.request("altera_reserved_tck")
+        rtdi = self.platform.request("altera_reserved_tdi")
+        rtdo = self.platform.request("altera_reserved_tdo")
+
+        reserved_jtag_pads = Record([
+                ('altera_reserved_tms', rtms),
+                ('altera_reserved_tck', rtck),
+                ('altera_reserved_tdi', rtdi),
+                ('altera_reserved_tdo', rtdo),
+            ],
+            name='altera_jtag_reserved',
+        )
+        self.submodules.jtag_phy = MAX10JTAG(reserved_jtag_pads, chain=1)
         self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tck, self.crg.cd_sys.rst, self.jtag_phy)
 
         # UARTBone ---------------------------------------------------------------------------------
