@@ -23,7 +23,7 @@ from litex.soc.cores.jtag import JTAGPHY, MAX10JTAG
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class BenchSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6)):
+    def __init__(self, sys_clk_freq=int(100e6)):
         platform = altera_max10_dev_kit.Platform()
 
         # SoCMini ----------------------------------------------------------------------------------
