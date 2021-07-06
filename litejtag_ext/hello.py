@@ -66,7 +66,10 @@ class BeatTickerZeroToMax(Module):
 
 class JTAGHello(Module):
     def __init__(self, jtag_clk: Signal, jtag_rst: Signal, pads: Record):
-        self.clock_domains.cd_jtag = ClockDomain()
+        self.clock_domains.cd_jtag = cd_jtag = ClockDomain("jtag")
+        # self.comb += jtag_clk.eq(cd_jtag.clk)
+        # self.comb += jtag_rst.eq(cd_jtag.rst)
+
 
         # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
         self.hello_code = sr = Signal(32, reset=0xAA00FF55)
