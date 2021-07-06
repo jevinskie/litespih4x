@@ -75,6 +75,10 @@ class JTAGHello(Module):
         self.hello_code = sr = Signal(32, reset=0xAA00FF55)
         self.buf = buf = Signal()
 
+
+        self.drck_cnt = drck_cnt = Signal(16)
+        self.sync.jtag_drck += drck_cnt.eq(drck_cnt + 1)
+
         self.comb += [
             ClockSignal('jtag_drck').eq(pads.tck),
             ResetSignal('jtag_drck').eq(pads.reset),
