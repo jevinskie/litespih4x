@@ -64,6 +64,7 @@ class BenchSoC(SoCCore):
         phy_sigs.remove(self.jtag_phy.altera_reserved_tdo) # wont pass fitter, output must go to pin
         hello_sigs = set(self.jtag_hello._signals)
         # hello_sigs.remove(self.jtag_hello.hello_code)
+        self.jtag_tap_fsm.fsm.finalize()
         fsm_sigs = self.jtag_tap_fsm._signals
         analyzer_signals = [
             *phy_sigs,
