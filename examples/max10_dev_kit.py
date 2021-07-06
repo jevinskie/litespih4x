@@ -52,7 +52,7 @@ class BenchSoC(SoCCore):
             name='altera_jtag_reserved',
         )
         self.submodules.jtag_phy = MAX10JTAG(reserved_jtag_pads, chain=1)
-        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tck, self.crg.cd_sys.rst, self.jtag_phy)
+        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.drck, self.crg.cd_sys.rst, self.jtag_phy)
         self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tms, self.jtag_phy.tck, self.crg.cd_sys.rst)
 
         # UARTBone ---------------------------------------------------------------------------------
