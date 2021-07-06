@@ -18,7 +18,7 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
 from litejtag_ext.hello import JTAGHello
-from litex.soc.cores.jtag import JTAGPHY, MAX10JTAG
+from litex.soc.cores.jtag import JTAGPHY, MAX10JTAG, JTAGTAPFSM
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
@@ -53,6 +53,7 @@ class BenchSoC(SoCCore):
         )
         self.submodules.jtag_phy = MAX10JTAG(reserved_jtag_pads, chain=1)
         self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tck, self.crg.cd_sys.rst, self.jtag_phy)
+        self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tms, self.cd_jtag)
 
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
@@ -63,9 +64,11 @@ class BenchSoC(SoCCore):
         phy_sigs.remove(self.jtag_phy.altera_reserved_tdo) # wont pass fitter, output must go to pin
         hello_sigs = set(self.jtag_hello._signals)
         # hello_sigs.remove(self.jtag_hello.hello_code)
+        fsm_sigs = self.jtag_tap_fsm._signals
         analyzer_signals = [
             *phy_sigs,
             *hello_sigs,
+            *fsm_sigs,
         ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=8192,
