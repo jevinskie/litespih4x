@@ -80,16 +80,16 @@ class JTAGHello(Module):
         self.sync.jtag_drck += drck_cnt.eq(drck_cnt + 1)
 
         self.comb += [
-            ClockSignal('jtag_drck').eq(pads.drck),
+            ClockSignal('jtag_drck').eq(pads.tckcore),
             ResetSignal('jtag_drck').eq(pads.reset),
             # pads.tck.eq(jtag_clk),
             # pads.reset.eq(jtag_rst),
-            pads.tdo.eq(sr[0]),
+            pads.tdocore.eq(sr[0]),
             # pads.tdo.eq(buf),
         ]
         self.sync.jtag_drck += [
             If(pads.shift,
-                sr.eq(Cat(sr[1:], pads.tdi)),
+                sr.eq(Cat(sr[1:], pads.tdicore)),
             ).Else(
                 sr.eq(sr.reset),
             ),
