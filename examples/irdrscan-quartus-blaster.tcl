@@ -30,10 +30,14 @@ open_device -hardware_name $usbblaster_name -device_name $test_device
 # out while the instruction register is still holding the IDCODE instruction.
 device_lock -timeout 10000
 device_ir_shift -ir_value 0xc -no_captured_ir_value
+
+puts "Waiting for Any Key"
+gets stdin
+
+puts "00DEADBEEF 80 RES: 0x[device_dr_shift -length 80 -dr_value 000000000000DEADBEEF -value_in_hex]"
 puts "  DEADBEEF 32 RES: 0x[device_dr_shift -length 32 -dr_value DEADBEEF -value_in_hex]"
 puts "00DEADBEEF 40 RES: 0x[device_dr_shift -length 40 -dr_value 00DEADBEEF -value_in_hex]"
 puts "00DEADBEEF 64 RES: 0x[device_dr_shift -length 64 -dr_value 00000000DEADBEEF -value_in_hex]"
-puts "00DEADBEEF 80 RES: 0x[device_dr_shift -length 80 -dr_value 000000000000DEADBEEF -value_in_hex]"
 device_unlock
 
 # Close device
