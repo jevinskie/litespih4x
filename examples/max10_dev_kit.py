@@ -43,6 +43,9 @@ class BenchSoC(SoCCore):
         rtdi = self.platform.request("altera_reserved_tdi")
         rtdo = self.platform.request("altera_reserved_tdo")
 
+        # jc = self.cd_jtag.clk
+        # print(jc)
+
         reserved_jtag_pads = Record([
                 ('altera_reserved_tms', rtms),
                 ('altera_reserved_tck', rtck),
@@ -82,6 +85,14 @@ class BenchSoC(SoCCore):
         self.submodules.leds = LedChaser(
             pads         = platform.request_all("user_led"),
             sys_clk_freq = sys_clk_freq)
+
+    def finalize(self, *args, **kwargs):
+        super().finalize(*args, **kwargs)
+    #     self.platform.add_period_constraint('altera_reserved_tck', 1e9/50e6)
+        self.platform.add_period_constraint(self.platform.lookup_request('altera_reserved_tck', loose=True), 1e9/50e6)
+        self.platform.add_period_constraint(self.jtag_phy.tckutap, 1e9/50e6)
+        self.platform.add_period_constraint(self.jtag_phy.tckcore, 1e9/50e6)
+        self.platform.add_period_constraint(self.jtag_phy.drck, 1e9/50e6)
 
 # Main ---------------------------------------------------------------------------------------------
 
