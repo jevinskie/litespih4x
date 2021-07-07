@@ -80,7 +80,7 @@ class JTAGHello(Module):
         self.sync.jtag_drck += drck_cnt.eq(drck_cnt + 1)
 
         self.comb += [
-            ClockSignal('jtag_drck').eq(pads.tckutap),
+            ClockSignal('jtag_drck').eq(pads.drck),
             ResetSignal('jtag_drck').eq(pads.reset),
             # pads.tck.eq(jtag_clk),
             # pads.reset.eq(jtag_rst),
