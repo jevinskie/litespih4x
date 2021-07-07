@@ -67,7 +67,7 @@ class BenchSoC(SoCCore):
         phy_sigs.remove(self.jtag_phy.altera_reserved_tdo) # wont pass fitter, output must go to pin
         phy_sigs.remove(self.jtag_phy.tdocore)
         hello_sigs = set(self.jtag_hello._signals)
-        hello_sigs.remove(self.jtag_hello.hello_code)
+        # hello_sigs.remove(self.jtag_hello.hello_code)
         self.jtag_tap_fsm.fsm.finalize()
         fsm_sigs = self.jtag_tap_fsm._signals
         analyzer_signals = [
@@ -89,10 +89,10 @@ class BenchSoC(SoCCore):
     def finalize(self, *args, **kwargs):
         super().finalize(*args, **kwargs)
     #     self.platform.add_period_constraint('altera_reserved_tck', 1e9/50e6)
-        self.platform.add_period_constraint(self.platform.lookup_request('altera_reserved_tck', loose=True), 1e9/50e6)
-        self.platform.add_period_constraint(self.jtag_phy.tckutap, 1e9/50e6)
-        self.platform.add_period_constraint(self.jtag_phy.tckcore, 1e9/50e6)
-        self.platform.add_period_constraint(self.jtag_phy.drck, 1e9/50e6)
+        # self.platform.add_period_constraint(self.platform.lookup_request('altera_reserved_tck', loose=True), 1e9/50e6)
+        # self.platform.add_period_constraint(self.jtag_phy.tckutap, 1e9/35e6)
+        # self.platform.add_period_constraint(self.jtag_phy.tckcore, 1e9/35e6)
+        # self.platform.add_period_constraint(self.jtag_phy.drck, 1e9/35e6)
 
 # Main ---------------------------------------------------------------------------------------------
 
