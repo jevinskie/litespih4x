@@ -23,7 +23,7 @@ from litex.soc.cores.jtag import JTAGPHY, S7JTAG
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class BenchSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6)):
+    def __init__(self, sys_clk_freq=int(100e6)):
         platform = arty.Platform(variant='a7-100')
 
         # SoCMini ----------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ class BenchSoC(SoCCore):
         # JTAG Hello -------------------------------------------------------------------------------
         self.clock_domains.cd_jtag = ClockDomain()
         self.submodules.jtag_phy = S7JTAG(chain=1)
-        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tck, self.jtag_phy.reset, self.jtag_phy)
+        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tms, self.jtag_phy.tck, self.jtag_phy.tdi, self.jtag_phy.tdo, self.crg.cd_sys.rst, self.jtag_phy)
 
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
@@ -48,9 +48,12 @@ class BenchSoC(SoCCore):
         phy_sigs = self.jtag_phy._signals
         hello_sigs = set(self.jtag_hello._signals)
         # hello_sigs.remove(self.jtag_hello.hello_code)
+        # fsm_sigs = self.jtag_phy.tap_fsm.finalize()
+        fsm_sigs = self.jtag_phy.tap_fsm._signals + self.jtag_phy.tap_fsm.fsm._signals
         analyzer_signals = [
             *phy_sigs,
             *hello_sigs,
+            *fsm_sigs,
         ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=8192,

@@ -25,6 +25,9 @@ open_device -hardware_name $usbblaster_name -device_name $test_device
 # Retrieve device id code.
 # IDCODE instruction value is 6; The ID code is 32 bits long.
 
+puts "Waiting for Any Key"
+gets stdin
+
 # IR and DR shift should be locked together to ensure that other applications 
 # will not change the instruction register before the id code value is shifted
 # out while the instruction register is still holding the IDCODE instruction.

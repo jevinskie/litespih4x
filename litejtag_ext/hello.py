@@ -6,6 +6,7 @@ from __future__ import annotations
 from rich import print
 
 from migen import *
+from migen.genlib.cdc import AsyncResetSynchronizer
 
 class TickerZeroToMax(Module):
     def __init__(self, pads: Record, max_cnt: int):
@@ -65,10 +66,11 @@ class BeatTickerZeroToMax(Module):
 
 
 class JTAGHello(Module):
-    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal, phy):
+    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal, phy: Module):
         self.clock_domains.cd_jtag = cd_jtag = ClockDomain("jtag")
         self.comb += ClockSignal("jtag").eq(tck)
-        self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
+        # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
+        self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys") | ~phy.sel)
 
 
         # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
@@ -80,8 +82,8 @@ class JTAGHello(Module):
         self.sync.jtag += tck_cnt.eq(tck_cnt + 1)
 
         self.comb += [
-            # tdo.eq(sr[0]),
-            tdo.eq(buf),
+            tdo.eq(sr[0]),
+            # tdo.eq(buf),
         ]
         self.sync.jtag += [
             buf.eq(sr[0]),
