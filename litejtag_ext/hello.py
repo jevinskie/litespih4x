@@ -72,18 +72,21 @@ class JTAGHello(Module):
 
 
         # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
-        # self.hello_code = sr = Signal(32, reset=0xAA00FF55)
+        self.hello_code = sr = Signal(32, reset=0xAA00FF55)
         self.buf = buf = Signal()
 
 
-        # self.drck_cnt = drck_cnt = Signal(16)
-        # self.sync.jtag_drck += drck_cnt.eq(drck_cnt + 1)
+        self.tck_cnt = tck_cnt = Signal(16)
+        self.sync.jtag += tck_cnt.eq(tck_cnt + 1)
 
         self.comb += [
-            tdo.eq(buf)
+            # tdo.eq(sr[0]),
+            tdo.eq(buf),
         ]
         self.sync.jtag += [
+            # buf.eq(sr[0]),
             buf.eq(tdi),
+            sr.eq(Cat(sr[1:], tdi)),
         ]
 
         # # #
