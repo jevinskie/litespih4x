@@ -56,21 +56,27 @@ class BenchSoC(SoCCore):
         )
         self.submodules.jtag_phy = MAX10JTAG(reserved_jtag_pads, chain=1)
         self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tmsutap, self.jtag_phy.tckutap, self.jtag_phy.tdiutap, self.jtag_phy.tdouser, self.crg.cd_sys.rst, self.jtag_phy)
-        self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tmsutap, self.jtag_phy.drck, self.crg.cd_sys.rst)
+        # self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tmsutap, self.jtag_phy.drck, self.crg.cd_sys.rst)
 
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
 
         # scope ------------------------------------------------------------------------------------
         from litescope import LiteScopeAnalyzer
+
         phy_sigs = self.jtag_phy._signals
         phy_sigs.remove(self.jtag_phy.altera_reserved_tdo) # wont pass fitter, output must go to pin
         phy_sigs.remove(self.jtag_phy.tdocore)
         hello_sigs = set(self.jtag_hello._signals)
         hello_sigs.remove(self.jtag_hello.hello_code)
         # hello_sigs.remove(self.jtag_hello.buf)
-        self.jtag_tap_fsm.fsm.finalize()
-        fsm_sigs = self.jtag_tap_fsm._signals
+        # self.jtag_tap_fsm.fsm.finalize()
+        # fsm_sigs = self.jtag_tap_fsm._signals
+        # self.jtag_phy.tap_fsm.finalize()
+        # print('!!!!')
+        self.jtag_phy.tap_fsm.finalize()
+        fsm_sigs = self.jtag_phy.tap_fsm._signals
+        # print(f'fsm_sigs: {fsm_sigs}')
         analyzer_signals = [
             *phy_sigs,
             *hello_sigs,
