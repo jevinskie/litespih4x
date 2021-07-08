@@ -65,35 +65,25 @@ class BeatTickerZeroToMax(Module):
 
 
 class JTAGHello(Module):
-    def __init__(self, jtag_clk: Signal, jtag_rst: Signal, pads: Record):
-        self.clock_domains.cd_jtag_drck = cd_jtag_drck = ClockDomain("jtag_drck")
-        # self.comb += jtag_clk.eq(cd_jtag.clk)
-        # self.comb += jtag_rst.eq(cd_jtag.rst)
+    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal):
+        self.clock_domains.cd_jtag = cd_jtag = ClockDomain("jtag")
+        self.comb += ClockSignal("jtag").eq(tck)
+        self.comb += ResetSignal("jtag").eq(rst)
 
 
         # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
-        self.hello_code = sr = Signal(32, reset=0xAA00FF55)
+        # self.hello_code = sr = Signal(32, reset=0xAA00FF55)
         self.buf = buf = Signal()
 
 
-        self.drck_cnt = drck_cnt = Signal(16)
-        self.sync.jtag_drck += drck_cnt.eq(drck_cnt + 1)
+        # self.drck_cnt = drck_cnt = Signal(16)
+        # self.sync.jtag_drck += drck_cnt.eq(drck_cnt + 1)
 
         self.comb += [
-            ClockSignal('jtag_drck').eq(pads.drck),
-            ResetSignal('jtag_drck').eq(pads.reset),
-            # pads.tck.eq(jtag_clk),
-            # pads.reset.eq(jtag_rst),
-            pads.tdouser.eq(sr[0]),
-            # pads.tdo.eq(buf),
+            tdo.eq(buf)
         ]
-        self.sync.jtag_drck += [
-            If(pads.shift,
-                sr.eq(Cat(sr[1:], pads.tdiutap)),
-            ).Else(
-                sr.eq(sr.reset),
-            ),
-            # buf.eq(~pads.tdi),
+        self.sync.jtag += [
+            buf.eq(tdi),
         ]
 
         # # #

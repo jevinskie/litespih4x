@@ -55,8 +55,8 @@ class BenchSoC(SoCCore):
             name='altera_jtag_reserved',
         )
         self.submodules.jtag_phy = MAX10JTAG(reserved_jtag_pads, chain=1)
-        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.drck, self.crg.cd_sys.rst, self.jtag_phy)
-        self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.altera_reserved_tms, self.jtag_phy.altera_reserved_tck, self.crg.cd_sys.rst)
+        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tmsutap, self.jtag_phy.tckutap, self.jtag_phy.tdiutap, self.jtag_phy.tdocore, self.crg.cd_sys.rst)
+        self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tmsutap, self.jtag_phy.tckutap, self.crg.cd_sys.rst)
 
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
@@ -68,6 +68,7 @@ class BenchSoC(SoCCore):
         phy_sigs.remove(self.jtag_phy.tdocore)
         hello_sigs = set(self.jtag_hello._signals)
         # hello_sigs.remove(self.jtag_hello.hello_code)
+        hello_sigs.remove(self.jtag_hello.buf)
         self.jtag_tap_fsm.fsm.finalize()
         fsm_sigs = self.jtag_tap_fsm._signals
         analyzer_signals = [
@@ -76,7 +77,7 @@ class BenchSoC(SoCCore):
             *fsm_sigs,
         ]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                                                     depth=8192,
+                                                     depth=756,
                                                      clock_domain="sys",
                                                      csr_csv="analyzer.csv")
 
