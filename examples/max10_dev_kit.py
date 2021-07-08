@@ -55,8 +55,8 @@ class BenchSoC(SoCCore):
             name='altera_jtag_reserved',
         )
         self.submodules.jtag_phy = MAX10JTAG(reserved_jtag_pads, chain=1)
-        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tmsutap, self.jtag_phy.tckutap, self.jtag_phy.tdiutap, self.jtag_phy.tdouser, self.crg.cd_sys.rst)
-        self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tmsutap, self.jtag_phy.tckutap, self.crg.cd_sys.rst)
+        self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tmsutap, self.jtag_phy.tckutap, self.jtag_phy.tdiutap, self.jtag_phy.tdouser, self.crg.cd_sys.rst, self.jtag_phy)
+        self.submodules.jtag_tap_fsm = JTAGTAPFSM(self.jtag_phy.tmsutap, self.jtag_phy.drck, self.crg.cd_sys.rst)
 
         # UARTBone ---------------------------------------------------------------------------------
         self.add_uartbone(baudrate=3_000_000)
