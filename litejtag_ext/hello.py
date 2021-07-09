@@ -72,23 +72,33 @@ class JTAGHello(Module):
         # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
         self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys") | ~phy.sel)
 
+        self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
+        self.comb += ClockSignal("jtag_inv").eq(~tck)
+        # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
+        self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys") | ~phy.sel)
 
         # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
         self.hello_code = sr = Signal(32, reset=0xAA00FF55)
-        self.buf = buf = Signal()
+        self.buf = buf = Signal(reset=sr.reset & 1)
+        self.bufi = bufi = Signal(reset=sr.reset & 1)
 
 
         self.tck_cnt = tck_cnt = Signal(16)
         self.sync.jtag += tck_cnt.eq(tck_cnt + 1)
 
         self.comb += [
-            tdo.eq(sr[0]),
+            # tdo.eq(sr[0]),
             # tdo.eq(buf),
+            tdo.eq(bufi),
         ]
         self.sync.jtag += [
-            buf.eq(sr[0]),
+            buf.eq(sr[1]),
             # buf.eq(tdi),
             sr.eq(Cat(sr[1:], tdi)),
+        ]
+
+        self.sync.jtag_inv += [
+            bufi.eq(sr[1])
         ]
 
         # # #

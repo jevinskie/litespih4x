@@ -7,7 +7,7 @@ reset_config none
 
 source [find cpld/xilinx-xc7.cfg]
 source [find cpld/jtagspi.cfg]
-adapter speed 5000
+adapter speed 25000
 
 gdb_port disabled
 tcl_port disabled
