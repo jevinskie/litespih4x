@@ -1,0 +1,529 @@
+Open On-Chip Debugger 0.11.0+dev-00253-g28c91b8f8 (2021-07-02-23:28)
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+User : 3 1 options.c:63 configuration_output_handler(): debug_level: 4
+User : 4 1 options.c:63 configuration_output_handler(): 
+Debug: 5 1 options.c:244 add_default_dirs(): bindir=/home/jevin/code/jtag/openocd/prefix/bin
+Debug: 6 1 options.c:245 add_default_dirs(): pkgdatadir=/home/jevin/code/jtag/openocd/prefix/share/openocd
+Debug: 7 1 options.c:246 add_default_dirs(): exepath=/home/jevin/code/jtag/openocd/prefix/bin
+Debug: 8 1 options.c:247 add_default_dirs(): bin2data=../share/openocd
+Debug: 9 1 configuration.c:44 add_script_search_dir(): adding /home/jevin/.config/openocd
+Debug: 10 1 configuration.c:44 add_script_search_dir(): adding /home/jevin/.openocd
+Debug: 11 1 configuration.c:44 add_script_search_dir(): adding /home/jevin/code/jtag/openocd/prefix/bin/../share/openocd/site
+Debug: 12 1 configuration.c:44 add_script_search_dir(): adding /home/jevin/code/jtag/openocd/prefix/bin/../share/openocd/scripts
+Debug: 13 1 command.c:201 script_debug(): command - ocd_find irdrscan-openocd-arty.tcl
+Debug: 14 1 configuration.c:99 find_file(): found irdrscan-openocd-arty.tcl
+Debug: 15 1 command.c:201 script_debug(): command - echo DEPRECATED! use 'adapter driver' not 'interface'
+User : 16 1 command.c:729 jim_echo(): DEPRECATED! use 'adapter driver' not 'interface'
+Debug: 17 1 command.c:201 script_debug(): command - adapter driver ftdi
+Debug: 18 1 command.c:201 script_debug(): command - adapter driver ftdi
+Debug: 19 1 command.c:201 script_debug(): command - ftdi_vid_pid 0x0403 0x6010
+Debug: 20 1 command.c:201 script_debug(): command - ftdi_channel 0
+Debug: 21 1 command.c:201 script_debug(): command - ftdi_layout_init 0x00e8 0x60eb
+Debug: 22 1 command.c:201 script_debug(): command - reset_config none
+Debug: 23 1 command.c:201 script_debug(): command - ocd_find cpld/xilinx-xc7.cfg
+Debug: 24 1 configuration.c:99 find_file(): found /home/jevin/code/jtag/openocd/prefix/bin/../share/openocd/scripts/cpld/xilinx-xc7.cfg
+Debug: 25 1 command.c:201 script_debug(): command - transport select
+Debug: 26 1 command.c:201 script_debug(): command - transport select
+Info : 27 1 transport.c:276 jim_transport_select(): auto-selecting first available session transport "jtag". To override use 'transport select <transport>'.
+Debug: 28 1 command.c:201 script_debug(): command - transport select
+Debug: 29 1 command.c:201 script_debug(): command - transport select
+Debug: 30 1 command.c:201 script_debug(): command - jtag newtap xc7 tap -irlen 6 -ignore-version -expected-id 0x03622093 -expected-id 0x03620093 -expected-id 0x037C4093 -expected-id 0x0362F093 -expected-id 0x037C8093 -expected-id 0x037C7093 -expected-id 0x037C3093 -expected-id 0x0362E093 -expected-id 0x037C2093 -expected-id 0x0362D093 -expected-id 0x0362C093 -expected-id 0x03632093 -expected-id 0x03631093 -expected-id 0x03636093 -expected-id 0x03647093 -expected-id 0x0364C093 -expected-id 0x03651093 -expected-id 0x03747093 -expected-id 0x03656093 -expected-id 0x03752093 -expected-id 0x03751093 -expected-id 0x03671093 -expected-id 0x036B3093 -expected-id 0x036B7093 -expected-id 0x036BB093 -expected-id 0x036BF093 -expected-id 0x03667093 -expected-id 0x03682093 -expected-id 0x03687093 -expected-id 0x03692093 -expected-id 0x03691093 -expected-id 0x03696093 -expected-id 0x036D5093 -expected-id 0x036D9093 -expected-id 0x036DB093
+Debug: 31 1 command.c:201 script_debug(): command - jtag newtap xc7 tap -irlen 6 -ignore-version -expected-id 0x03622093 -expected-id 0x03620093 -expected-id 0x037C4093 -expected-id 0x0362F093 -expected-id 0x037C8093 -expected-id 0x037C7093 -expected-id 0x037C3093 -expected-id 0x0362E093 -expected-id 0x037C2093 -expected-id 0x0362D093 -expected-id 0x0362C093 -expected-id 0x03632093 -expected-id 0x03631093 -expected-id 0x03636093 -expected-id 0x03647093 -expected-id 0x0364C093 -expected-id 0x03651093 -expected-id 0x03747093 -expected-id 0x03656093 -expected-id 0x03752093 -expected-id 0x03751093 -expected-id 0x03671093 -expected-id 0x036B3093 -expected-id 0x036B7093 -expected-id 0x036BB093 -expected-id 0x036BF093 -expected-id 0x03667093 -expected-id 0x03682093 -expected-id 0x03687093 -expected-id 0x03692093 -expected-id 0x03691093 -expected-id 0x03696093 -expected-id 0x036D5093 -expected-id 0x036D9093 -expected-id 0x036DB093
+Debug: 32 1 tcl.c:565 jim_newtap_cmd(): Creating New Tap, Chip: xc7, Tap: tap, Dotted: xc7.tap, 73 params
+Debug: 33 1 tcl.c:590 jim_newtap_cmd(): Processing option: -irlen
+Debug: 34 1 tcl.c:590 jim_newtap_cmd(): Processing option: -ignore-version
+Debug: 35 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 36 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 37 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 38 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 39 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 40 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 41 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 42 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 43 1 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 44 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 45 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 46 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 47 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 48 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 49 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 50 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 51 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 52 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 53 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 54 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 55 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 56 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 57 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 58 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 59 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 60 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 61 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 62 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 63 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 64 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 65 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 66 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 67 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 68 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 69 2 tcl.c:590 jim_newtap_cmd(): Processing option: -expected-id
+Debug: 70 2 core.c:1480 jtag_tap_init(): Created Tap: xc7.tap @ abs position 0, irlen 6, capture: 0x1 mask: 0x3
+Debug: 71 2 command.c:201 script_debug(): command - pld device virtex2 xc7.tap 1
+Debug: 72 2 command.c:201 script_debug(): command - pld device virtex2 xc7.tap 1
+Debug: 73 2 command.c:201 script_debug(): command - ocd_find cpld/jtagspi.cfg
+Debug: 74 2 configuration.c:99 find_file(): found /home/jevin/code/jtag/openocd/prefix/bin/../share/openocd/scripts/cpld/jtagspi.cfg
+Debug: 75 2 command.c:201 script_debug(): command - target create xc7.proxy testee -chain-position xc7.tap
+Debug: 76 2 command.c:201 script_debug(): command - target create xc7.proxy testee -chain-position xc7.tap
+Debug: 77 2 target.c:2179 target_free_all_working_areas_restore(): freeing all working areas
+Debug: 78 2 command.c:201 script_debug(): command - flash bank xc7.spi jtagspi 0 0 0 0 xc7.proxy 0x02
+Debug: 79 2 command.c:201 script_debug(): command - flash bank xc7.spi jtagspi 0 0 0 0 xc7.proxy 0x02
+Debug: 80 2 tcl.c:1317 handle_flash_bank_command(): 'jtagspi' driver usage field missing
+Debug: 81 2 command.c:201 script_debug(): command - adapter speed 20000
+Debug: 82 2 command.c:201 script_debug(): command - adapter speed 20000
+Debug: 83 2 core.c:1818 jtag_config_khz(): handle jtag khz
+Debug: 84 2 core.c:1781 adapter_khz_to_speed(): convert khz to interface specific speed value
+Debug: 85 2 core.c:1781 adapter_khz_to_speed(): convert khz to interface specific speed value
+Debug: 86 2 command.c:201 script_debug(): command - gdb_port disabled
+Debug: 87 2 command.c:201 script_debug(): command - tcl_port disabled
+Debug: 88 2 command.c:201 script_debug(): command - telnet_port disabled
+Debug: 89 2 command.c:201 script_debug(): command - init
+Debug: 90 2 command.c:201 script_debug(): command - target init
+Debug: 91 2 command.c:201 script_debug(): command - target init
+Debug: 92 2 command.c:201 script_debug(): command - target names
+Debug: 93 2 command.c:201 script_debug(): command - target names
+Debug: 94 2 command.c:201 script_debug(): command - xc7.proxy cget -event gdb-flash-erase-start
+Debug: 95 2 command.c:201 script_debug(): command - xc7.proxy cget -event gdb-flash-erase-start
+Debug: 96 2 command.c:201 script_debug(): command - xc7.proxy configure -event gdb-flash-erase-start reset init
+Debug: 97 2 command.c:201 script_debug(): command - xc7.proxy configure -event gdb-flash-erase-start reset init
+Debug: 98 2 command.c:201 script_debug(): command - xc7.proxy cget -event gdb-flash-write-end
+Debug: 99 2 command.c:201 script_debug(): command - xc7.proxy cget -event gdb-flash-write-end
+Debug: 100 2 command.c:201 script_debug(): command - xc7.proxy configure -event gdb-flash-write-end reset halt
+Debug: 101 2 command.c:201 script_debug(): command - xc7.proxy configure -event gdb-flash-write-end reset halt
+Debug: 102 2 command.c:201 script_debug(): command - xc7.proxy cget -event gdb-attach
+Debug: 103 2 command.c:201 script_debug(): command - xc7.proxy cget -event gdb-attach
+Debug: 104 2 command.c:201 script_debug(): command - xc7.proxy configure -event gdb-attach halt 1000
+Debug: 105 2 command.c:201 script_debug(): command - xc7.proxy configure -event gdb-attach halt 1000
+Debug: 106 2 target.c:1646 handle_target_init_command(): Initializing targets...
+Debug: 107 2 ftdi.c:666 ftdi_initialize(): ftdi interface using shortest path jtag state transitions
+Debug: 108 14 mpsse.c:423 mpsse_purge(): -
+Debug: 109 19 mpsse.c:624 mpsse_set_data_bits_low_byte(): -
+Debug: 110 19 mpsse.c:456 buffer_write_byte(): 80
+Debug: 111 19 mpsse.c:456 buffer_write_byte(): e8
+Debug: 112 19 mpsse.c:456 buffer_write_byte(): eb
+Debug: 113 19 mpsse.c:641 mpsse_set_data_bits_high_byte(): -
+Debug: 114 19 mpsse.c:456 buffer_write_byte(): 82
+Debug: 115 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 116 19 mpsse.c:456 buffer_write_byte(): 60
+Debug: 117 19 mpsse.c:704 mpsse_loopback_config(): off
+Debug: 118 19 mpsse.c:456 buffer_write_byte(): 85
+Debug: 119 19 mpsse.c:749 mpsse_set_frequency(): target 20000000 Hz
+Debug: 120 19 mpsse.c:741 mpsse_rtck_config(): off
+Debug: 121 19 mpsse.c:456 buffer_write_byte(): 97
+Debug: 122 19 mpsse.c:730 mpsse_divide_by_5_config(): off
+Debug: 123 19 mpsse.c:456 buffer_write_byte(): 8a
+Debug: 124 19 mpsse.c:710 mpsse_set_divisor(): 1
+Debug: 125 19 mpsse.c:456 buffer_write_byte(): 86
+Debug: 126 19 mpsse.c:456 buffer_write_byte(): 01
+Debug: 127 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 128 19 mpsse.c:773 mpsse_set_frequency(): actually 15000000 Hz
+Debug: 129 19 mpsse.c:855 mpsse_flush(): write 12, read 0
+Debug: 130 19 mpsse.c:830 write_cb(): transferred 12 of 12
+Debug: 131 19 mpsse.c:832 write_cb():  80 e8 eb 82 00 60 85 97 8a 86 01 00
+Debug: 132 19 core.c:1781 adapter_khz_to_speed(): convert khz to interface specific speed value
+Debug: 133 19 core.c:1785 adapter_khz_to_speed(): have interface set up
+Debug: 134 19 mpsse.c:749 mpsse_set_frequency(): target 20000000 Hz
+Debug: 135 19 mpsse.c:741 mpsse_rtck_config(): off
+Debug: 136 19 mpsse.c:456 buffer_write_byte(): 97
+Debug: 137 19 mpsse.c:730 mpsse_divide_by_5_config(): off
+Debug: 138 19 mpsse.c:456 buffer_write_byte(): 8a
+Debug: 139 19 mpsse.c:710 mpsse_set_divisor(): 1
+Debug: 140 19 mpsse.c:456 buffer_write_byte(): 86
+Debug: 141 19 mpsse.c:456 buffer_write_byte(): 01
+Debug: 142 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 143 19 mpsse.c:773 mpsse_set_frequency(): actually 15000000 Hz
+Info : 144 19 ftdi.c:291 ftdi_speed(): ftdi: if you experience problems at higher adapter clocks, try the command "ftdi_tdo_sample_edge falling"
+Debug: 145 19 core.c:1781 adapter_khz_to_speed(): convert khz to interface specific speed value
+Debug: 146 19 core.c:1785 adapter_khz_to_speed(): have interface set up
+Info : 147 19 core.c:1561 adapter_init(): clock speed 20000 kHz
+Debug: 148 19 openocd.c:143 handle_init_command(): Debug Adapter init complete
+Debug: 149 19 command.c:201 script_debug(): command - transport init
+Debug: 150 19 command.c:201 script_debug(): command - transport init
+Debug: 151 19 transport.c:230 handle_transport_init(): handle_transport_init
+Debug: 152 19 mpsse.c:855 mpsse_flush(): write 5, read 0
+Debug: 153 19 mpsse.c:830 write_cb(): transferred 5 of 5
+Debug: 154 19 mpsse.c:832 write_cb():  97 8a 86 01 00
+Debug: 155 19 ftdi.c:541 ftdi_reset(): reset trst: 0 srst 0
+Debug: 156 19 mpsse.c:855 mpsse_flush(): write 0, read 0
+Debug: 157 19 core.c:833 jtag_add_reset(): SRST line released
+Debug: 158 19 core.c:858 jtag_add_reset(): TRST line released
+Debug: 159 19 core.c:331 jtag_call_event_callbacks(): jtag event: TAP reset
+Debug: 160 19 mpsse.c:855 mpsse_flush(): write 0, read 0
+Debug: 161 19 command.c:201 script_debug(): command - jtag arp_init
+Debug: 162 19 command.c:201 script_debug(): command - jtag arp_init
+Debug: 163 19 core.c:1574 jtag_init_inner(): Init JTAG chain
+Debug: 164 19 core.c:331 jtag_call_event_callbacks(): jtag event: TAP reset
+Debug: 165 19 ftdi.c:356 ftdi_execute_statemove(): statemove end in RESET
+Debug: 166 19 ftdi.c:266 move_to_state(): start=RESET goal=RESET
+Debug: 167 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 168 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 169 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 170 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 171 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 172 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 173 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 174 19 mpsse.c:574 mpsse_clock_tms_cs(): out 7 bits, tdi=0
+Debug: 175 19 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 176 19 mpsse.c:456 buffer_write_byte(): 06
+Debug: 177 19 mpsse.c:456 buffer_write_byte(): 7f
+Debug: 178 19 mpsse.c:855 mpsse_flush(): write 3, read 0
+Debug: 179 19 mpsse.c:830 write_cb(): transferred 3 of 3
+Debug: 180 19 mpsse.c:832 write_cb():  4b 06 7f
+Debug: 181 19 core.c:981 default_interface_jtag_execute_queue(): JTAG TLR RESET to RESET
+Debug: 182 19 core.c:1239 jtag_examine_chain(): DR scan interrogation for IDCODE/BYPASS
+Debug: 183 19 core.c:331 jtag_call_event_callbacks(): jtag event: TAP reset
+Debug: 184 19 ftdi.c:436 ftdi_execute_scan(): DRSCAN type:3
+Debug: 185 19 ftdi.c:266 move_to_state(): start=RESET goal=DRSHIFT
+Debug: 186 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 187 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 188 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 189 19 ftdi.c:270 move_to_state(): tap_set_state(RUN/IDLE)
+Debug: 190 19 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 191 19 ftdi.c:270 move_to_state(): tap_set_state(DRCAPTURE)
+Debug: 192 19 ftdi.c:270 move_to_state(): tap_set_state(DRSHIFT)
+Debug: 193 19 mpsse.c:574 mpsse_clock_tms_cs(): out 7 bits, tdi=0
+Debug: 194 19 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 195 19 mpsse.c:456 buffer_write_byte(): 06
+Debug: 196 19 mpsse.c:456 buffer_write_byte(): 17
+Debug: 197 19 ftdi.c:466 ftdi_execute_scan(): inout field 0/1 672 bits
+Debug: 198 19 mpsse.c:498 mpsse_clock_data(): inout 671 bits
+Debug: 199 19 mpsse.c:456 buffer_write_byte(): 39
+Debug: 200 19 mpsse.c:456 buffer_write_byte(): 52
+Debug: 201 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 202 19 mpsse.c:464 buffer_write(): 664 bits
+Debug: 203 19 mpsse.c:474 buffer_add_read(): 664 bits, offset 0
+Debug: 204 19 mpsse.c:456 buffer_write_byte(): 3b
+Debug: 205 19 mpsse.c:456 buffer_write_byte(): 06
+Debug: 206 19 mpsse.c:464 buffer_write(): 7 bits
+Debug: 207 19 mpsse.c:474 buffer_add_read(): 7 bits, offset 1
+Debug: 208 19 mpsse.c:574 mpsse_clock_tms_cs(): inout 1 bits, tdi=1
+Debug: 209 19 mpsse.c:456 buffer_write_byte(): 6b
+Debug: 210 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 211 19 mpsse.c:456 buffer_write_byte(): 81
+Debug: 212 19 mpsse.c:474 buffer_add_read(): 1 bits, offset 7
+Debug: 213 19 ftdi.c:499 ftdi_execute_scan(): tap_set_state(DREXIT1)
+Debug: 214 19 mpsse.c:574 mpsse_clock_tms_cs(): out 1 bits, tdi=1
+Debug: 215 19 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 216 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 217 19 mpsse.c:456 buffer_write_byte(): 80
+Debug: 218 19 ftdi.c:516 ftdi_execute_scan(): tap_set_state(DRPAUSE)
+Debug: 219 19 ftdi.c:531 ftdi_execute_scan(): DR scan, 672 bits, end in DRPAUSE
+Debug: 220 19 ftdi.c:356 ftdi_execute_statemove(): statemove end in RESET
+Debug: 221 19 ftdi.c:266 move_to_state(): start=DRPAUSE goal=RESET
+Debug: 222 19 ftdi.c:270 move_to_state(): tap_set_state(DREXIT2)
+Debug: 223 19 ftdi.c:270 move_to_state(): tap_set_state(DRUPDATE)
+Debug: 224 19 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 225 19 ftdi.c:270 move_to_state(): tap_set_state(IRSELECT)
+Debug: 226 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 227 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 228 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 229 19 mpsse.c:574 mpsse_clock_tms_cs(): out 7 bits, tdi=0
+Debug: 230 19 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 231 19 mpsse.c:456 buffer_write_byte(): 06
+Debug: 232 19 mpsse.c:456 buffer_write_byte(): 7f
+Debug: 233 19 mpsse.c:855 mpsse_flush(): write 101+1, read 85
+Debug: 234 19 mpsse.c:456 buffer_write_byte(): 87
+Debug: 235 19 mpsse.c:830 write_cb(): transferred 102 of 102
+Debug: 236 19 mpsse.c:832 write_cb():  4b 06 17 39 52 00 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+Debug: 237 19 mpsse.c:832 write_cb():  ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+Debug: 238 19 mpsse.c:832 write_cb():  ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 3b 06 7f 6b 00 81 4b
+Debug: 239 19 mpsse.c:832 write_cb():  00 80 4b 06 7f 87
+Debug: 240 19 mpsse.c:792 read_cb():  32 60 93 10 63 13 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+Debug: 241 19 mpsse.c:792 read_cb():  ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+Debug: 242 19 mpsse.c:792 read_cb():  ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+Debug: 243 19 mpsse.c:815 read_cb(): raw chunk 87, transferred 85 of 85
+Debug: 244 19 core.c:963 default_interface_jtag_execute_queue(): JTAG DR SCAN to DRPAUSE
+Debug: 245 19 core.c:970 default_interface_jtag_execute_queue():   672b out: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+Debug: 246 19 core.c:975 default_interface_jtag_execute_queue():   672b  in: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff13631093
+Debug: 247 19 core.c:981 default_interface_jtag_execute_queue(): JTAG TLR RESET to RESET
+Info : 248 19 core.c:1138 jtag_examine_chain_display(): JTAG tap: xc7.tap tap/device found: 0x13631093 (mfg: 0x049 (Xilinx), part: 0x3631, ver: 0x1)
+Debug: 249 19 core.c:1370 jtag_validate_ircapture(): IR capture validation scan
+Debug: 250 19 ftdi.c:436 ftdi_execute_scan(): IRSCAN type:3
+Debug: 251 19 ftdi.c:266 move_to_state(): start=RESET goal=IRSHIFT
+Debug: 252 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 253 19 ftdi.c:270 move_to_state(): tap_set_state(RESET)
+Debug: 254 19 ftdi.c:270 move_to_state(): tap_set_state(RUN/IDLE)
+Debug: 255 19 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 256 19 ftdi.c:270 move_to_state(): tap_set_state(IRSELECT)
+Debug: 257 19 ftdi.c:270 move_to_state(): tap_set_state(IRCAPTURE)
+Debug: 258 19 ftdi.c:270 move_to_state(): tap_set_state(IRSHIFT)
+Debug: 259 19 mpsse.c:574 mpsse_clock_tms_cs(): out 7 bits, tdi=0
+Debug: 260 19 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 261 19 mpsse.c:456 buffer_write_byte(): 06
+Debug: 262 19 mpsse.c:456 buffer_write_byte(): 1b
+Debug: 263 19 ftdi.c:466 ftdi_execute_scan(): inout field 0/1 8 bits
+Debug: 264 19 mpsse.c:498 mpsse_clock_data(): inout 7 bits
+Debug: 265 19 mpsse.c:456 buffer_write_byte(): 3b
+Debug: 266 19 mpsse.c:456 buffer_write_byte(): 06
+Debug: 267 19 mpsse.c:464 buffer_write(): 7 bits
+Debug: 268 19 mpsse.c:474 buffer_add_read(): 7 bits, offset 1
+Debug: 269 19 mpsse.c:574 mpsse_clock_tms_cs(): inout 1 bits, tdi=1
+Debug: 270 19 mpsse.c:456 buffer_write_byte(): 6b
+Debug: 271 19 mpsse.c:456 buffer_write_byte(): 00
+Debug: 272 19 mpsse.c:456 buffer_write_byte(): 81
+Debug: 273 19 mpsse.c:474 buffer_add_read(): 1 bits, offset 7
+Debug: 274 19 ftdi.c:499 ftdi_execute_scan(): tap_set_state(IREXIT1)
+Debug: 275 19 mpsse.c:574 mpsse_clock_tms_cs(): out 2 bits, tdi=1
+Debug: 276 19 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 277 19 mpsse.c:456 buffer_write_byte(): 01
+Debug: 278 19 mpsse.c:456 buffer_write_byte(): 81
+Debug: 279 19 ftdi.c:507 ftdi_execute_scan(): tap_set_state(IRUPDATE)
+Debug: 280 19 ftdi.c:508 ftdi_execute_scan(): tap_set_state(RUN/IDLE)
+Debug: 281 19 ftdi.c:531 ftdi_execute_scan(): IR scan, 8 bits, end in RUN/IDLE
+Debug: 282 19 mpsse.c:855 mpsse_flush(): write 12+1, read 2
+Debug: 283 19 mpsse.c:456 buffer_write_byte(): 87
+Debug: 284 20 mpsse.c:830 write_cb(): transferred 13 of 13
+Debug: 285 20 mpsse.c:832 write_cb():  4b 06 1b 3b 06 7f 6b 00 81 4b 01 81 87
+Debug: 286 20 mpsse.c:792 read_cb():  32 60 eb f5
+Debug: 287 20 mpsse.c:815 read_cb(): raw chunk 4, transferred 2 of 2
+Debug: 288 20 core.c:963 default_interface_jtag_execute_queue(): JTAG IR SCAN to RUN/IDLE
+Debug: 289 20 core.c:970 default_interface_jtag_execute_queue():   8b out: ff
+Debug: 290 20 core.c:975 default_interface_jtag_execute_queue():   8b  in: f5
+Debug: 291 20 core.c:1427 jtag_validate_ircapture(): xc7.tap: IR capture 0x35
+Debug: 292 20 command.c:201 script_debug(): command - dap init
+Debug: 293 20 command.c:201 script_debug(): command - dap init
+Debug: 294 20 arm_dap.c:109 dap_init_all(): Initializing all DAPs ...
+Debug: 295 20 openocd.c:160 handle_init_command(): Examining targets...
+Debug: 296 20 target.c:1832 target_call_event_callbacks(): target event 19 (examine-start) for core xc7.proxy
+Debug: 297 20 target.c:1832 target_call_event_callbacks(): target event 21 (examine-end) for core xc7.proxy
+Debug: 298 20 command.c:201 script_debug(): command - flash init
+Debug: 299 20 command.c:201 script_debug(): command - flash init
+Debug: 300 20 tcl.c:1383 handle_flash_init_command(): Initializing flash devices...
+Debug: 301 20 command.c:201 script_debug(): command - nand init
+Debug: 302 20 command.c:201 script_debug(): command - nand init
+Debug: 303 20 tcl.c:498 handle_nand_init_command(): Initializing NAND devices...
+Debug: 304 20 command.c:201 script_debug(): command - pld init
+Debug: 305 20 command.c:201 script_debug(): command - pld init
+Debug: 306 20 pld.c:206 handle_pld_init_command(): Initializing PLDs...
+Debug: 307 20 command.c:201 script_debug(): command - tpiu init
+Debug: 308 20 command.c:201 script_debug(): command - tpiu init
+Debug: 309 20 gdb_server.c:3570 gdb_target_add_one(): skip gdb server for target xc7.proxy
+Waiting for Any Key
+Debug: 310 1368 command.c:201 script_debug(): command - irscan xc7.tap 0x2
+Debug: 311 1368 log.c:425 gdb_timeout_warning(): keep_alive() was not invoked in the 1000 ms timelimit (1368 ms). This may cause trouble with GDB connections.
+Debug: 313 1368 ftdi.c:436 ftdi_execute_scan(): IRSCAN type:2
+Debug: 314 1368 ftdi.c:266 move_to_state(): start=RUN/IDLE goal=IRSHIFT
+Debug: 315 1368 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 316 1368 ftdi.c:270 move_to_state(): tap_set_state(IRSELECT)
+Debug: 317 1368 ftdi.c:270 move_to_state(): tap_set_state(IRCAPTURE)
+Debug: 318 1368 ftdi.c:270 move_to_state(): tap_set_state(IRSHIFT)
+Debug: 319 1368 mpsse.c:574 mpsse_clock_tms_cs(): out 4 bits, tdi=0
+Debug: 320 1368 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 321 1368 mpsse.c:456 buffer_write_byte(): 03
+Debug: 322 1368 mpsse.c:456 buffer_write_byte(): 03
+Debug: 323 1368 ftdi.c:466 ftdi_execute_scan(): out field 0/1 6 bits
+Debug: 324 1368 mpsse.c:498 mpsse_clock_data(): out 5 bits
+Debug: 325 1368 mpsse.c:456 buffer_write_byte(): 1b
+Debug: 326 1368 mpsse.c:456 buffer_write_byte(): 04
+Debug: 327 1368 mpsse.c:464 buffer_write(): 5 bits
+Debug: 328 1368 mpsse.c:574 mpsse_clock_tms_cs(): out 1 bits, tdi=0
+Debug: 329 1368 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 330 1368 mpsse.c:456 buffer_write_byte(): 00
+Debug: 331 1368 mpsse.c:456 buffer_write_byte(): 01
+Debug: 332 1368 ftdi.c:499 ftdi_execute_scan(): tap_set_state(IREXIT1)
+Debug: 333 1368 mpsse.c:574 mpsse_clock_tms_cs(): out 2 bits, tdi=0
+Debug: 334 1368 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 335 1368 mpsse.c:456 buffer_write_byte(): 01
+Debug: 336 1368 mpsse.c:456 buffer_write_byte(): 01
+Debug: 337 1368 ftdi.c:507 ftdi_execute_scan(): tap_set_state(IRUPDATE)
+Debug: 338 1368 ftdi.c:508 ftdi_execute_scan(): tap_set_state(RUN/IDLE)
+Debug: 339 1368 ftdi.c:531 ftdi_execute_scan(): IR scan, 6 bits, end in RUN/IDLE
+Debug: 340 1368 mpsse.c:855 mpsse_flush(): write 12, read 0
+Debug: 341 1369 mpsse.c:830 write_cb(): transferred 12 of 12
+Debug: 342 1369 mpsse.c:832 write_cb():  4b 03 03 1b 04 62 4b 00 01 4b 01 01
+Debug: 343 1369 core.c:963 default_interface_jtag_execute_queue(): JTAG IR SCAN to RUN/IDLE
+Debug: 344 1369 core.c:970 default_interface_jtag_execute_queue():   6b out: 02
+Waiting for Any Key
+Debug: 345 5295 command.c:201 script_debug(): command - drscan xc7.tap 32 0xDEADBEEF
+Debug: 346 5295 log.c:425 gdb_timeout_warning(): keep_alive() was not invoked in the 1000 ms timelimit (3927 ms). This may cause trouble with GDB connections.
+Debug: 348 5295 ftdi.c:436 ftdi_execute_scan(): DRSCAN type:3
+Debug: 349 5295 ftdi.c:266 move_to_state(): start=RUN/IDLE goal=DRSHIFT
+Debug: 350 5295 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 351 5295 ftdi.c:270 move_to_state(): tap_set_state(DRCAPTURE)
+Debug: 352 5295 ftdi.c:270 move_to_state(): tap_set_state(DRSHIFT)
+Debug: 353 5295 mpsse.c:574 mpsse_clock_tms_cs(): out 3 bits, tdi=0
+Debug: 354 5295 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 355 5295 mpsse.c:456 buffer_write_byte(): 02
+Debug: 356 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 357 5295 ftdi.c:466 ftdi_execute_scan(): inout field 0/1 32 bits
+Debug: 358 5295 mpsse.c:498 mpsse_clock_data(): inout 31 bits
+Debug: 359 5295 mpsse.c:456 buffer_write_byte(): 39
+Debug: 360 5295 mpsse.c:456 buffer_write_byte(): 02
+Debug: 361 5295 mpsse.c:456 buffer_write_byte(): 00
+Debug: 362 5295 mpsse.c:464 buffer_write(): 24 bits
+Debug: 363 5295 mpsse.c:474 buffer_add_read(): 24 bits, offset 0
+Debug: 364 5295 mpsse.c:456 buffer_write_byte(): 3b
+Debug: 365 5295 mpsse.c:456 buffer_write_byte(): 06
+Debug: 366 5295 mpsse.c:464 buffer_write(): 7 bits
+Debug: 367 5295 mpsse.c:474 buffer_add_read(): 7 bits, offset 1
+Debug: 368 5295 mpsse.c:574 mpsse_clock_tms_cs(): inout 1 bits, tdi=1
+Debug: 369 5295 mpsse.c:456 buffer_write_byte(): 6b
+Debug: 370 5295 mpsse.c:456 buffer_write_byte(): 00
+Debug: 371 5295 mpsse.c:456 buffer_write_byte(): 81
+Debug: 372 5295 mpsse.c:474 buffer_add_read(): 1 bits, offset 7
+Debug: 373 5295 ftdi.c:499 ftdi_execute_scan(): tap_set_state(DREXIT1)
+Debug: 374 5295 mpsse.c:574 mpsse_clock_tms_cs(): out 2 bits, tdi=1
+Debug: 375 5295 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 376 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 377 5295 mpsse.c:456 buffer_write_byte(): 81
+Debug: 378 5295 ftdi.c:507 ftdi_execute_scan(): tap_set_state(DRUPDATE)
+Debug: 379 5295 ftdi.c:508 ftdi_execute_scan(): tap_set_state(RUN/IDLE)
+Debug: 380 5295 ftdi.c:531 ftdi_execute_scan(): DR scan, 32 bits, end in RUN/IDLE
+Debug: 381 5295 mpsse.c:855 mpsse_flush(): write 18+1, read 5
+Debug: 382 5295 mpsse.c:456 buffer_write_byte(): 87
+Debug: 383 5295 mpsse.c:830 write_cb(): transferred 19 of 19
+Debug: 384 5295 mpsse.c:832 write_cb():  4b 02 01 39 02 00 ef be ad 3b 06 5e 6b 00 81 4b 01 81 87
+Debug: 385 5295 mpsse.c:792 read_cb():  32 60 56 fd 03 50 a8
+Debug: 386 5295 mpsse.c:815 read_cb(): raw chunk 7, transferred 5 of 5
+Debug: 387 5295 core.c:963 default_interface_jtag_execute_queue(): JTAG DR SCAN to RUN/IDLE
+Debug: 388 5295 core.c:970 default_interface_jtag_execute_queue():   32b out: deadbeef
+Debug: 389 5295 core.c:975 default_interface_jtag_execute_queue():   32b  in: a803fd56
+  DEADBEEF 32 RES: 0xa803fd56
+Debug: 390 5295 command.c:201 script_debug(): command - drscan xc7.tap 40 0x00DEADBEEF
+Debug: 391 5295 ftdi.c:436 ftdi_execute_scan(): DRSCAN type:3
+Debug: 392 5295 ftdi.c:266 move_to_state(): start=RUN/IDLE goal=DRSHIFT
+Debug: 393 5295 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 394 5295 ftdi.c:270 move_to_state(): tap_set_state(DRCAPTURE)
+Debug: 395 5295 ftdi.c:270 move_to_state(): tap_set_state(DRSHIFT)
+Debug: 396 5295 mpsse.c:574 mpsse_clock_tms_cs(): out 3 bits, tdi=0
+Debug: 397 5295 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 398 5295 mpsse.c:456 buffer_write_byte(): 02
+Debug: 399 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 400 5295 ftdi.c:466 ftdi_execute_scan(): inout field 0/1 40 bits
+Debug: 401 5295 mpsse.c:498 mpsse_clock_data(): inout 39 bits
+Debug: 402 5295 mpsse.c:456 buffer_write_byte(): 39
+Debug: 403 5295 mpsse.c:456 buffer_write_byte(): 03
+Debug: 404 5295 mpsse.c:456 buffer_write_byte(): 00
+Debug: 405 5295 mpsse.c:464 buffer_write(): 32 bits
+Debug: 406 5295 mpsse.c:474 buffer_add_read(): 32 bits, offset 0
+Debug: 407 5295 mpsse.c:456 buffer_write_byte(): 3b
+Debug: 408 5295 mpsse.c:456 buffer_write_byte(): 06
+Debug: 409 5295 mpsse.c:464 buffer_write(): 7 bits
+Debug: 410 5295 mpsse.c:474 buffer_add_read(): 7 bits, offset 1
+Debug: 411 5295 mpsse.c:574 mpsse_clock_tms_cs(): inout 1 bits, tdi=0
+Debug: 412 5295 mpsse.c:456 buffer_write_byte(): 6b
+Debug: 413 5295 mpsse.c:456 buffer_write_byte(): 00
+Debug: 414 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 415 5295 mpsse.c:474 buffer_add_read(): 1 bits, offset 7
+Debug: 416 5295 ftdi.c:499 ftdi_execute_scan(): tap_set_state(DREXIT1)
+Debug: 417 5295 mpsse.c:574 mpsse_clock_tms_cs(): out 2 bits, tdi=0
+Debug: 418 5295 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 419 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 420 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 421 5295 ftdi.c:507 ftdi_execute_scan(): tap_set_state(DRUPDATE)
+Debug: 422 5295 ftdi.c:508 ftdi_execute_scan(): tap_set_state(RUN/IDLE)
+Debug: 423 5295 ftdi.c:531 ftdi_execute_scan(): DR scan, 40 bits, end in RUN/IDLE
+Debug: 424 5295 mpsse.c:855 mpsse_flush(): write 19+1, read 6
+Debug: 425 5295 mpsse.c:456 buffer_write_byte(): 87
+Debug: 426 5295 mpsse.c:830 write_cb(): transferred 20 of 20
+Debug: 427 5295 mpsse.c:832 write_cb():  4b 02 01 39 03 00 ef be ad de 3b 06 00 6b 00 01 4b 01 01 87
+Debug: 428 5295 mpsse.c:792 read_cb():  32 00 ef be ad de
+Debug: 429 5295 mpsse.c:815 read_cb(): raw chunk 6, transferred 4 of 6
+Debug: 430 5295 mpsse.c:792 read_cb():  32 60 bd de
+Debug: 431 5295 mpsse.c:815 read_cb(): raw chunk 4, transferred 6 of 6
+Debug: 432 5295 core.c:963 default_interface_jtag_execute_queue(): JTAG DR SCAN to RUN/IDLE
+Debug: 433 5295 core.c:970 default_interface_jtag_execute_queue():   40b out: 00deadbeef
+Debug: 434 5295 core.c:975 default_interface_jtag_execute_queue():   40b  in: dedeadbeef
+00DEADBEEF 40 RES: 0xdedeadbeef
+Debug: 435 5295 command.c:201 script_debug(): command - drscan xc7.tap 64 0x00000000DEADBEEF
+Debug: 436 5295 ftdi.c:436 ftdi_execute_scan(): DRSCAN type:3
+Debug: 437 5295 ftdi.c:266 move_to_state(): start=RUN/IDLE goal=DRSHIFT
+Debug: 438 5295 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 439 5295 ftdi.c:270 move_to_state(): tap_set_state(DRCAPTURE)
+Debug: 440 5295 ftdi.c:270 move_to_state(): tap_set_state(DRSHIFT)
+Debug: 441 5295 mpsse.c:574 mpsse_clock_tms_cs(): out 3 bits, tdi=0
+Debug: 442 5295 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 443 5295 mpsse.c:456 buffer_write_byte(): 02
+Debug: 444 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 445 5295 ftdi.c:466 ftdi_execute_scan(): inout field 0/1 64 bits
+Debug: 446 5295 mpsse.c:498 mpsse_clock_data(): inout 63 bits
+Debug: 447 5295 mpsse.c:456 buffer_write_byte(): 39
+Debug: 448 5295 mpsse.c:456 buffer_write_byte(): 06
+Debug: 449 5295 mpsse.c:456 buffer_write_byte(): 00
+Debug: 450 5295 mpsse.c:464 buffer_write(): 56 bits
+Debug: 451 5295 mpsse.c:474 buffer_add_read(): 56 bits, offset 0
+Debug: 452 5295 mpsse.c:456 buffer_write_byte(): 3b
+Debug: 453 5295 mpsse.c:456 buffer_write_byte(): 06
+Debug: 454 5295 mpsse.c:464 buffer_write(): 7 bits
+Debug: 455 5295 mpsse.c:474 buffer_add_read(): 7 bits, offset 1
+Debug: 456 5295 mpsse.c:574 mpsse_clock_tms_cs(): inout 1 bits, tdi=0
+Debug: 457 5295 mpsse.c:456 buffer_write_byte(): 6b
+Debug: 458 5295 mpsse.c:456 buffer_write_byte(): 00
+Debug: 459 5295 mpsse.c:456 buffer_write_byte(): 01
+Debug: 460 5295 mpsse.c:474 buffer_add_read(): 1 bits, offset 7
+Debug: 461 5295 ftdi.c:499 ftdi_execute_scan(): tap_set_state(DREXIT1)
+Debug: 462 5295 mpsse.c:574 mpsse_clock_tms_cs(): out 2 bits, tdi=0
+Debug: 463 5295 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 464 5296 mpsse.c:456 buffer_write_byte(): 01
+Debug: 465 5296 mpsse.c:456 buffer_write_byte(): 01
+Debug: 466 5296 ftdi.c:507 ftdi_execute_scan(): tap_set_state(DRUPDATE)
+Debug: 467 5296 ftdi.c:508 ftdi_execute_scan(): tap_set_state(RUN/IDLE)
+Debug: 468 5296 ftdi.c:531 ftdi_execute_scan(): DR scan, 64 bits, end in RUN/IDLE
+Debug: 469 5296 mpsse.c:855 mpsse_flush(): write 22+1, read 9
+Debug: 470 5296 mpsse.c:456 buffer_write_byte(): 87
+Debug: 471 5296 mpsse.c:830 write_cb(): transferred 23 of 23
+Debug: 472 5296 mpsse.c:832 write_cb():  4b 02 01 39 06 00 ef be ad de 00 00 00 3b 06 00 6b 00 01 4b 01 01 87
+Debug: 473 5296 mpsse.c:792 read_cb():  32 60 be ad de 00 de 7d 5b 7a bd
+Debug: 474 5296 mpsse.c:815 read_cb(): raw chunk 11, transferred 9 of 9
+Debug: 475 5296 core.c:963 default_interface_jtag_execute_queue(): JTAG DR SCAN to RUN/IDLE
+Debug: 476 5296 core.c:970 default_interface_jtag_execute_queue():   64b out: 00000000deadbeef
+Debug: 477 5296 core.c:975 default_interface_jtag_execute_queue():   64b  in: bd5b7dde00deadbe
+00DEADBEEF 64 RES: 0xbd5b7dde00deadbe
+Debug: 478 5296 command.c:201 script_debug(): command - drscan xc7.tap 80 0x000000000000DEADBEEF
+Debug: 479 5296 ftdi.c:436 ftdi_execute_scan(): DRSCAN type:3
+Debug: 480 5296 ftdi.c:266 move_to_state(): start=RUN/IDLE goal=DRSHIFT
+Debug: 481 5296 ftdi.c:270 move_to_state(): tap_set_state(DRSELECT)
+Debug: 482 5296 ftdi.c:270 move_to_state(): tap_set_state(DRCAPTURE)
+Debug: 483 5296 ftdi.c:270 move_to_state(): tap_set_state(DRSHIFT)
+Debug: 484 5296 mpsse.c:574 mpsse_clock_tms_cs(): out 3 bits, tdi=0
+Debug: 485 5296 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 486 5296 mpsse.c:456 buffer_write_byte(): 02
+Debug: 487 5296 mpsse.c:456 buffer_write_byte(): 01
+Debug: 488 5296 ftdi.c:466 ftdi_execute_scan(): inout field 0/1 80 bits
+Debug: 489 5296 mpsse.c:498 mpsse_clock_data(): inout 79 bits
+Debug: 490 5296 mpsse.c:456 buffer_write_byte(): 39
+Debug: 491 5296 mpsse.c:456 buffer_write_byte(): 08
+Debug: 492 5296 mpsse.c:456 buffer_write_byte(): 00
+Debug: 493 5296 mpsse.c:464 buffer_write(): 72 bits
+Debug: 494 5296 mpsse.c:474 buffer_add_read(): 72 bits, offset 0
+Debug: 495 5296 mpsse.c:456 buffer_write_byte(): 3b
+Debug: 496 5296 mpsse.c:456 buffer_write_byte(): 06
+Debug: 497 5296 mpsse.c:464 buffer_write(): 7 bits
+Debug: 498 5296 mpsse.c:474 buffer_add_read(): 7 bits, offset 1
+Debug: 499 5296 mpsse.c:574 mpsse_clock_tms_cs(): inout 1 bits, tdi=0
+Debug: 500 5296 mpsse.c:456 buffer_write_byte(): 6b
+Debug: 501 5296 mpsse.c:456 buffer_write_byte(): 00
+Debug: 502 5296 mpsse.c:456 buffer_write_byte(): 01
+Debug: 503 5296 mpsse.c:474 buffer_add_read(): 1 bits, offset 7
+Debug: 504 5296 ftdi.c:499 ftdi_execute_scan(): tap_set_state(DREXIT1)
+Debug: 505 5296 mpsse.c:574 mpsse_clock_tms_cs(): out 2 bits, tdi=0
+Debug: 506 5296 mpsse.c:456 buffer_write_byte(): 4b
+Debug: 507 5296 mpsse.c:456 buffer_write_byte(): 01
+Debug: 508 5296 mpsse.c:456 buffer_write_byte(): 01
+Debug: 509 5296 ftdi.c:507 ftdi_execute_scan(): tap_set_state(DRUPDATE)
+Debug: 510 5296 ftdi.c:508 ftdi_execute_scan(): tap_set_state(RUN/IDLE)
+Debug: 511 5296 ftdi.c:531 ftdi_execute_scan(): DR scan, 80 bits, end in RUN/IDLE
+Debug: 512 5296 mpsse.c:855 mpsse_flush(): write 24+1, read 11
+Debug: 513 5296 mpsse.c:456 buffer_write_byte(): 87
+Debug: 514 5296 mpsse.c:830 write_cb(): transferred 25 of 25
+Debug: 515 5296 mpsse.c:832 write_cb():  4b 02 01 39 08 00 ef be ad de 00 00 00 00 00 3b 06 00 6b 00 01 4b 01 01 87
+Debug: 516 5296 mpsse.c:792 read_cb():  32 60 00 00 00 00 de 7d 5b bd 01 00 00
+Debug: 517 5296 mpsse.c:815 read_cb(): raw chunk 13, transferred 11 of 11
+Debug: 518 5296 core.c:963 default_interface_jtag_execute_queue(): JTAG DR SCAN to RUN/IDLE
+Debug: 519 5296 core.c:970 default_interface_jtag_execute_queue():   80b out: 000000000000deadbeef
+Debug: 520 5296 core.c:975 default_interface_jtag_execute_queue():   80b  in: 0001bd5b7dde00000000
+00DEADBEEF 80 RES: 0x0001bd5b7dde00000000
+Debug: 521 5296 command.c:201 script_debug(): command - shutdown
+User : 522 5296 server.c:751 handle_shutdown_command(): shutdown command invoked
+Debug: 523 5296 target.c:2179 target_free_all_working_areas_restore(): freeing all working areas
