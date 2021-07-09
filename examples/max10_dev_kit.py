@@ -75,8 +75,7 @@ class BenchSoC(SoCCore):
         # self.jtag_phy.tap_fsm.finalize()
         # print('!!!!')
         # self.jtag_phy.tap_fsm.finalize()
-        fsm_sigs = self.jtag_phy.tap_fsm._signals
-        # print(f'fsm_sigs: {fsm_sigs}')
+        fsm_sigs = self.jtag_phy.tap_fsm._signals + self.jtag_phy.tap_fsm.fsm._signals
         analyzer_signals = [
             *phy_sigs,
             *hello_sigs,

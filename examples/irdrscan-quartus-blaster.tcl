@@ -32,7 +32,7 @@ gets stdin
 # will not change the instruction register before the id code value is shifted
 # out while the instruction register is still holding the IDCODE instruction.
 device_lock -timeout 10000
-device_ir_shift -ir_value 0xc -no_captured_ir_value
+device_ir_shift -ir_value 0xe -no_captured_ir_value
 
 puts "Waiting for Any Key"
 gets stdin

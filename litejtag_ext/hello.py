@@ -68,19 +68,19 @@ class BeatTickerZeroToMax(Module):
 class JTAGHello(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal, phy: Module):
         self.clock_domains.cd_jtag = cd_jtag = ClockDomain("jtag")
-        self.comb += ClockSignal("jtag").eq(tck)
+        self.comb += ClockSignal("jtag").eq(phy.drck)
         # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
         self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys") | ~phy.sel)
 
         self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
-        self.comb += ClockSignal("jtag_inv").eq(~tck)
+        self.comb += ClockSignal("jtag_inv").eq(~phy.tck)
         # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
         self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys") | ~phy.sel)
 
         # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
         self.hello_code = sr = Signal(32, reset=0xAA00FF55)
-        self.buf = buf = Signal(reset=sr.reset & 1)
-        self.bufi = bufi = Signal(reset=sr.reset & 1)
+        # self.buf = buf = Signal()
+        self.bufi = bufi = Signal()
 
 
         self.tck_cnt = tck_cnt = Signal(16)
@@ -92,13 +92,13 @@ class JTAGHello(Module):
             tdo.eq(bufi),
         ]
         self.sync.jtag += [
-            buf.eq(sr[1]),
+            # buf.eq(sr[1]),
             # buf.eq(tdi),
             sr.eq(Cat(sr[1:], tdi)),
         ]
 
         self.sync.jtag_inv += [
-            bufi.eq(sr[1])
+            bufi.eq(sr[0])
         ]
 
         # # #
