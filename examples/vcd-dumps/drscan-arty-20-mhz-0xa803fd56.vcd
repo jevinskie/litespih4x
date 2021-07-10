@@ -2,7 +2,7 @@ $date
 	2021-07-08 22:27
 $end
 $timescale 4000ps $end
-$scope 1ps $end
+$scope module TOP $end
 $var wire 1 ! main_jtag_phy_capture $end
 $var wire 1 " main_jtag_phy_drck $end
 $var wire 1 # main_jtag_phy_reset $end
@@ -36,8 +36,9 @@ $var wire 1 > main_jtag_phy_UPDATE_IR $end
 $var wire 16 ? main_jtag_phy_tck_cnt $end
 $var wire 1 @ scope_clk $end
 $var wire 1 A scope_trig $end
-$unscope  $end
+$upscope  $end
 $enddefinitions  $end
+#0
 $dumpvars
 bx !
 bx "

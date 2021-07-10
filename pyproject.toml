@@ -59,6 +59,8 @@ pythondata-misc-usb_ohci = { path = "../pythondata-misc-usb_ohci", develop = tru
 pythondata-software-compiler_rt = { path = "../pythondata-software-compiler_rt", develop = true }
 cocotb = "^1.5.2"
 cocotb-coverage = "^1.1.0"
+pyDigitalWaveTools = "^1.1"
+pydigitalwavetools = {git = "https://github.com/Nic30/pyDigitalWaveTools"}
 
 
 [tool.poetry.dev-dependencies]
