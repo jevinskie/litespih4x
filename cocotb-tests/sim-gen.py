@@ -124,7 +124,7 @@ def main():
     sim_config.add_clocker("jtag_clk", freq_hz=1e6//16)
 
     soc     = BenchSoC(sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
-    builder = Builder(soc, csr_csv="csr.csv")
+    builder = Builder(soc, csr_csv="csr.csv", compile_software=False)
     builder.build(
         sim_config  = sim_config,
         trace       = args.trace,
