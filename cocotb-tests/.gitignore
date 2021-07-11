@@ -1,0 +1,8 @@
+poetry.lock
+sim_build/
+.python-version
+results.xml
+__pycache__/
+.pytest_cache/
+jtag_tap.vcd
+*.vcd

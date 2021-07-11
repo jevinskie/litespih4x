@@ -1,3 +1,5 @@
 poetry.lock
 **/__pycache__/
-w
+.python-version
+csr.csv
+build/

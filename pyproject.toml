@@ -26,6 +26,7 @@ pprintpp = "^0.4.0"
 pp-ez = "^0.2.0"
 bitstring = "^3.1.7"
 attrs = "^21.2.0"
+poethepoet = "^0.10.0"
 
 litedram = { path = "../litedram", develop = true }
 liteeth = { path = "../liteeth", develop = true }
@@ -57,10 +58,12 @@ pythondata-misc-opentitan = { path = "../pythondata-misc-opentitan", develop = t
 pythondata-misc-tapcfg = { path = "../pythondata-misc-tapcfg", develop = true }
 pythondata-misc-usb_ohci = { path = "../pythondata-misc-usb_ohci", develop = true }
 pythondata-software-compiler_rt = { path = "../pythondata-software-compiler_rt", develop = true }
-cocotb = "^1.5.2"
+
+cocotb = { path = "../cocotb", develop = true }
 cocotb-coverage = "^1.1.0"
-pyDigitalWaveTools = "^1.1"
+
 pydigitalwavetools = {git = "https://github.com/Nic30/pyDigitalWaveTools"}
+importlib-resources = "^5.2.0"
 
 
 [tool.poetry.dev-dependencies]
@@ -72,7 +75,6 @@ pytest-clarity = "^0.3.0-alpha.0"
 pytest-pycharm = "^0.7.0"
 pytest-randomly = "^3.8.0"
 pytest-cov = "^2.11.1"
-poethepoet = "^0.10.0"
 mypy = "^0.812"
 
 [build-system]
