@@ -26,8 +26,10 @@ _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAM
 import cocotb
 from cocotb.triggers import Timer
 
+_g_runner = None
 
-
+if cocotb.top:
+    _g_runner = rpyc.utils.factory.unix_connect(f'{os.environ["TOPLEVEL"]}.pipe')
 
 # IOs ----------------------------------------------------------------------------------------------
 
@@ -139,7 +141,6 @@ def main():
         trace_end   = args.trace_end,
         trace_exit  = args.trace_exit,
         sim_end     = args.sim_end,
-        run         = False,
         module      = sys.modules[__name__],
     )
 
@@ -152,4 +153,5 @@ async def read_idcode(dut):
 
 
 if __name__ == "__main__":
+    print(f'__name__ was indeed __main__ args: {sys.argv}')
     main()
