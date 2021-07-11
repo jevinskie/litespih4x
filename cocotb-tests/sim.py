@@ -4,12 +4,13 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 import argparse
+import sys
 from typing import Final
 
 from migen import *
 
 from litex.build.generic_platform import *
-from litex.build.sim import IcarusPlatform
+from litex.build.sim import SimPlatform, IcarusPlatform
 from litex.build.sim.config import SimConfig
 
 from litex.soc.integration.soc_core import *
@@ -21,6 +22,11 @@ from litejtag_ext import data as data_mod
 from importlib_resources import files
 _MOHOR_TAP_VERILOG_NAME: Final = 'window-packing.json'
 _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAME)
+
+import cocotb
+from cocotb.triggers import Timer
+
+
 
 
 # IOs ----------------------------------------------------------------------------------------------
@@ -59,9 +65,9 @@ _io = [
 
 # Platform -----------------------------------------------------------------------------------------
 
-class Platform(IcarusPlatform):
+class Platform(SimPlatform):
     def __init__(self):
-        super().__init__("SIM", _io)
+        super().__init__("SIM", _io, toolchain="cocotb")
 
 
 # Bench SoC ----------------------------------------------------------------------------------------
@@ -132,8 +138,18 @@ def main():
         trace_start = args.trace_start,
         trace_end   = args.trace_end,
         trace_exit  = args.trace_exit,
-        sim_end     = args.sim_end
+        sim_end     = args.sim_end,
+        run         = False,
+        module      = sys.modules[__name__],
     )
+
+
+@cocotb.test()
+async def read_idcode(dut):
+    dut._log.info("Running read_idcode...")
+
+    dut._log.info("Running read_idcode...done")
+
 
 if __name__ == "__main__":
     main()
