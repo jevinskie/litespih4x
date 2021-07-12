@@ -22,11 +22,6 @@ from litex.soc.integration.builder import *
 from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 from litejtag_ext.mohor_tap import MohorJTAGTAP
 
-from litejtag_ext import data as data_mod
-from importlib_resources import files
-_MOHOR_TAP_VERILOG_NAME: Final = 'window-packing.json'
-_MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAME)
-
 import cocotb
 from cocotb.triggers import Timer
 
@@ -163,35 +158,164 @@ def main():
     )
 
 
+# clk_sig = None
+# rst_sig = None
+# tck_sig = None
+# tms_sig = None
+# tdi_sig = None
+# tdo_sig = None
+
+if cocotb.top:
+    setattr(cocotb.top, 'clk_sig', getattr(cocotb.top, srv.root.soc.crg.cd_sys.clk.name_override))
+    # setattr(cocotb.top, 'tck_sig', getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override))
+    cocotb.top.__setattr__('tck_sig', getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override))
+
+
+
+    cocotb.top.rst_sig = getattr(cocotb.top, srv.root.soc.crg.cd_sys.rst.name_override)
+    cocotb.top.tck_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override)
+    cocotb.top.tms_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tms.name_override)
+    cocotb.top.tdi_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tdi.name_override)
+    cocotb.top.tdo_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tdo.name_override)
+
+async def tick_tms(dut, tms: int) -> None:
+    dut._log.info(f'tick_tms_internal {tms}')
+    dut.tms_sig <= tms
+    dut.tck_sig <= 0
+    await tmr(clkper_ns / 2)
+    dut.tck_sig <= 1
+    await tmr(clkper_ns / 2)
+
+tick_tms_ext = cocotb.function(tick_tms)
+
+
+async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
+    dut._log.info(f'tick_tdi_bs_internal {tdi}')
+    tdo = BitSequence()
+    for di in tdi:
+        dut.tdi_sig <= di
+        dut.tck_sig <= 0
+        await tmr(clkper_ns / 2)
+        tdo += BitSequence(int(dut.tdo_sig.value), length=1)
+        dut.tck_sig <= 1
+        await tmr(clkper_ns / 2)
+    return tdo
+
+tick_tdi_ext = cocotb.function(tick_tdi)
+
+async def tick_tdo(dut, nbits: int) -> BitSequence:
+    dut._log.info(f'tick_tdo {nbits}')
+    tdi = BitSequence(0, length=nbits)
+    tdo = await tick_tdi(dut, tdi)
+    return tdo
+
+tick_tdo_ext = cocotb.function(tick_tdo)
+
+
+class SimJtagController(JtagController):
+    def __init__(self, dut, trst: bool = False, frequency: float = 20e6):
+        self.dut = dut
+        self.trst = trst
+        assert not trst
+        self.freq = frequency
+        self.p = dut._log.info
+        self.p('SimJtagController __init__')
+
+    def configure(self, url: str) -> None:
+        raise NotImplementedError
+
+    def close(self, freeze: bool = False) -> None:
+        raise NotImplementedError
+
+    def purge(self) -> None:
+        raise NotImplementedError
+
+    def reset(self, sync: bool = False) -> None:
+        raise NotImplementedError
+
+    def sync(self) -> None:
+        raise NotImplementedError
+
+    def write_tms(self, tms: BitSequence,
+                  should_read: bool=False) -> None:
+        self.p(f'write_tms(should_read={should_read}) with {tms}')
+        for b in tms:
+            tick_tms_ext(self.dut, b)
+
+    def read(self, length: int) -> BitSequence:
+        self.p(f'read({length})')
+        tdo = tick_tdo_ext(self.dut, length)
+        return tdo
+
+    def write(self, out: Union[BitSequence, str], use_last: bool = True):
+        self.p(f'write(use_last={use_last}) with {out}')
+        tick_tdi_ext(self.dut, out)
+
+
+    def write_with_read(self, out: BitSequence,
+                        use_last: bool = False) -> int:
+        raise NotImplementedError
+
+    def read_from_buffer(self, length) -> BitSequence:
+        raise NotImplementedError
+
+
+async def reset_tap(dut):
+    dut.tck_sig <= 0
+    dut.tms_sig <= 0
+    dut.tdi_sig <= 0
+    dut.trst_sig <= 1
+    await tmr(clkper_ns)
+    # trst_sig.value = 0
+    # await tmr(clkper_ns)
+
+
 @cocotb.test()
 async def read_idcode(dut):
-    dut._log.info(f"Running read_idcode... {srv}")
-    lx_tck = srv.root.soc.jtag_pads.tck
-    lx_tms = srv.root.soc.jtag_pads.tms
+    # dut = cocotb.top
+    dut._log.info("Running read_idcode...")
 
-    clk = getattr(dut, srv.root.soc.crg.cd_sys.clk.name_override)
-    rst = getattr(dut, srv.root.soc.crg.cd_sys.rst.name_override)
-    tck = getattr(dut, lx_tck.name_override)
-    tms = getattr(dut, lx_tms.name_override)
-    dut._log.info(f"tck: {tck._path} {tck.value}")
-    dut._log.info(f"tms: {tms._path} {tms.value}")
-    dut._log.info(f"clk: {clk._path} {clk.value}")
-    dut._log.info(f"rst: {rst._path} {rst.value}")
+    await reset_tap(dut)
 
-    rst <= 1
-    await tmr(10)
-    rst <= 0
-    await tmr(10)
+    jte = JtagEngine()
+    jte._ctrl = SimJtagController(dut)
 
-    for i in range(8):
-        clk <= 1
-        await tmr(5)
-        clk <= 0
-        await tmr(5)
+    dut._log.info('shifting idcode instruction out')
+    await ext(jte.write_ir)(IDCODE)
+    # assert dut.update_ir.value == 1
+    await tmr(clkper_ns)
 
+    read_idcode = await ext(jte.read_dr)(32)
+    # assert dut.update_dr.value == 1
+    await tmr(clkper_ns)
+    dut._log.info(f'read_idcode: {hex(int(read_idcode))} {read_idcode}')
 
     dut._log.info("Running read_idcode...done")
 
-10
+
+
+@cocotb.test()
+async def reset_to_e1d(dut):
+    # dut = cocotb.top
+    dut._log.info("Running reset_to_e1d...")
+
+    await reset_tap(dut)
+
+    jte = JtagEngine()
+    jte._ctrl = SimJtagController(dut)
+
+    dut._log.info('going to exit_1_dr')
+    await ext(jte.change_state)('exit_1_dr')
+    # assert dut.exit1_dr.value == 1
+    assert jte.state_machine.state() == jte.state_machine.states['exit_1_dr']
+    await tmr(clkper_ns)
+
+    dut._log.info('going to shift_ir')
+    await ext(jte.change_state)('shift_ir')
+    # assert dut.shift_ir.value == 1
+    await tmr(clkper_ns)
+
+    dut._log.info("Running reset_to_e1d...done")
+
 if __name__ == "__main__":
     main()

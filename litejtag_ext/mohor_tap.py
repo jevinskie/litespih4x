@@ -17,19 +17,15 @@ _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAM
 
 class MohorJTAGTAPImpl(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal):
-        self.tck = Signal()
-        self.tms = Signal()
-        self.tdi = Signal()
-        self.tdo = Signal()
 
         # # #
 
         self.specials += Instance("tap_top",
-              i_tms_pad_i  = self.tms,
-              i_tck_pad_i  = self.tck,
+              i_tms_pad_i  = tms,
+              i_tck_pad_i  = tck,
               i_trst_pad_i = 0,
-              i_tdi_pad_i  = self.tdi,
-              o_tdo_pad_o  = self.tdo,
+              i_tdi_pad_i  = tdi,
+              o_tdo_pad_o  = tdo,
           )
 
 
