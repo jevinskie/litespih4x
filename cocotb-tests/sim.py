@@ -21,6 +21,7 @@ from litex.soc.integration.builder import *
 
 from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 from litejtag_ext.mohor_tap import MohorJTAGTAP
+from litex.soc.cores.jtag import JTAGTAPFSM
 
 import cocotb
 from cocotb.triggers import Timer
@@ -109,7 +110,8 @@ class BenchSoC(SoCCore):
         jtag_rst = self.platform.request("jtag_rst")
         self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
                   self.crg.cd_sys.rst, jtag_pads)
-        self.comb += jtag_pads.shift.eq(1)
+        # self.comb += jtag_pads.shift.eq(1) # what was this for
+        self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
 
         self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, jtag_pads.trst)
 
@@ -274,8 +276,10 @@ async def reset_tap(dut):
     sigs.tdi <= 0
     sigs.tdo <= 1
     sigs.trst <= 1
+    sigs.rst <= 1
     await tmr(clkper_ns)
     sigs.trst <= 0
+    sigs.rst <= 0
     await tmr(clkper_ns)
 
 
