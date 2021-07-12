@@ -13,6 +13,7 @@ from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform
 from litex.build.sim.config import SimConfig
 from litex.build.sim.cocotb import start_sim_server, stop_sim_server
+from litex.build.sim.common import CocotbVCDDumperSpecial
 
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
@@ -27,7 +28,14 @@ _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAM
 import cocotb
 from cocotb.triggers import Timer
 
-sim_server = start_sim_server()
+from rich import inspect as rinspect
+
+srv = start_sim_server()
+
+ext: Final = cocotb.external
+
+async def tmr(ns: float) -> None:
+    await Timer(ns, units='ns')
 
 # IOs ----------------------------------------------------------------------------------------------
 
@@ -98,6 +106,8 @@ class BenchSoC(SoCCore):
                   self.crg.cd_sys.rst, jtag_pads)
         self.comb += jtag_pads.shift.eq(1)
 
+        self.specials.vcddumper = CocotbVCDDumperSpecial()
+
         if sim_debug:
             platform.add_debug(self, reset=1 if trace_reset_on else 0)
         else:
@@ -146,12 +156,35 @@ def main():
 
 @cocotb.test()
 async def read_idcode(dut):
-    dut._log.info(f"Running read_idcode... {sim_server}")
-    dut._log.info(f"sim_server.platform: {sim_server.root.platform}")
-    dut._log.info(f"get_io_signals: {sim_server.root.platform.constraint_manager.get_io_signals()}")
-    lx_tck = sim_server.root.soc.jtag_pads.tck
-    lx_tms = sim_server.root.soc.jtag_pads.tms
-    dut._log.info(f"lx_tckL {lx_tck} lx_tms: {lx_tms}")
+    dut._log.info(f"Running read_idcode... {srv}")
+    dut._log.info(f"sim_server.platform: {srv.root.platform}")
+    dut._log.info(f"get_io_signals: {srv.root.platform.constraint_manager.get_io_signals()}")
+    lx_tck = srv.root.soc.jtag_pads.tck
+    lx_tms = srv.root.soc.jtag_pads.tms
+    dut._log.info(f"lx_tck: {lx_tck} lx_tms: {lx_tms}")
+    dut._log.info(f"dir(tck) = {dir(lx_tck)}")
+    dut._log.info(f"name_override: {lx_tck.name_override} bt: {lx_tck.backtrace}")
+
+    clk = getattr(dut, srv.root.soc.crg.cd_sys.clk.name_override)
+    rst = getattr(dut, srv.root.soc.crg.cd_sys.rst.name_override)
+    tck = getattr(dut, lx_tck.name_override)
+    tms = getattr(dut, lx_tms.name_override)
+    dut._log.info(f"tck: {tck._path} {tck.value}")
+    dut._log.info(f"tms: {tms._path} {tms.value}")
+    dut._log.info(f"clk: {clk._path} {clk.value}")
+    dut._log.info(f"rst: {rst._path} {rst.value}")
+
+    rst.value = 1
+    await tmr(10)
+    rst.value = 0
+    await tmr(10)
+
+    for i in range(8):
+        clk.value = 1
+        await tmr(5)
+        clk.value = 0
+        await tmr(5)
+
 
     dut._log.info("Running read_idcode...done")
 
