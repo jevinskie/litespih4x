@@ -65,6 +65,7 @@ cocotb-coverage = "^1.1.0"
 pydigitalwavetools = {git = "https://github.com/Nic30/pyDigitalWaveTools"}
 importlib-resources = "^5.2.0"
 rpyc = "^5.0.1"
+pyftdi = "^0.53.2"
 
 
 [tool.poetry.dev-dependencies]

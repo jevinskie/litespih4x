@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) 2020 Florent Kermarrec <florent@enjoy-digital.fr>
+# Copyright (c) 2021 Jevin Sweval <jevinsweval@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
 import argparse
@@ -12,7 +13,7 @@ from migen import *
 from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform
 from litex.build.sim.config import SimConfig
-from litex.build.sim.cocotb import start_sim_server, stop_sim_server
+from litex.build.sim.cocotb import start_sim_server
 from litex.build.sim.common import CocotbVCDDumperSpecial
 
 from litex.soc.integration.soc_core import *
@@ -28,11 +29,16 @@ _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAM
 import cocotb
 from cocotb.triggers import Timer
 
+from pyftdi.jtag import *
+
 from rich import inspect as rinspect
 
-srv = start_sim_server()
-
+srv: Final = start_sim_server()
 ext: Final = cocotb.external
+
+Ftck_mhz: Final = 20
+clkper_ns: Final = 1_000 / Ftck_mhz
+IDCODE: Final = BitSequence('0010')
 
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
@@ -157,13 +163,8 @@ def main():
 @cocotb.test()
 async def read_idcode(dut):
     dut._log.info(f"Running read_idcode... {srv}")
-    dut._log.info(f"sim_server.platform: {srv.root.platform}")
-    dut._log.info(f"get_io_signals: {srv.root.platform.constraint_manager.get_io_signals()}")
     lx_tck = srv.root.soc.jtag_pads.tck
     lx_tms = srv.root.soc.jtag_pads.tms
-    dut._log.info(f"lx_tck: {lx_tck} lx_tms: {lx_tms}")
-    dut._log.info(f"dir(tck) = {dir(lx_tck)}")
-    dut._log.info(f"name_override: {lx_tck.name_override} bt: {lx_tck.backtrace}")
 
     clk = getattr(dut, srv.root.soc.crg.cd_sys.clk.name_override)
     rst = getattr(dut, srv.root.soc.crg.cd_sys.rst.name_override)
@@ -174,23 +175,20 @@ async def read_idcode(dut):
     dut._log.info(f"clk: {clk._path} {clk.value}")
     dut._log.info(f"rst: {rst._path} {rst.value}")
 
-    rst.value = 1
+    rst <= 1
     await tmr(10)
-    rst.value = 0
+    rst <= 0
     await tmr(10)
 
     for i in range(8):
-        clk.value = 1
+        clk <= 1
         await tmr(5)
-        clk.value = 0
+        clk <= 0
         await tmr(5)
 
 
     dut._log.info("Running read_idcode...done")
 
-
+10
 if __name__ == "__main__":
-    print(f'__name__ was indeed __main__ args: {sys.argv}')
     main()
-
-# stop_sim_server(sim_server)
