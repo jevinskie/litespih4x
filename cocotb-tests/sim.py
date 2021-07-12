@@ -24,9 +24,11 @@ from litejtag_ext.mohor_tap import MohorJTAGTAP
 
 import cocotb
 from cocotb.triggers import Timer
+from cocotb.handle import SimHandleBase
 
 from pyftdi.jtag import *
 
+import attr
 from rich import inspect as rinspect
 
 srv: Final = start_sim_server()
@@ -61,7 +63,7 @@ _io = [
     ),
     ("jtag_clk", 0, Pins(1)),
     ("jtag_rst", 0, Pins(1)),
-    ("jtag_hello", 0,
+    ("jtag", 0,
         Subsignal("tck", Pins(1)),
         Subsignal("tms", Pins(1)),
         Subsignal("tdi", Pins(1)),
@@ -101,7 +103,7 @@ class BenchSoC(SoCCore):
         # Ticker B
         # self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
         # JTAG Hello
-        self.jtag_pads = jtag_pads = self.platform.request("jtag_hello")
+        self.jtag_pads = jtag_pads = self.platform.request("jtag")
         jtag_clk = self.platform.request("jtag_clk")
         jtag_rst = self.platform.request("jtag_rst")
         self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
@@ -122,6 +124,8 @@ class BenchSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteJTAG Simulation")
+    parser.add_argument("--build", default=True,  action="store_true",     help="Build simulation")
+    parser.add_argument("--run",   default=False,  action="store_true",     help="Run simulation")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-fst",            action="store_true",     help="Enable FST tracing (default=VCD)")
     parser.add_argument("--trace-start",          default="0",             help="Time to start tracing (ps)")
@@ -155,35 +159,36 @@ def main():
         sim_end     = args.sim_end,
         module      = sys.modules[__name__],
         soc         = soc,
+        build       = args.build,
+        run         = args.run,
     )
 
+@attr.s(auto_attribs=True)
+class Sigs:
+    clk: SimHandleBase
+    rst: SimHandleBase
+    tck: SimHandleBase
+    tms: SimHandleBase
+    tdi: SimHandleBase
+    tdo: SimHandleBase
 
-# clk_sig = None
-# rst_sig = None
-# tck_sig = None
-# tms_sig = None
-# tdi_sig = None
-# tdo_sig = None
+sigs = None
 
-if cocotb.top:
-    setattr(cocotb.top, 'clk_sig', getattr(cocotb.top, srv.root.soc.crg.cd_sys.clk.name_override))
-    # setattr(cocotb.top, 'tck_sig', getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override))
-    cocotb.top.__setattr__('tck_sig', getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override))
-
-
-
-    cocotb.top.rst_sig = getattr(cocotb.top, srv.root.soc.crg.cd_sys.rst.name_override)
-    cocotb.top.tck_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override)
-    cocotb.top.tms_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tms.name_override)
-    cocotb.top.tdi_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tdi.name_override)
-    cocotb.top.tdo_sig = getattr(cocotb.top, srv.root.soc.jtag_pads.tdo.name_override)
+if cocotb.top is not None:
+    clk = getattr(cocotb.top, srv.root.soc.crg.cd_sys.clk.name_override)
+    rst = getattr(cocotb.top, srv.root.soc.crg.cd_sys.rst.name_override)
+    tck = getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override)
+    tms = getattr(cocotb.top, srv.root.soc.jtag_pads.tms.name_override)
+    tdi = getattr(cocotb.top, srv.root.soc.jtag_pads.tdi.name_override)
+    tdo = getattr(cocotb.top, srv.root.soc.jtag_pads.tdo.name_override)
+    sigs = Sigs(clk=clk, rst=rst,tck=tck, tms=tms, tdi=tdi, tdo=tdo)
 
 async def tick_tms(dut, tms: int) -> None:
     dut._log.info(f'tick_tms_internal {tms}')
-    dut.tms_sig <= tms
-    dut.tck_sig <= 0
+    sigs.tms <= tms
+    sigs.tck <= 0
     await tmr(clkper_ns / 2)
-    dut.tck_sig <= 1
+    sigs.tck <= 1
     await tmr(clkper_ns / 2)
 
 tick_tms_ext = cocotb.function(tick_tms)
@@ -193,11 +198,11 @@ async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
     dut._log.info(f'tick_tdi_bs_internal {tdi}')
     tdo = BitSequence()
     for di in tdi:
-        dut.tdi_sig <= di
-        dut.tck_sig <= 0
+        sigs.tdi <= di
+        sigs.tck <= 0
         await tmr(clkper_ns / 2)
-        tdo += BitSequence(int(dut.tdo_sig.value), length=1)
-        dut.tck_sig <= 1
+        tdo += BitSequence(int(sigs.tdo.value), length=1)
+        sigs.tck <= 1
         await tmr(clkper_ns / 2)
     return tdo
 
@@ -261,10 +266,10 @@ class SimJtagController(JtagController):
 
 
 async def reset_tap(dut):
-    dut.tck_sig <= 0
-    dut.tms_sig <= 0
-    dut.tdi_sig <= 0
-    dut.trst_sig <= 1
+    sigs.tck <= 0
+    sigs.tms <= 0
+    sigs.tdi <= 0
+    sigs.tdo <= 1
     await tmr(clkper_ns)
     # trst_sig.value = 0
     # await tmr(clkper_ns)
