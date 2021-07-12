@@ -10,8 +10,9 @@ from typing import Final
 from migen import *
 
 from litex.build.generic_platform import *
-from litex.build.sim import SimPlatform, IcarusPlatform
+from litex.build.sim import SimPlatform
 from litex.build.sim.config import SimConfig
+from litex.build.sim.cocotb import start_sim_server, stop_sim_server
 
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
@@ -26,10 +27,7 @@ _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAM
 import cocotb
 from cocotb.triggers import Timer
 
-_g_runner = None
-
-if cocotb.top:
-    _g_runner = rpyc.utils.factory.unix_connect(f'{os.environ["TOPLEVEL"]}.pipe')
+sim_server = start_sim_server()
 
 # IOs ----------------------------------------------------------------------------------------------
 
@@ -155,3 +153,5 @@ async def read_idcode(dut):
 if __name__ == "__main__":
     print(f'__name__ was indeed __main__ args: {sys.argv}')
     main()
+
+# stop_sim_server(sim_server)
