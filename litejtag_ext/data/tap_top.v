@@ -645,13 +645,4 @@ begin
 end
 
 
-// the "macro" to dump signals
-`ifdef COCOTB_SIM_DUMP_VCD_VERILOG
-initial begin
-  $dumpfile (`COCOTB_SIM_DUMP_VCD_VERILOG);
-  $dumpvars (0, `COCOTB_SIM_DUMP_VCD_VERILOG_TOPLEVEL);
-  #1;
-end
-`endif
-
 endmodule

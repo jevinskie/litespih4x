@@ -20,6 +20,7 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
 from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
+from litejtag_ext.mohor_tap import MohorJTAGTAP
 
 from litejtag_ext import data as data_mod
 from importlib_resources import files
@@ -101,9 +102,9 @@ class BenchSoC(SoCCore):
         self.submodules.crg = CRG(platform.request("sys_clk"))
 
         # Ticker A
-        self.submodules.ticker_a = TickerZeroToMax(self.platform.request("ticker_zero_to_max"), max_cnt=15)
+        # self.submodules.ticker_a = TickerZeroToMax(self.platform.request("ticker_zero_to_max"), max_cnt=15)
         # Ticker B
-        self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
+        # self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
         # JTAG Hello
         self.jtag_pads = jtag_pads = self.platform.request("jtag_hello")
         jtag_clk = self.platform.request("jtag_clk")
@@ -111,6 +112,8 @@ class BenchSoC(SoCCore):
         self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
                   self.crg.cd_sys.rst, jtag_pads)
         self.comb += jtag_pads.shift.eq(1)
+
+        self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
 
