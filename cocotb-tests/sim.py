@@ -164,13 +164,6 @@ def main():
         run         = args.run,
     )
 
-def res_sig(sig):
-    if sig.value.is_resolvable:
-        return sig.value.value
-    else:
-        print('unresolved, returning 0')
-        return 0
-
 @attr.s(auto_attribs=True)
 class Sigs:
     clk: SimHandleBase
@@ -211,7 +204,7 @@ async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
         sigs.tdi <= di
         sigs.tck <= 0
         await tmr(clkper_ns / 2)
-        tdo += BitSequence(res_sig(sigs.tdo), length=1)
+        tdo += BitSequence(sigs.tdo.value.value, length=1)
         sigs.tck <= 1
         await tmr(clkper_ns / 2)
     return tdo
