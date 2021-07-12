@@ -91,7 +91,7 @@ class BenchSoC(SoCCore):
         # Ticker B
         self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
         # JTAG Hello
-        jtag_pads = self.platform.request("jtag_hello")
+        self.jtag_pads = jtag_pads = self.platform.request("jtag_hello")
         jtag_clk = self.platform.request("jtag_clk")
         jtag_rst = self.platform.request("jtag_rst")
         self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
@@ -140,6 +140,7 @@ def main():
         trace_exit  = args.trace_exit,
         sim_end     = args.sim_end,
         module      = sys.modules[__name__],
+        soc         = soc,
     )
 
 
@@ -148,6 +149,10 @@ async def read_idcode(dut):
     dut._log.info(f"Running read_idcode... {sim_server}")
     dut._log.info(f"sim_server.platform: {sim_server.root.platform}")
     dut._log.info(f"get_io_signals: {sim_server.root.platform.constraint_manager.get_io_signals()}")
+    lx_tck = sim_server.root.soc.jtag_pads.tck
+    lx_tms = sim_server.root.soc.jtag_pads.tms
+    dut._log.info(f"lx_tckL {lx_tck} lx_tms: {lx_tms}")
+
     dut._log.info("Running read_idcode...done")
 
 
