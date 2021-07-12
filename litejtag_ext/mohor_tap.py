@@ -16,29 +16,30 @@ _MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAM
 
 
 class MohorJTAGTAPImpl(Module):
-    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal):
+    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
 
         # # #
 
         self.specials += Instance("tap_top",
               i_tms_pad_i  = tms,
               i_tck_pad_i  = tck,
-              i_trst_pad_i = 0,
+              i_trst_pad_i = trst,
               i_tdi_pad_i  = tdi,
               o_tdo_pad_o  = tdo,
           )
 
 
 class MohorJTAGTAP(Special):
-    def __init__(self, platform, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal):
+    def __init__(self, platform, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
         super().__init__()
         self.tms = tms
         self.tck = tck
         self.tdi = tdi
         self.tdo = tdo
+        self.trst = trst
 
-        platform.add_source(str(_MOHOR_TAP_VERILOG_PATH), 'veriliog)')
+        platform.add_source(str(_MOHOR_TAP_VERILOG_PATH), 'veriliog')
 
     @staticmethod
     def lower(dr):
-        return MohorJTAGTAPImpl(dr.tms, dr.tck, dr.tdi, dr.tdo)
+        return MohorJTAGTAPImpl(dr.tms, dr.tck, dr.tdi, dr.tdo, dr.trst)

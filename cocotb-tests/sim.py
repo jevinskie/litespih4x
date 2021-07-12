@@ -68,6 +68,7 @@ _io = [
         Subsignal("tms", Pins(1)),
         Subsignal("tdi", Pins(1)),
         Subsignal("tdo", Pins(1)),
+        Subsignal("trst", Pins(1)),
         Subsignal("reset", Pins(1)),
         Subsignal("drck", Pins(1)),
         Subsignal("shift", Pins(1)),
@@ -110,7 +111,7 @@ class BenchSoC(SoCCore):
                   self.crg.cd_sys.rst, jtag_pads)
         self.comb += jtag_pads.shift.eq(1)
 
-        self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo)
+        self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, jtag_pads.trst)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
 
@@ -163,6 +164,12 @@ def main():
         run         = args.run,
     )
 
+def res_sig(sig):
+    if sig.value.is_resolvable:
+        return sig.value.value
+    else:
+        return 1
+
 @attr.s(auto_attribs=True)
 class Sigs:
     clk: SimHandleBase
@@ -171,6 +178,7 @@ class Sigs:
     tms: SimHandleBase
     tdi: SimHandleBase
     tdo: SimHandleBase
+    trst: SimHandleBase
 
 sigs = None
 
@@ -181,7 +189,8 @@ if cocotb.top is not None:
     tms = getattr(cocotb.top, srv.root.soc.jtag_pads.tms.name_override)
     tdi = getattr(cocotb.top, srv.root.soc.jtag_pads.tdi.name_override)
     tdo = getattr(cocotb.top, srv.root.soc.jtag_pads.tdo.name_override)
-    sigs = Sigs(clk=clk, rst=rst,tck=tck, tms=tms, tdi=tdi, tdo=tdo)
+    trst = getattr(cocotb.top, srv.root.soc.jtag_pads.trst.name_override)
+    sigs = Sigs(clk=clk, rst=rst,tck=tck, tms=tms, tdi=tdi, tdo=tdo, trst=trst)
 
 async def tick_tms(dut, tms: int) -> None:
     dut._log.info(f'tick_tms_internal {tms}')
@@ -201,7 +210,7 @@ async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
         sigs.tdi <= di
         sigs.tck <= 0
         await tmr(clkper_ns / 2)
-        tdo += BitSequence(int(sigs.tdo.value), length=1)
+        tdo += BitSequence(res_sig(sigs.tdo), length=1)
         sigs.tck <= 1
         await tmr(clkper_ns / 2)
     return tdo
@@ -270,9 +279,10 @@ async def reset_tap(dut):
     sigs.tms <= 0
     sigs.tdi <= 0
     sigs.tdo <= 1
+    sigs.trst <= 1
     await tmr(clkper_ns)
-    # trst_sig.value = 0
-    # await tmr(clkper_ns)
+    sigs.trst <= 0
+    await tmr(clkper_ns)
 
 
 @cocotb.test()
