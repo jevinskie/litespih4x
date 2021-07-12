@@ -168,7 +168,8 @@ def res_sig(sig):
     if sig.value.is_resolvable:
         return sig.value.value
     else:
-        return 1
+        print('unresolved, returning 0')
+        return 0
 
 @attr.s(auto_attribs=True)
 class Sigs:

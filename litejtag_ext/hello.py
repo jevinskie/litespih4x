@@ -89,7 +89,7 @@ class JTAGHello(Module):
         self.comb += [
             # tdo.eq(sr[0]),
             # tdo.eq(buf),
-            tdo.eq(bufi),
+            # tdo.eq(bufi), # comment out to allow mohor tap to drive tdo
         ]
         self.sync.jtag += [
             # buf.eq(sr[1]),
