@@ -147,6 +147,7 @@ def main():
 async def read_idcode(dut):
     dut._log.info(f"Running read_idcode... {sim_server}")
     dut._log.info(f"sim_server.platform: {sim_server.root.platform}")
+    dut._log.info(f"get_io_signals: {sim_server.root.platform.constraint_manager.get_io_signals()}")
     dut._log.info("Running read_idcode...done")
 
 
