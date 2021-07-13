@@ -21,10 +21,12 @@ from litex.soc.integration.builder import *
 
 from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 from litejtag_ext.mohor_tap import MohorJTAGTAP
+from litejtag_ext.tap import JTAGTAP
 from litex.soc.cores.jtag import JTAGTAPFSM
 
 import cocotb
 from cocotb.triggers import Timer
+from cocotb.clock import Clock
 from cocotb.handle import SimHandleBase
 
 from pyftdi.jtag import *
@@ -47,23 +49,23 @@ async def tmr(ns: float) -> None:
 _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
-    ("ticker_zero_to_max", 0,
-        Subsignal("tick", Pins(1)),
-        Subsignal("counter", Pins(32)),
-    ),
-    ("ticker_zero_to_max_from_freq", 0,
-        Subsignal("tick", Pins(1)),
-        Subsignal("counter", Pins(32)),
-    ),
-    ("beat_ticker", 0,
-        Subsignal("tick", Pins(1)),
-        Subsignal("tick_a", Pins(1)),
-        Subsignal("counter_a", Pins(32)),
-        Subsignal("tick_b", Pins(1)),
-        Subsignal("counter_b", Pins(32)),
-    ),
-    ("jtag_clk", 0, Pins(1)),
-    ("jtag_rst", 0, Pins(1)),
+    # ("ticker_zero_to_max", 0,
+    #     Subsignal("tick", Pins(1)),
+    #     Subsignal("counter", Pins(32)),
+    # ),
+    # ("ticker_zero_to_max_from_freq", 0,
+    #     Subsignal("tick", Pins(1)),
+    #     Subsignal("counter", Pins(32)),
+    # ),
+    # ("beat_ticker", 0,
+    #     Subsignal("tick", Pins(1)),
+    #     Subsignal("tick_a", Pins(1)),
+    #     Subsignal("counter_a", Pins(32)),
+    #     Subsignal("tick_b", Pins(1)),
+    #     Subsignal("counter_b", Pins(32)),
+    # ),
+    # ("jtag_clk", 0, Pins(1)),
+    # ("jtag_rst", 0, Pins(1)),
     ("jtag", 0,
         Subsignal("tck", Pins(1)),
         Subsignal("tms", Pins(1)),
@@ -106,12 +108,14 @@ class BenchSoC(SoCCore):
         # self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
         # JTAG Hello
         self.jtag_pads = jtag_pads = self.platform.request("jtag")
-        jtag_clk = self.platform.request("jtag_clk")
-        jtag_rst = self.platform.request("jtag_rst")
-        self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
-                  self.crg.cd_sys.rst, jtag_pads)
+        # jtag_clk = self.platform.request("jtag_clk")
+        # jtag_rst = self.platform.request("jtag_rst")
+        # self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
+        #           self.crg.cd_sys.rst, jtag_pads)
         # self.comb += jtag_pads.shift.eq(1) # what was this for
-        self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
+        # self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
+
+        self.submodules.jev_tap = JTAGTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, ResetSignal("sys"))
 
         self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, jtag_pads.trst)
 
@@ -188,8 +192,10 @@ if cocotb.top is not None:
     trst = getattr(cocotb.top, srv.root.soc.jtag_pads.trst.name_override)
     sigs = Sigs(clk=clk, rst=rst,tck=tck, tms=tms, tdi=tdi, tdo=tdo, trst=trst)
 
+    cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
+
 async def tick_tms(dut, tms: int) -> None:
-    dut._log.info(f'tick_tms_internal {tms}')
+    # dut._log.info(f'tick_tms_internal {tms}')
     sigs.tms <= tms
     sigs.tck <= 0
     await tmr(clkper_ns / 2)
@@ -200,7 +206,7 @@ tick_tms_ext = cocotb.function(tick_tms)
 
 
 async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
-    dut._log.info(f'tick_tdi_bs_internal {tdi}')
+    # dut._log.info(f'tick_tdi_bs_internal {tdi}')
     tdo = BitSequence()
     for di in tdi:
         sigs.tdi <= di
@@ -214,7 +220,7 @@ async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
 tick_tdi_ext = cocotb.function(tick_tdi)
 
 async def tick_tdo(dut, nbits: int) -> BitSequence:
-    dut._log.info(f'tick_tdo {nbits}')
+    # dut._log.info(f'tick_tdo {nbits}')
     tdi = BitSequence(0, length=nbits)
     tdo = await tick_tdi(dut, tdi)
     return tdo
@@ -275,6 +281,9 @@ async def reset_tap(dut):
     sigs.tms <= 0
     sigs.tdi <= 0
     sigs.tdo <= 1
+    sigs.trst <= 0
+    sigs.rst <= 0
+    await tmr(clkper_ns)
     sigs.trst <= 1
     sigs.rst <= 1
     await tmr(clkper_ns)
