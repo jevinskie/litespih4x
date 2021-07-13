@@ -20,7 +20,7 @@ class JTAGTAP(Module):
         self.comb += ClockSignal("jtag_inv").eq(~tck)
         # self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys"))
 
-        self.submodules.state_fsm = JTAGTAPFSM(tms, tck, sys_rst)
+        self.submodules.state_fsm = JTAGTAPFSM(tms, tck)
 
         # self.submodules.tap_fsm = FSM(clock_domain=cd_jtag.name)
 
