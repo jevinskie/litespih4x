@@ -284,7 +284,7 @@ async def reset_tap(dut):
     sigs.trst <= 0
     sigs.rst <= 0
     await tmr(clkper_ns)
-    sigs.trst <= 1
+    # sigs.trst <= 1
     sigs.rst <= 1
     await tmr(clkper_ns)
     sigs.trst <= 0
