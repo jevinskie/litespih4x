@@ -180,6 +180,7 @@ class Sigs:
     tdo: SimHandleBase
     trst: SimHandleBase
 
+
 sigs = None
 
 if cocotb.top is not None:
@@ -192,6 +193,8 @@ if cocotb.top is not None:
     trst = getattr(cocotb.top, srv.root.soc.jtag_pads.trst.name_override)
     sigs = Sigs(clk=clk, rst=rst,tck=tck, tms=tms, tdi=tdi, tdo=tdo, trst=trst)
 
+
+def clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
 
 async def tick_tms(dut, tms: int) -> None:
@@ -276,7 +279,9 @@ class SimJtagController(JtagController):
         raise NotImplementedError
 
 
+@cocotb.test()
 async def reset_tap(dut):
+    clk()
     sigs.tck <= 0
     sigs.tms <= 0
     sigs.tdi <= 0
@@ -284,7 +289,7 @@ async def reset_tap(dut):
     sigs.trst <= 0
     sigs.rst <= 0
     await tmr(clkper_ns)
-    # sigs.trst <= 1
+    sigs.trst <= 1
     sigs.rst <= 1
     await tmr(clkper_ns)
     sigs.trst <= 0
@@ -292,12 +297,11 @@ async def reset_tap(dut):
     await tmr(clkper_ns)
 
 
+
 @cocotb.test()
 async def read_idcode(dut):
-    # dut = cocotb.top
+    clk()
     dut._log.info("Running read_idcode...")
-
-    await reset_tap(dut)
 
     jte = JtagEngine()
     jte._ctrl = SimJtagController(dut)
@@ -318,10 +322,8 @@ async def read_idcode(dut):
 
 @cocotb.test()
 async def reset_to_e1d(dut):
-    # dut = cocotb.top
+    # clk()
     dut._log.info("Running reset_to_e1d...")
-
-    await reset_tap(dut)
 
     jte = JtagEngine()
     jte._ctrl = SimJtagController(dut)
