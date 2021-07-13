@@ -11,16 +11,30 @@ from migen.genlib.cdc import AsyncResetSynchronizer
 
 from bitstring import Bits
 
-class TestDataReg(Module):
-    def __init__(self, ir_opcode: Bits, dr_len: int, tap_fsm: JTAGTAPFSM):
+class IDCODE(Module):
+    def __init__(self, tck: Signal, idcode_opcode: Bits, idcode: Bits, tap_fsm: JTAGTAPFSM):
         self.tdoz = tdoz = Signal()
+        self.dr = dr = Signal(32, reset=0x149511c3)
+        self.dr_reg = dr_reg = Signal()
+        self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
+        self.comb += ClockSignal("jtag_inv").eq(~tck)
+
+        self.comb += [
+            If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
+                dr.eq(dr.reset),
+            ),
+        ]
 
         self.sync += [
-            If(tap_fsm.CAPTURE_IR,
-                tdoz.eq(1),
-            ).Else(
-                tdoz.eq(0),
+            If(tap_fsm.SHIFT_DR,
+                dr.eq(Cat(dr[1:], 0)),
             )
+        ]
+
+        self.sync.jtag_inv += [
+            If(tap_fsm.SHIFT_DR,
+               tdoz.eq(dr[0]),
+           ),
         ]
 
 class JTAGTAP(Module):
@@ -34,7 +48,7 @@ class JTAGTAP(Module):
         # self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys"))
 
         self.submodules.state_fsm = JTAGTAPFSM(tms, tck)
-        self.submodules.idcode = ClockDomainsRenamer("jtag")(TestDataReg(Bits('0b0010'), 32, self.state_fsm))
+        self.submodules.idcode = ClockDomainsRenamer("jtag")(IDCODE(tck, Bits('0b0010'), Bits('0x149511c3'), self.state_fsm))
 
         # self.submodules.tap_fsm = FSM(clock_domain=cd_jtag.name)
 
