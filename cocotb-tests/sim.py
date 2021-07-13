@@ -9,6 +9,7 @@ import sys
 from typing import Final
 
 from migen import *
+from migen.fhdl import verilog
 
 from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform
@@ -116,6 +117,9 @@ class BenchSoC(SoCCore):
         # self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
 
         self.submodules.jev_tap = JTAGTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, ResetSignal("sys"))
+        # with open('jev_tap.v', 'w') as f:
+            # f.write(str(verilog.convert(self.jev_tap)))
+
 
         self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, jtag_pads.trst)
 
