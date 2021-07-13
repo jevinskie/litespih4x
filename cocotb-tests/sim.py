@@ -82,15 +82,15 @@ _io = [
 # Platform -----------------------------------------------------------------------------------------
 
 class Platform(SimPlatform):
-    def __init__(self):
-        super().__init__("SIM", _io, toolchain="cocotb")
+    def __init__(self, toolchain="cocotb"):
+        super().__init__("SIM", _io, toolchain=toolchain)
 
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class BenchSoC(SoCCore):
-    def __init__(self, sim_debug=False, trace_reset_on=False, **kwargs):
-        platform     = Platform()
+    def __init__(self, toolchain="cocotb", sim_debug=False, trace_reset_on=False, **kwargs):
+        platform     = Platform(toolchain=toolchain)
         sys_clk_freq = int(1e6)
 
         # SoCMini ----------------------------------------------------------------------------------
@@ -132,7 +132,8 @@ class BenchSoC(SoCCore):
 def main():
     parser = argparse.ArgumentParser(description="LiteJTAG Simulation")
     parser.add_argument("--build", default=True,  action="store_true",     help="Build simulation")
-    parser.add_argument("--run",   default=False,  action="store_true",     help="Run simulation")
+    parser.add_argument("--run",   default=False, action="store_true",     help="Run simulation")
+    parser.add_argument("--toolchain",            default="cocotb",        help="Simulation toolchain")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-fst",            action="store_true",     help="Enable FST tracing (default=VCD)")
     parser.add_argument("--trace-start",          default="0",             help="Time to start tracing (ps)")
@@ -152,9 +153,9 @@ def main():
 
     sim_config = SimConfig()
     sim_config.add_clocker("sys_clk", freq_hz=1e6)
-    sim_config.add_clocker("jtag_clk", freq_hz=1e6//16)
+    # sim_config.add_clocker("jtag_tck", freq_hz=1e6//16)
 
-    soc     = BenchSoC(sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
+    soc     = BenchSoC(toolchain=args.toolchain, sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
     builder = Builder(soc, csr_csv="csr.csv", compile_software=False)
     builder.build(
         sim_config  = sim_config,
