@@ -9,6 +9,11 @@ from rich import print
 from migen import *
 from migen.genlib.cdc import AsyncResetSynchronizer
 
+from bitstring import Bits
+
+class TestDataReg(Module):
+    def __init__(self, ir_opcode: Bits, dr_len: int, tap_fsm: JTAGTAPFSM):
+
 
 class JTAGTAP(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, sys_rst: Signal):
@@ -21,6 +26,7 @@ class JTAGTAP(Module):
         # self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys"))
 
         self.submodules.state_fsm = JTAGTAPFSM(tms, tck)
+        self.submodules.idcode = TestDataReg(Bits('0010'), 32, self.state_fsm)
 
         # self.submodules.tap_fsm = FSM(clock_domain=cd_jtag.name)
 
