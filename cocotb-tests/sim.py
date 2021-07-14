@@ -40,6 +40,7 @@ ext: Final = cocotb.external
 
 Ftck_mhz: Final = 20
 clkper_ns: Final = 1_000 / Ftck_mhz
+# IDCODE: Final = BitSequence('0000000110')
 IDCODE: Final = BitSequence('0010')
 
 async def tmr(ns: float) -> None:
