@@ -2,6 +2,22 @@
 # Copyright (c) 2021 Jevin Sweval <jevinsweval@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
+# portions from https://github.com/ChrisPVille/jtaglet
+#
+# Copyright 2018 Christopher Parish
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from litex.soc.cores.jtag import JTAGTAPFSM
 
 from rich import print
@@ -9,15 +25,19 @@ from rich import print
 from migen import *
 from migen.genlib.cdc import AsyncResetSynchronizer
 
+from typing import Final
 from bitstring import Bits
 
-class IDCODE(Module):
-    def __init__(self, tck: Signal, idcode_opcode: Bits, idcode: Bits, tap_fsm: JTAGTAPFSM):
-        self.tdoz = tdoz = Signal()
-        self.dr = dr = Signal(32, reset=0x149511c3)
+OP_IDCODE: Final = Constant(0b0010, 4)
+OP_BYPASS: Final = Constant(0b1111, 4)
+IDCODE: Final = Constant(0x149511c3, 32)
+
+class BYPASSReg(Module):
+    def __init__(self, tck: Signal, tdi: Signal, tdo: Signal, tap_fsm: JTAGTAPFSM):
+        self.dr = dr = Signal(1, reset=0)
         self.dr_reg = dr_reg = Signal()
-        self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
-        self.comb += ClockSignal("jtag_inv").eq(~tck)
+        # self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
+        # self.comb += ClockSignal("jtag_inv").eq(~tck)
 
         self.comb += [
             If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
@@ -25,7 +45,33 @@ class IDCODE(Module):
             ),
         ]
 
-        self.sync += [
+        self.sync.jtag += [
+            If(tap_fsm.SHIFT_DR,
+                dr.eq(tdi),
+            )
+        ]
+
+        self.sync.jtag_inv += [
+            If(tap_fsm.SHIFT_DR,
+               tdo.eq(dr),
+           ),
+        ]
+
+
+class IDCODEReg(Module):
+    def __init__(self, tck: Signal, tdi: Signal, tdo: Signal, idcode: Constant, tap_fsm: JTAGTAPFSM):
+        self.dr = dr = Signal(32, reset=idcode.value)
+        self.dr_reg = dr_reg = Signal()
+        # self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
+        # self.comb += ClockSignal("jtag_inv").eq(~tck)
+
+        self.comb += [
+            If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
+                dr.eq(dr.reset),
+            ),
+        ]
+
+        self.sync.jtag += [
             If(tap_fsm.SHIFT_DR,
                 dr.eq(Cat(dr[1:], 0)),
             )
@@ -33,7 +79,7 @@ class IDCODE(Module):
 
         self.sync.jtag_inv += [
             If(tap_fsm.SHIFT_DR,
-               tdoz.eq(dr[0]),
+               tdo.eq(dr[0]),
            ),
         ]
 
@@ -47,8 +93,48 @@ class JTAGTAP(Module):
         self.comb += ClockSignal("jtag_inv").eq(~tck)
         # self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys"))
 
-        self.submodules.state_fsm = JTAGTAPFSM(tms, tck)
-        self.submodules.idcode = ClockDomainsRenamer("jtag")(IDCODE(tck, Bits('0b0010'), Bits('0x149511c3'), self.state_fsm))
+        self.submodules.state_fsm = fsm = JTAGTAPFSM(tms, tck)
+
+        self.idcode_tdo = idcode_tdo = Signal()
+        self.submodules.idcode = ClockDomainsRenamer("jtag")(
+            IDCODEReg(tck, tdi, idcode_tdo, idcode=IDCODE, tap_fsm=self.state_fsm)
+        )
+
+        self.bypass_tdo = bypass_tdo = Signal()
+        self.submodules.bypass = ClockDomainsRenamer("jtag")(
+            BYPASSReg(tck, tdi, bypass_tdo, tap_fsm=self.state_fsm)
+        )
+
+        self.ir = ir = Signal(4, reset=OP_IDCODE)
+        self.ir_tdo = ir_tdo = Signal()
+        self.comb += ir_tdo.eq(ir[0])
+
+        self.sync.jtag += [
+            If(fsm.TEST_LOGIC_RESET,
+                ir.eq(ir.reset)
+            ).Elif(fsm.CAPTURE_IR,
+                ir.eq(1)
+            ).Elif(fsm.SHIFT_IR,
+                ir.eq(Cat(ir[1:], tdi))
+            )
+        ]
+
+        self.tdo_pre = tdo_pre = Signal()
+        self.sync.jtag += [
+            If(fsm.SHIFT_DR,
+                Case(ir, {
+                    OP_IDCODE: tdo_pre.eq(idcode_tdo),
+                    OP_BYPASS: tdo_pre.eq(bypass_tdo),
+                    'default': tdo_pre.eq(bypass_tdo),
+                })
+            ).Elif(fsm.SHIFT_IR,
+                tdo_pre.eq(ir_tdo),
+            )
+        ]
+
+        self.sync.jtag_inv += [
+            tdo.eq(tdo_pre),
+        ]
 
         # self.submodules.tap_fsm = FSM(clock_domain=cd_jtag.name)
 
