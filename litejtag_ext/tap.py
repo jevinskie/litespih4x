@@ -42,6 +42,8 @@ class BYPASSReg(Module):
         self.comb += [
             If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
                 dr.eq(dr.reset),
+            ).Elif(tap_fsm.SHIFT_DR,
+                tdo.eq(dr),
             ),
         ]
 
@@ -49,12 +51,6 @@ class BYPASSReg(Module):
             If(tap_fsm.SHIFT_DR,
                 dr.eq(tdi),
             )
-        ]
-
-        self.sync.jtag_inv += [
-            If(tap_fsm.SHIFT_DR,
-               tdo.eq(dr),
-           ),
         ]
 
 
@@ -68,6 +64,8 @@ class IDCODEReg(Module):
         self.comb += [
             If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
                 dr.eq(dr.reset),
+            ).Elif(tap_fsm.SHIFT_DR,
+                tdo.eq(dr),
             ),
         ]
 
@@ -75,12 +73,6 @@ class IDCODEReg(Module):
             If(tap_fsm.SHIFT_DR,
                 dr.eq(Cat(dr[1:], 0)),
             )
-        ]
-
-        self.sync.jtag_inv += [
-            If(tap_fsm.SHIFT_DR,
-               tdo.eq(dr[0]),
-           ),
         ]
 
 class JTAGTAP(Module):
@@ -120,7 +112,7 @@ class JTAGTAP(Module):
         ]
 
         self.tdo_pre = tdo_pre = Signal()
-        self.sync.jtag += [
+        self.comb += [
             If(fsm.SHIFT_DR,
                 Case(ir, {
                     OP_IDCODE: tdo_pre.eq(idcode_tdo),
