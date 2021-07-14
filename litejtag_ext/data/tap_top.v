@@ -101,11 +101,23 @@
 // `include "tap_defines.v"
 
 // Define IDCODE Value
-`define IDCODE_VALUE  32'h149511c3
+// `define IDCODE_VALUE  32'h149511c3
+`define IDCODE_VALUE 32'h031050DD
 // 0001             version
 // 0100100101010001 part number (IQ)
 // 00011100001      manufacturer id (flextronics)
 // 1                required by standard
+
+// // Length of the Instruction register
+// `define IR_LENGTH 5
+//
+// // Supported Instructions
+// `define EXTEST          4'b00000
+// `define SAMPLE_PRELOAD  4'b00001
+// `define IDCODE          4'b00010
+// `define DEBUG           4'b01000
+// `define MBIST           4'b01001
+// `define BYPASS          4'b11111
 
 // Length of the Instruction register
 `define IR_LENGTH 4
@@ -117,6 +129,7 @@
 `define DEBUG           4'b1000
 `define MBIST           4'b1001
 `define BYPASS          4'b1111
+
 
 // Top module
 module tap_top(

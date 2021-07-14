@@ -40,8 +40,10 @@ ext: Final = cocotb.external
 
 Ftck_mhz: Final = 20
 clkper_ns: Final = 1_000 / Ftck_mhz
+# IDCODE: Final = BitSequence('0000000110', msb=True, length=10)
 # IDCODE: Final = BitSequence('0000000110')
-IDCODE: Final = BitSequence('0010')
+# IDCODE: Final = BitSequence('0010')
+IDCODE: Final = BitSequence('00010', msb=False)
 
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
@@ -91,7 +93,7 @@ class Platform(SimPlatform):
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class BenchSoC(SoCCore):
-    def __init__(self, toolchain="cocotb", sim_debug=False, trace_reset_on=False, **kwargs):
+    def __init__(self, toolchain="cocotb", dump=False, sim_debug=False, trace_reset_on=False, **kwargs):
         platform     = Platform(toolchain=toolchain)
         sys_clk_freq = int(1e6)
 
@@ -118,10 +120,13 @@ class BenchSoC(SoCCore):
         # self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
 
         self.submodules.jev_tap = JTAGTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, ResetSignal("sys"))
-        # with open('jev_tap.v', 'w') as f:
-        #     f.write(str(verilog.convert(self.jev_tap)))
+        if dump:
+            with open('jev_tap.v', 'w') as f:
+                f.write(str(verilog.convert(self.jev_tap)))
+            sys.exit(0)
 
-        # self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, jtag_pads.trst)
+        self.mohor_tdo = mohor_tdo = Signal()
+        self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, mohor_tdo, jtag_pads.trst)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
 
@@ -137,6 +142,7 @@ def main():
     parser = argparse.ArgumentParser(description="LiteJTAG Simulation")
     parser.add_argument("--build", default=True,  action="store_true",     help="Build simulation")
     parser.add_argument("--run",   default=False, action="store_true",     help="Run simulation")
+    parser.add_argument("--dump",  default=False, action="store_true",     help="Dump module")
     parser.add_argument("--toolchain",            default="cocotb",        help="Simulation toolchain")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-fst",            action="store_true",     help="Enable FST tracing (default=VCD)")
@@ -159,7 +165,7 @@ def main():
     sim_config.add_clocker("sys_clk", freq_hz=1e6)
     # sim_config.add_clocker("jtag_tck", freq_hz=1e6//16)
 
-    soc     = BenchSoC(toolchain=args.toolchain, sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
+    soc     = BenchSoC(toolchain=args.toolchain, dump=args.dump, sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
     builder = Builder(soc, csr_csv="csr.csv", compile_software=False)
     builder.build(
         sim_config  = sim_config,

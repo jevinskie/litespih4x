@@ -28,16 +28,19 @@ from migen.genlib.cdc import AsyncResetSynchronizer
 from typing import Final
 from bitstring import Bits
 
-# OP_IDCODE: Final = Constant(6, 10)
+# OP_IDCODE: Final = Constant(0b00_0000_0110, 10)
 OP_IDCODE: Final = Constant(0b0010, 4)
-OP_USER0: Final = Constant(0xc, 10)
-OP_USER1: Final = Constant(0xe, 10)
-OP_BYPASS: Final = Constant(0b1111111111, 10)
-IDCODE: Final = Constant(0x031050DD, 32)
+# OP_IDCODE: Final = Constant(0b0_0010, 5)
+# OP_USER0: Final = Constant(0xc, 10)
+# OP_USER1: Final = Constant(0xe, 10)
+# OP_BYPASS: Final = Constant(0b11_1111_1111, 10)
+# OP_BYPASS: Final = Constant(0b1_1111, 5)
+OP_BYPASS: Final = Constant(0b1111, 4)
+IDCODE: Final = Constant(0x0310_50DD, 32)
 
 class BYPASSReg(Module):
     def __init__(self, tdi: Signal, tdo: Signal, tap_fsm: JTAGTAPFSM):
-        self.dr = dr = Signal(1, reset=0)
+        self.dr = dr = Signal(1, reset=1)
 
         self.comb += [
             If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
@@ -68,7 +71,7 @@ class IDCODEReg(Module):
 
         self.sync.jtag += [
             If(tap_fsm.SHIFT_DR,
-                dr.eq(Cat(dr[1:], 0)),
+                dr.eq(Cat(dr[1:], tdi)),
             )
         ]
 
@@ -94,7 +97,7 @@ class JTAGTAP(Module):
             BYPASSReg(tdi, bypass_tdo, tap_fsm=self.state_fsm)
         )
 
-        self.ir = ir = Signal(4, reset=OP_IDCODE)
+        self.ir = ir = Signal(OP_IDCODE.nbits, reset=OP_IDCODE)
         self.ir_tdo = ir_tdo = Signal()
         self.comb += ir_tdo.eq(ir[0])
 
