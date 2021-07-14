@@ -29,13 +29,13 @@ from typing import Final
 from bitstring import Bits
 
 # OP_IDCODE: Final = Constant(0b00_0000_0110, 10)
-OP_IDCODE: Final = Constant(0b0010, 4)
-# OP_IDCODE: Final = Constant(0b0_0010, 5)
+# OP_IDCODE: Final = Constant(0b0010, 4)
+OP_IDCODE: Final = Constant(0b0_0010, 5)
 # OP_USER0: Final = Constant(0xc, 10)
 # OP_USER1: Final = Constant(0xe, 10)
 # OP_BYPASS: Final = Constant(0b11_1111_1111, 10)
-# OP_BYPASS: Final = Constant(0b1_1111, 5)
-OP_BYPASS: Final = Constant(0b1111, 4)
+OP_BYPASS: Final = Constant(0b1_1111, 5)
+# OP_BYPASS: Final = Constant(0b1111, 4)
 IDCODE: Final = Constant(0x0310_50DD, 32)
 
 class BYPASSReg(Module):
@@ -97,7 +97,7 @@ class JTAGTAP(Module):
             BYPASSReg(tdi, bypass_tdo, tap_fsm=self.state_fsm)
         )
 
-        self.ir = ir = Signal(OP_IDCODE.nbits, reset=OP_IDCODE)
+        self.ir = ir = Signal(OP_IDCODE.nbits, reset=0)
         self.ir_tdo = ir_tdo = Signal()
         self.comb += ir_tdo.eq(ir[0])
 
@@ -105,7 +105,7 @@ class JTAGTAP(Module):
             If(fsm.TEST_LOGIC_RESET,
                 ir.eq(ir.reset)
             ).Elif(fsm.CAPTURE_IR,
-                ir.eq(1)
+                ir.eq(0b101)
             ).Elif(fsm.SHIFT_IR,
                 ir.eq(Cat(ir[1:], tdi))
             )

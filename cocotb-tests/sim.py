@@ -43,7 +43,7 @@ clkper_ns: Final = 1_000 / Ftck_mhz
 # IDCODE: Final = BitSequence('0000000110', msb=True, length=10)
 # IDCODE: Final = BitSequence('0000000110')
 # IDCODE: Final = BitSequence('0010')
-IDCODE: Final = BitSequence('00010', msb=False)
+IDCODE: Final = BitSequence('00010', msb=True)
 
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
@@ -210,24 +210,27 @@ def clk():
 
 async def tick_tms(dut, tms: int) -> None:
     # dut._log.info(f'tick_tms_internal {tms}')
+    assert sigs.tck.value == 0
     sigs.tms <= tms
-    sigs.tck <= 0
-    await tmr(clkper_ns / 2)
     sigs.tck <= 1
+    await tmr(clkper_ns / 2)
+    sigs.tck <= 0
     await tmr(clkper_ns / 2)
 
 tick_tms_ext = cocotb.function(tick_tms)
 
 
 async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
-    # dut._log.info(f'tick_tdi_bs_internal {tdi}')
+    dut._log.info(f'tick_tdi_bs_internal {tdi} {int(tdi)}')
+    assert sigs.tck.value == 0
     tdo = BitSequence()
     for di in tdi:
+        dut._log.info(f'tick_tdi_bs_internal bit {di}')
         sigs.tdi <= di
-        sigs.tck <= 0
+        sigs.tck <= 1
         await tmr(clkper_ns / 2)
         tdo += BitSequence(sigs.tdo.value.value, length=1)
-        sigs.tck <= 1
+        sigs.tck <= 0
         await tmr(clkper_ns / 2)
     return tdo
 
