@@ -112,12 +112,12 @@
 `define IR_LENGTH 5
 
 // Supported Instructions
-`define EXTEST          4'b00000
-`define SAMPLE_PRELOAD  4'b00001
-`define IDCODE          4'b00010
-`define DEBUG           4'b01000
-`define MBIST           4'b01001
-`define BYPASS          4'b11111
+`define EXTEST          5'b00000
+`define SAMPLE_PRELOAD  5'b00001
+`define IDCODE          5'b00010
+`define DEBUG           5'b01000
+`define MBIST           5'b01001
+`define BYPASS          5'b11111
 
 // // Length of the Instruction register
 // `define IR_LENGTH 4
