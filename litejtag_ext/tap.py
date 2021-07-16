@@ -106,7 +106,7 @@ class JTAGTAP(Module):
                 ir.eq(ir.reset)
             ).Elif(fsm.CAPTURE_IR,
                 ir.eq(0b101)
-            ).Elif(fsm.SHIFT_IR,
+            ).Elif(fsm.SHIFT_IR_ns,
                 ir.eq(Cat(ir[1:], tdi))
             )
         ]
