@@ -66,6 +66,7 @@ pydigitalwavetools = {git = "https://github.com/Nic30/pyDigitalWaveTools"}
 importlib-resources = "^5.2.0"
 rpyc = "^5.0.1"
 pyftdi = "^0.53.2"
+toolz = "^0.11.1"
 
 
 [tool.poetry.dev-dependencies]
@@ -78,6 +79,10 @@ pytest-pycharm = "^0.7.0"
 pytest-randomly = "^3.8.0"
 pytest-cov = "^2.11.1"
 mypy = "^0.812"
+scalene = "^1.3.12"
+pprofile = "^2.0.5"
+py-spy = "^0.3.7"
+pyinstrument = "^3.4.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

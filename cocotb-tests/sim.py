@@ -26,9 +26,9 @@ from litejtag_ext.tap import JTAGTAP
 from litex.soc.cores.jtag import JTAGTAPFSM
 
 import cocotb
-from cocotb.triggers import Timer
+from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
 from cocotb.clock import Clock
-from cocotb.handle import SimHandleBase
+from cocotb.handle import SimHandleBase, ModifiableObject
 
 from pyftdi.jtag import *
 
@@ -40,6 +40,8 @@ ext: Final = cocotb.external
 
 Ftck_mhz: Final = 20
 clkper_ns: Final = 1_000 / Ftck_mhz
+tclk: Final = Timer(clkper_ns, units='ns')
+tclkh: Final = Timer(clkper_ns/2, units='ns')
 # IDCODE: Final = BitSequence('0000000110', msb=True, length=10)
 # IDCODE: Final = BitSequence('0000000110')
 # IDCODE: Final = BitSequence('0010')
@@ -183,13 +185,13 @@ def main():
 
 @attr.s(auto_attribs=True)
 class Sigs:
-    clk: SimHandleBase
-    rst: SimHandleBase
-    tck: SimHandleBase
-    tms: SimHandleBase
-    tdi: SimHandleBase
-    tdo: SimHandleBase
-    trst: SimHandleBase
+    clk: ModifiableObject
+    rst: ModifiableObject
+    tck: ModifiableObject
+    tms: ModifiableObject
+    tdi: ModifiableObject
+    tdo: ModifiableObject
+    trst: ModifiableObject
 
 
 sigs = None
@@ -202,36 +204,38 @@ if cocotb.top is not None:
     tdi = getattr(cocotb.top, srv.root.soc.jtag_pads.tdi.name_override)
     tdo = getattr(cocotb.top, srv.root.soc.jtag_pads.tdo.name_override)
     trst = getattr(cocotb.top, srv.root.soc.jtag_pads.trst.name_override)
-    sigs = Sigs(clk=clk, rst=rst,tck=tck, tms=tms, tdi=tdi, tdo=tdo, trst=trst)
+    sigs = Sigs(clk=clk, rst=rst, tck=tck, tms=tms, tdi=tdi, tdo=tdo, trst=trst)
 
-
-def clk():
+def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
 
 async def tick_tms(dut, tms: int) -> None:
-    # dut._log.info(f'tick_tms_internal {tms}')
-    # assert sigs.tck.value == 0
+    dut._log.info(f'tick_tms_internal tms: {tms} tck: {sigs.tck.value}')
     sigs.tms <= tms
-    await tmr(clkper_ns / 2)
+    await ReadOnly()
+    assert sigs.tck.value == 0
+    await tclkh
     sigs.tck <= 1
-    await tmr(clkper_ns / 2)
+    await tclkh
     sigs.tck <= 0
 
 tick_tms_ext = cocotb.function(tick_tms)
 
 
 async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
-    dut._log.info(f'tick_tdi_bs_internal {tdi} {int(tdi)}')
-    # assert sigs.tck.value == 0
+    dut._log.info(f'tick_tdi_bs_internal {tdi} {int(tdi)} tck: {sigs.tck.value}')
     tdo = BitSequence()
     for di in tdi:
         dut._log.info(f'tick_tdi_bs_internal bit {di}')
         sigs.tdi <= di
-        await tmr(clkper_ns / 2)
+        await ReadOnly()
+        assert sigs.tck.value == 0
+        await tclkh
         sigs.tck <= 1
         tdo += BitSequence(sigs.tdo.value.value, length=1)
-        await tmr(clkper_ns / 2)
+        await tclkh
         sigs.tck <= 0
+    await NextTimeStep()
     return tdo
 
 tick_tdi_ext = cocotb.function(tick_tdi)
@@ -295,57 +299,68 @@ class SimJtagController(JtagController):
 
 @cocotb.test()
 async def reset_tap(dut):
-    clk()
+    fork_clk()
     sigs.tck <= 0
     sigs.tms <= 0
     sigs.tdi <= 0
     sigs.tdo <= 1
     sigs.trst <= 0
     sigs.rst <= 0
-    await tmr(clkper_ns)
+    await tclk
     sigs.trst <= 1
     sigs.rst <= 1
-    await tmr(clkper_ns)
+    await tclk
     sigs.trst <= 0
     sigs.rst <= 0
-    await tmr(clkper_ns)
+    await tclk
+    print(f'at end of reset tck: {sigs.tck.value}')
 
 
 
 @cocotb.test()
 async def read_idcode(dut):
-    clk()
+    fork_clk()
     dut._log.info("Running read_idcode...")
     await tmr(2*clkper_ns)
 
     jte = JtagEngine()
     jte._ctrl = SimJtagController(dut)
 
-    await ext(jte.change_state)('shift_ir')
+    # await ext(jte.change_state)('capture_ir')
+    # assert dut.CAPTURE_IR.value == 1
+    # dut._log.info('in capture-ir')
 
-    await tmr(2*clkper_ns)
+    # await tmr(2*clkper_ns)
 
 
     dut._log.info('shifting idcode instruction out')
     await ext(jte.write_ir)(IDCODE)
-    # assert dut.update_ir.value == 1
     await tmr(clkper_ns)
 
     await tmr(2*clkper_ns)
+
+    await tmr(2*clkper_ns)
+
+    dut._log.info('changing state after write_ir')
+    await ext(jte.change_state)('test_logic_reset')
+    assert dut.TEST_LOGIC_RESET.value == 1
+    await tmr(2 * clkper_ns)
 
     read_idcode = await ext(jte.read_dr)(32)
     # assert dut.update_dr.value == 1
     await tmr(clkper_ns)
     dut._log.info(f'read_idcode: {hex(int(read_idcode))} {read_idcode}')
 
-    await tmr(2*clkper_ns)
+
+
+    await tmr(4*clkper_ns)
     dut._log.info("Running read_idcode...done")
 
 
 
 @cocotb.test()
 async def reset_to_e1d(dut):
-    # clk()
+    fork_clk()
     dut._log.info("Running reset_to_e1d...")
     await tmr(2*clkper_ns)
 

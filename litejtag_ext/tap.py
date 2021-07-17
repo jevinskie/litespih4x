@@ -36,7 +36,7 @@ OP_IDCODE: Final = Constant(0b0_0010, 5)
 # OP_BYPASS: Final = Constant(0b11_1111_1111, 10)
 OP_BYPASS: Final = Constant(0b1_1111, 5)
 # OP_BYPASS: Final = Constant(0b1111, 4)
-IDCODE: Final = Constant(0x0310_50DD, 32)
+IDCODE: Final = Constant(0x8310_50DD, 32)
 
 class BYPASSReg(Module):
     def __init__(self, tdi: Signal, tdo: Signal, tap_fsm: JTAGTAPFSM):
@@ -106,7 +106,7 @@ class JTAGTAP(Module):
                 ir.eq(ir.reset)
             ).Elif(fsm.CAPTURE_IR,
                 ir.eq(0b101)
-            ).Elif(fsm.SHIFT_IR_ns,
+            ).Elif(fsm.SHIFT_IR,
                 ir.eq(Cat(ir[1:], tdi))
             )
         ]
