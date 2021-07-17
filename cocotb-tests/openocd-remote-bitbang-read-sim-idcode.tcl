@@ -3,10 +3,26 @@ tcl_port disabled
 telnet_port disabled
 
 adapter driver remote_bitbang
+
+verify_ircapture disable
+verify_jtag disable
+
 remote_bitbang_host localhost
 remote_bitbang_port 2430
 
+verify_ircapture disable
+verify_jtag disable
+
 jtag newtap sim tap -irlen 5 -expected-id 0x831050DD
+verify_ircapture disable
+verify_jtag disable
+
+puts "scan_chain: [scan_chain]"
+
+proc jtag_init {} {
+	verify_ircapture disable
+	verify_jtag disable
+}
 
 init
 
