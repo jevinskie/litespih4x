@@ -352,7 +352,7 @@ async def reset_tap(dut):
     await tclk
     print(f'at end of reset tck: {sigs.tck.value}')
 
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def openocd_srv(dut):
     fork_clk()
     p = dut._log.info
@@ -363,7 +363,6 @@ async def openocd_srv(dut):
     s.bind(('localhost', 2430))
     s.listen(1)
     conn, addr = s.accept()
-    p(f'connected by {addr} conn: {conn}')
     while True:
         cmd = conn.recv(1)
         if cmd is None:
@@ -398,7 +397,7 @@ async def openocd_srv(dut):
 
 
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def read_idcode(dut):
     fork_clk()
     dut._log.info("Running read_idcode...")
