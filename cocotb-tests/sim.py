@@ -22,6 +22,7 @@ from litex.soc.integration.builder import *
 
 from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 from litejtag_ext.mohor_tap import MohorJTAGTAP
+from litejtag_ext.jtaglet_tap import JtagletJTAGTAP
 from litejtag_ext.tap import JTAGTAP
 from litex.soc.cores.jtag import JTAGTAPFSM
 
@@ -129,6 +130,10 @@ class BenchSoC(SoCCore):
 
         self.mohor_tdo = mohor_tdo = Signal()
         self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, mohor_tdo, jtag_pads.trst)
+
+        self.jtaglet_tdo = jtaglet_tdo = Signal()
+        self.specials.jtaglet_tap = JtagletJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtaglet_tdo, jtag_pads.trst)
+
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
 

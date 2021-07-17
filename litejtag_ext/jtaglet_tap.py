@@ -10,27 +10,27 @@ from rich import print
 from migen import *
 from migen.fhdl.specials import Special
 
-from .data import mohor as data_mod
+from .data import jtaglet as data_mod
 from importlib_resources import files
-_MOHOR_TAP_VERILOG_NAME: Final = 'tap_top.v'
-_MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAME)
+_JTAGLET_TAP_VERILOG_NAMES: Final = ('ff_sync.v', 'jtag_reg.v', 'jtag_state_machine.v', 'jtaglet.v')
+_JTAGLET_TAP_VERILOG_PATHS: Final = [files(data_mod).joinpath(n) for n in _JTAGLET_TAP_VERILOG_NAMES]
 
 
-class MohorJTAGTAPImpl(Module):
+class JtagletJTAGTAPImpl(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
 
         # # #
 
-        self.specials += Instance("tap_top",
-              i_tms_pad_i  = tms,
-              i_tck_pad_i  = tck,
-              i_trst_pad_i = trst,
-              i_tdi_pad_i  = tdi,
-              o_tdo_pad_o  = tdo,
+        self.specials += Instance("jtaglet",
+              i_tms  = tms,
+              i_tck  = tck,
+              i_trst = trst,
+              i_tdi  = tdi,
+              o_tdo  = tdo,
           )
 
 
-class MohorJTAGTAP(Special):
+class JtagletJTAGTAP(Special):
     def __init__(self, platform, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
         super().__init__()
         self.tms = tms
@@ -39,8 +39,9 @@ class MohorJTAGTAP(Special):
         self.tdo = tdo
         self.trst = trst
 
-        platform.add_source(str(_MOHOR_TAP_VERILOG_PATH), 'veriliog')
+        for p in _JTAGLET_TAP_VERILOG_PATHS:
+            platform.add_source(str(p), 'veriliog')
 
     @staticmethod
     def lower(dr):
-        return MohorJTAGTAPImpl(dr.tms, dr.tck, dr.tdi, dr.tdo, dr.trst)
+        return JtagletJTAGTAPImpl(dr.tms, dr.tck, dr.tdi, dr.tdo, dr.trst)
