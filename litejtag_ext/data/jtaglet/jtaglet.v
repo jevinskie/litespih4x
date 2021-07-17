@@ -127,4 +127,9 @@ module jtaglet #(
         tdo <= tdo_pre;
     end
 
+    reg [15:0] jtaglet_cnt = 16'd0;
+    always @(posedge tck) begin
+        jtaglet_cnt <= (jtaglet_cnt + 1'b1);
+    end
+
 endmodule

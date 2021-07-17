@@ -24,6 +24,7 @@ from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 from litejtag_ext.mohor_tap import MohorJTAGTAP
 from litejtag_ext.jtaglet_tap import JtagletJTAGTAP
 from litejtag_ext.tap import JTAGTAP
+from litejtag_ext.std_tap import StdTAP
 from litex.soc.cores.jtag import JTAGTAPFSM
 
 import cocotb
@@ -123,9 +124,18 @@ class BenchSoC(SoCCore):
         # self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
 
         self.submodules.jev_tap = JTAGTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, ResetSignal("sys"))
+
+        self.std_tdo = std_tdo = Signal()
+        self.submodules.std_tap = StdTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, std_tdo, jtag_pads.trst)
+
+        foo = self.jev_tap.state_fsm.TEST_LOGIC_RESET
+        print(foo)
+
         if dump:
             with open('jev_tap.v', 'w') as f:
                 f.write(str(verilog.convert(self.jev_tap)))
+            with open('std_tap.v', 'w') as f:
+                f.write(str(verilog.convert(self.std_tap)))
             sys.exit(0)
 
         self.mohor_tdo = mohor_tdo = Signal()
@@ -133,7 +143,6 @@ class BenchSoC(SoCCore):
 
         self.jtaglet_tdo = jtaglet_tdo = Signal()
         self.specials.jtaglet_tap = JtagletJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtaglet_tdo, jtag_pads.trst)
-
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
 
@@ -148,8 +157,9 @@ class BenchSoC(SoCCore):
 def main():
     parser = argparse.ArgumentParser(description="LiteJTAG Simulation")
     parser.add_argument("--build", default=True,  action="store_true",     help="Build simulation")
-    parser.add_argument("--run",   default=False, action="store_true",     help="Run simulation")
-    parser.add_argument("--dump",  default=False, action="store_true",     help="Dump module")
+    genopts = parser.add_mutually_exclusive_group()
+    genopts.add_argument("--run",   default=False, action="store_true",     help="Run simulation")
+    genopts.add_argument("--dump",  default=False, action="store_true",     help="Dump module")
     parser.add_argument("--toolchain",            default="cocotb",        help="Simulation toolchain")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-fst",            action="store_true",     help="Enable FST tracing (default=VCD)")
@@ -174,7 +184,7 @@ def main():
 
     soc     = BenchSoC(toolchain=args.toolchain, dump=args.dump, sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
     builder = Builder(soc, csr_csv="csr.csv", compile_software=False)
-    builder.build(
+    soc.ns = builder.build(
         sim_config  = sim_config,
         trace       = args.trace,
         trace_fst   = args.trace_fst,
@@ -197,19 +207,37 @@ class Sigs:
     tdi: ModifiableObject
     tdo: ModifiableObject
     trst: ModifiableObject
+    TLR: ModifiableObject
 
 
 sigs = None
+soc = None
+ns = None
+
+def nol(sig: Signal) -> str:
+    return sig.name_override
+
+def nsl(sig: Signal) -> str:
+    return ns.pnd[sig]
 
 if cocotb.top is not None:
-    clk = getattr(cocotb.top, srv.root.soc.crg.cd_sys.clk.name_override)
-    rst = getattr(cocotb.top, srv.root.soc.crg.cd_sys.rst.name_override)
-    tck = getattr(cocotb.top, srv.root.soc.jtag_pads.tck.name_override)
-    tms = getattr(cocotb.top, srv.root.soc.jtag_pads.tms.name_override)
-    tdi = getattr(cocotb.top, srv.root.soc.jtag_pads.tdi.name_override)
-    tdo = getattr(cocotb.top, srv.root.soc.jtag_pads.tdo.name_override)
-    trst = getattr(cocotb.top, srv.root.soc.jtag_pads.trst.name_override)
-    sigs = Sigs(clk=clk, rst=rst, tck=tck, tms=tms, tdi=tdi, tdo=tdo, trst=trst)
+    soc = srv.root.soc
+    ns = srv.root.ns
+    j = soc.jtag_pads
+    t = cocotb.top
+    jf = soc.jev_tap.state_fsm
+
+    d = {}
+    d['clk']  = getattr(t, nol(soc.crg.cd_sys.clk))
+    d['rst']  = getattr(t, nol(soc.crg.cd_sys.rst))
+    d['tck']  = getattr(t, nsl(j.tck))
+    d['tms']  = getattr(t, nsl(j.tms))
+    d['tdi']  = getattr(t, nsl(j.tdi))
+    d['tdo']  = getattr(t, nsl(j.tdo))
+    d['trst'] = getattr(t, nsl(j.trst))
+    d['TLR']  = getattr(t, nsl(jf.TEST_LOGIC_RESET))
+
+    sigs = Sigs(**d)
 
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
@@ -348,7 +376,7 @@ async def read_idcode(dut):
 
     dut._log.info('changing state after write_ir')
     await ext(jte.change_state)('test_logic_reset')
-    assert dut.TEST_LOGIC_RESET.value == 1
+    assert sigs.value == 1
     await tmr(2 * clkper_ns)
 
     read_idcode = await ext(jte.read_dr)(32)
