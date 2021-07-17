@@ -34,13 +34,29 @@ class StdTAPFSM(Module):
         self.std_tck_cnt = std_tck_cnt = Signal(16)
         self.sync.jtag += std_tck_cnt.eq(std_tck_cnt + 1)
 
-        self.NA = NA = Signal(1, reset=1)
-        self.NB = NB = Signal(1, reset=1)
-        self.NC = NC = Signal(1, reset=1)
-        self.ND = ND = Signal(1, reset=1)
+        T = tms
+        self.A = A = Signal(1, reset=1)
+        self.B = B = Signal(1, reset=1)
+        self.C = C = Signal(1, reset=1)
+        self.D = D = Signal(1, reset=1)
 
         self.state = state = Signal(4, reset_less=True)
-        self.comb += state.eq(Cat(NA, NB, NC, ND))
+        self.comb += state.eq(Cat(A, B, C, D))
+
+        # From IEEE 1149.1-2013 6.1.2.2 pg 36 (pdf page 58)
+        #
+        # ND := DC* + DB + T*CB* + D*CB*A*
+        # NC := CB* + CA + TB*
+        # NB := T*BA* + T*C* + T*D*B + T*D*A* + TCB* + TDCA
+        # NA := T*C*A + TB* + TA* + TDC
+        # where
+        # T = value present at TMS
+        self.sync.jtag += [
+            D.eq((D & ~C) | (D & B) | (~T & C & ~B) | (~D & C & ~B & ~A)),
+            C.eq((C & ~B) | (C & A) | (T & ~B)),
+            B.eq((~T & B & ~A) | (~T & ~C) | (~T & ~D & B) | (~T & ~D & ~A) | (T & C & ~B) | (T & D & C & A)),
+            A.eq((~T & ~C & A) | (T & ~B) | (T & ~A) | (T & D & C)),
+        ]
 
 
 class StdTAP(Module):

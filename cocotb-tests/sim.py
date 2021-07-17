@@ -376,7 +376,7 @@ async def read_idcode(dut):
 
     dut._log.info('changing state after write_ir')
     await ext(jte.change_state)('test_logic_reset')
-    assert sigs.value == 1
+    assert sigs.TLR.value == 1
     await tmr(2 * clkper_ns)
 
     read_idcode = await ext(jte.read_dr)(32)
