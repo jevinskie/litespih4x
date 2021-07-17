@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 import argparse
-import sys
+import socket
+import time
 from typing import Final
 
 from migen import *
@@ -25,7 +26,6 @@ from litejtag_ext.mohor_tap import MohorJTAGTAP
 from litejtag_ext.jtaglet_tap import JtagletJTAGTAP
 from litejtag_ext.tap import JTAGTAP
 from litejtag_ext.std_tap import StdTAP
-from litex.soc.cores.jtag import JTAGTAPFSM
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -228,6 +228,7 @@ if cocotb.top is not None:
     jf = soc.jev_tap.state_fsm
 
     d = {}
+    # FIXME: why doesnt nsl work for CRG signals?
     d['clk']  = getattr(t, nol(soc.crg.cd_sys.clk))
     d['rst']  = getattr(t, nol(soc.crg.cd_sys.rst))
     d['tck']  = getattr(t, nsl(j.tck))
@@ -238,6 +239,9 @@ if cocotb.top is not None:
     d['TLR']  = getattr(t, nsl(jf.TEST_LOGIC_RESET))
 
     sigs = Sigs(**d)
+
+def xbits(n, hi, lo):
+    return (n >> lo) & (2**(hi+1 - lo) - 1)
 
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
@@ -348,9 +352,53 @@ async def reset_tap(dut):
     await tclk
     print(f'at end of reset tck: {sigs.tck.value}')
 
+@cocotb.test(skip=True)
+async def openocd_srv(dut):
+    fork_clk()
+    p = dut._log.info
+    p("Running openocd_srv...")
+    await tmr(2*clkper_ns)
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('localhost', 2430))
+    s.listen(1)
+    conn, addr = s.accept()
+    p(f'connected by {addr} conn: {conn}')
+    while True:
+        cmd = conn.recv(1)
+        if cmd is None:
+            break
+        if cmd == b'B':
+            p('BLINK ON')
+        elif cmd == b'b':
+            p('BLINK OFF')
+        elif cmd == b'R':
+            conn.sendall(bytes([ord(str(sigs.tdo.value))]))
+        elif cmd == b'Q':
+            p('QUIT req')
+            s.close()
+            break
+        elif b'0' <= cmd <= b'7':
+            v = int(cmd.decode('utf-8'))
+            sigs.tck <= (v & 2**2) >> 2
+            sigs.tms <= (v & 2**1) >> 1
+            sigs.tdi <= (v & 2**0) >> 0
+            await tclkh
+        elif cmd == b'r' or cmd == b's':
+            sigs.trst <= 0
+            await tclk
+        elif cmd == b't' or cmd == b'u':
+            sigs.trst <= 1
+            await tclk
+        else:
+            raise ValueError
+
+    await tmr(4*clkper_ns)
+    p("Running openocd_srv...done")
 
 
-@cocotb.test()
+
+@cocotb.test(skip=False)
 async def read_idcode(dut):
     fork_clk()
     dut._log.info("Running read_idcode...")
@@ -391,7 +439,7 @@ async def read_idcode(dut):
 
 
 
-@cocotb.test()
+@cocotb.test(skip=True)
 async def reset_to_e1d(dut):
     fork_clk()
     dut._log.info("Running reset_to_e1d...")
