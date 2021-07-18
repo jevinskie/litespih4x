@@ -65,40 +65,42 @@ class BeatTickerZeroToMax(Module):
         return cls.from_period(pads, sys_clk_freq, 1 / ticker_freq_a, 1 / ticker_freq_b)
 
 
+
+# class HelloReg(Module):
+#     def __init__(self, tdi: Signal, tdo: Signal, hellocode: Constant, tap_fsm: JTAGTAPFSM):
+#         self.dr = dr = Signal(32, reset=hellocode.value)
+#
+#         self.comb += [
+#             If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
+#                 dr.eq(dr.reset),
+#             ).Elif(tap_fsm.SHIFT_DR,
+#                 tdo.eq(dr),
+#             ),
+#         ]
+#
+#         self.sync.jtag += [
+#             If(tap_fsm.SHIFT_DR,
+#                 dr.eq(Cat(dr[1:], tdi)),
+#             )
+#         ]
+
+
 class JTAGHello(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal, phy: Module):
-        self.clock_domains.cd_jtag = cd_jtag = ClockDomain("jtag")
-        self.comb += ClockSignal("jtag").eq(phy.drck)
-        # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
-        self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys") | ~phy.sel)
-
-        self.clock_domains.cd_jtag_inv = cd_jtag_inv = ClockDomain("jtag_inv")
-        self.comb += ClockSignal("jtag_inv").eq(~phy.tck)
-        # self.comb += ResetSignal("jtag").eq(rst | ~phy.sel)
-        self.specials += AsyncResetSynchronizer(self.cd_jtag_inv, ResetSignal("sys") | ~phy.sel)
-
-        # self.hello_code = sr = Signal(32, reset=int.from_bytes(b'HELO', byteorder='little', signed=False))
-        self.hello_code = sr = Signal(32, reset=0xAA00FF55)
-        # self.buf = buf = Signal()
-        self.bufi = bufi = Signal()
-
-
-        self.tck_cnt = tck_cnt = Signal(16)
-        self.sync.jtag += tck_cnt.eq(tck_cnt + 1)
+        self.hello_dr = hello_dr = Signal(32, reset=0xAA00FF55)
 
         self.comb += [
-            # tdo.eq(sr[0]),
-            # tdo.eq(buf),
-            # tdo.eq(bufi), # comment out to allow mohor tap to drive tdo
-        ]
-        self.sync.jtag += [
-            # buf.eq(sr[1]),
-            # buf.eq(tdi),
-            sr.eq(Cat(sr[1:], tdi)),
+            If(phy.reset | phy.capture,
+                hello_dr.eq(hello_dr.reset),
+            ).Elif(phy.shift,
+                tdo.eq(hello_dr[0]),
+            ),
         ]
 
-        self.sync.jtag_inv += [
-            bufi.eq(sr[0])
+        self.sync.jtag += [
+            If(phy.shift,
+                hello_dr.eq(Cat(hello_dr[1:], tdi)),
+            ),
         ]
 
         # # #
