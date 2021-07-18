@@ -36,7 +36,9 @@ OP_IDCODE: Final = Constant(0b0_0010, 5)
 # OP_BYPASS: Final = Constant(0b11_1111_1111, 10)
 OP_BYPASS: Final = Constant(0b1_1111, 5)
 # OP_BYPASS: Final = Constant(0b1111, 4)
+OP_HELLO: Final = Constant(0b0_0110, 5)
 IDCODE: Final = Constant(0x8310_50DD, 32)
+HELLO: Final = Constant(0xAA00_FF55, 32)
 
 class BYPASSReg(Module):
     def __init__(self, tdi: Signal, tdo: Signal, tap_fsm: JTAGTAPFSM):
@@ -75,6 +77,26 @@ class IDCODEReg(Module):
             )
         ]
 
+
+class HelloReg(Module):
+    def __init__(self, tdi: Signal, tdo: Signal, hellocode: Constant, tap_fsm: JTAGTAPFSM):
+        self.dr = dr = Signal(32, reset=hellocode.value)
+
+        self.comb += [
+            If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
+                dr.eq(dr.reset),
+            ).Elif(tap_fsm.SHIFT_DR,
+                tdo.eq(dr),
+            ),
+        ]
+
+        self.sync.jtag += [
+            If(tap_fsm.SHIFT_DR,
+                dr.eq(Cat(dr[1:], tdi)),
+            )
+        ]
+
+
 class JTAGTAP(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, sys_rst: Signal):
         self.clock_domains.cd_jtag = cd_jtag = ClockDomain("jtag")
@@ -90,6 +112,11 @@ class JTAGTAP(Module):
         self.idcode_tdo = idcode_tdo = Signal()
         self.submodules.idcode = ClockDomainsRenamer("jtag")(
             IDCODEReg(tdi, idcode_tdo, idcode=IDCODE, tap_fsm=self.state_fsm)
+        )
+
+        self.hello_tdo = hello_tdo = Signal()
+        self.submodules.hello = ClockDomainsRenamer("jtag")(
+            HelloReg(tdi, hello_tdo, hellocode=HELLO, tap_fsm=self.state_fsm)
         )
 
         self.bypass_tdo = bypass_tdo = Signal()
@@ -117,6 +144,7 @@ class JTAGTAP(Module):
                 Case(ir, {
                     OP_IDCODE: tdo_pre.eq(idcode_tdo),
                     OP_BYPASS: tdo_pre.eq(bypass_tdo),
+                    OP_HELLO: tdo_pre.eq(hello_tdo),
                     'default': tdo_pre.eq(bypass_tdo),
                 })
             ).Elif(fsm.SHIFT_IR,
@@ -127,6 +155,4 @@ class JTAGTAP(Module):
         self.sync.jtag_inv += [
             tdo.eq(tdo_pre),
         ]
-
-        # self.submodules.tap_fsm = FSM(clock_domain=cd_jtag.name)
 

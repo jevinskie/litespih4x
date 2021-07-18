@@ -10,18 +10,17 @@ verify_jtag disable
 remote_bitbang_host localhost
 remote_bitbang_port 2430
 
-verify_ircapture disable
-verify_jtag disable
+# verify_ircapture disable
+# verify_jtag disable
 
 jtag newtap sim tap -irlen 5 -expected-id 0x831050DD
-verify_ircapture disable
-verify_jtag disable
+# verify_ircapture disable
+# verify_jtag disable
 
 puts "scan_chain: [scan_chain]"
 
 proc jtag_init {} {
-	verify_ircapture disable
-	verify_jtag disable
+	puts "jtag_init called"
 }
 
 init
@@ -35,6 +34,12 @@ irscan sim.tap 0x2
 # gets stdin
 
 puts "  IDCODE 32 RES: 0x[drscan sim.tap 32 0xDEADBEEF]"
+
+irscan sim.tap 0x6
+
+puts "  HELLOCODE 32 RES: 0x[drscan sim.tap 32 0xFACEFEED]"
+puts "00HELLOCODE 40 RES: 0x[drscan sim.tap 40 0x00FACEFEED]"
+
 
 # puts "00IDCODE 64 RES: 0x[drscan sim.tap 64 0x00000000DEADBEEF]"
 
