@@ -82,16 +82,12 @@ class HelloReg(Module):
     def __init__(self, tdi: Signal, tdo: Signal, hellocode: Constant, tap_fsm: JTAGTAPFSM):
         self.dr = dr = Signal(32, reset=hellocode.value)
 
-        self.comb += [
+        self.comb += tdo.eq(dr[0])
+
+        self.sync.jtag += [
             If(tap_fsm.TEST_LOGIC_RESET | tap_fsm.CAPTURE_DR,
                 dr.eq(dr.reset),
             ).Elif(tap_fsm.SHIFT_DR,
-                tdo.eq(dr),
-            ),
-        ]
-
-        self.sync.jtag += [
-            If(tap_fsm.SHIFT_DR,
                 dr.eq(Cat(dr[1:], tdi)),
             )
         ]
