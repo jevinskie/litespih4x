@@ -92,7 +92,9 @@ class JTAGHello(Module):
         self.comb += tdo.eq(hello_dr[0])
 
         self.sync.jtag += [
-            If(phy.shift,
+            If(phy.reset | phy.capture,
+                hello_dr.eq(hello_dr.reset),
+            ).Elif(phy.shift,
                 hello_dr.eq(Cat(hello_dr[1:], tdi)),
             ),
         ]
