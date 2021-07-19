@@ -83,7 +83,8 @@ class BenchSoC(SoCCore):
         # phy_sigs = self.jtag_phy._signals
         # phy_sigs.remove(self.jtag_phy.altera_reserved_tdo) # wont pass fitter, output must go to pin
         # phy_sigs.remove(self.jtag_phy.tdocore)
-        phy_sigs = self.jtagbone_phy.jtag._signals
+        self.jtagbone_phy.fsm.do_finalize()
+        phy_sigs = self.jtagbone_phy.jtag._signals + self.jtagbone_phy._signals + self.jtagbone_phy.fsm._signals
         phy_sigs.remove(self.jtagbone_phy.jtag.altera_reserved_tdo) # wont pass fitter, output must go to pin
         phy_sigs.remove(self.jtagbone_phy.jtag.tdocore)
         phy_sigs.remove(self.jtagbone_phy.jtag.tdo)
