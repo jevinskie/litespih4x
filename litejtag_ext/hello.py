@@ -89,7 +89,9 @@ class JTAGHello(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal, phy: Module):
         self.hello_dr = hello_dr = Signal(32, reset=0xAA00FF55)
 
-        self.comb += tdo.eq(hello_dr[0])
+        # self.comb += tdo.eq(hello_dr[0])
+        self.hello_inner_tdo = hello_inner_tdo = Signal()
+        self.comb += tdo.eq(hello_inner_tdo)
 
         self.sync.jtag += [
             If(phy.reset | phy.capture,
@@ -98,5 +100,7 @@ class JTAGHello(Module):
                 hello_dr.eq(Cat(hello_dr[1:], tdi)),
             ),
         ]
+
+        self.sync.jtag_inv += hello_inner_tdo.eq(hello_dr[0])
 
         # # #
