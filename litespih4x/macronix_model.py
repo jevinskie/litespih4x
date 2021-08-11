@@ -17,27 +17,28 @@ _MODEL_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MODEL_VERILOG_NAME)
 
 
 class MacronixModelImpl(Module):
-    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
-        # module
-        # MX25U25635F(SCLK,
-        #             CS,
-        #             SI,
-        #             SO,
-        #             WP,
-        #        `ifdef MX25U25635FM
-        #             RESET,
-        #        `endif
-        #             SIO3 );
+    def __init__(self, sclk: Signal, rst: Signal, csn: Signal, psink: Signal,
+                 si_i: Signal, si_o: Signal,
+                 so_o: Signal, so_i: Signal,
+                 wp_o: Signal, wp_i: Signal,
+                 sio3_i: Signal, sio3_o: Signal):
+        self.rstn = rstn = ~rst
 
         # # #
 
-        self.specials += Instance("tap_top",
-              i_SCLK = tms,
-              i_CS = tck,
-              i_SI = trst,
-              o_SO = tdi,
-              i_WP = wp,
-              i_SIO3 = tdo,
+        self.specials += Instance("MX25U25635F",
+              i_PSINK = psink,
+              i_RESET = rstn,
+              i_SCLK = sclk,
+              i_CS = csn,
+              i_SI_i = si_i,
+              i_SO_i = so_i,
+              i_WP_i = wp_i,
+              i_SIO3_i = sio3_i,
+              o_SI_o = si_o,
+              o_SO_o = so_o,
+              o_WP_o = wp_o,
+              o_SIO3_o = sio3_o,
           )
 
 
