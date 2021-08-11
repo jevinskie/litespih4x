@@ -21,11 +21,7 @@ from litex.build.sim.common import CocotbVCDDumperSpecial
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litespih4x.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 from litespih4x.macronix_model import MacronixModel
-from litespih4x.jtaglet_tap import JtagletJTAGTAP
-from litespih4x.tap import JTAGTAP
-from litespih4x.std_tap import StdTAP
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -57,33 +53,26 @@ async def tmr(ns: float) -> None:
 _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
-    # ("ticker_zero_to_max", 0,
-    #     Subsignal("tick", Pins(1)),
-    #     Subsignal("counter", Pins(32)),
-    # ),
-    # ("ticker_zero_to_max_from_freq", 0,
-    #     Subsignal("tick", Pins(1)),
-    #     Subsignal("counter", Pins(32)),
-    # ),
-    # ("beat_ticker", 0,
-    #     Subsignal("tick", Pins(1)),
-    #     Subsignal("tick_a", Pins(1)),
-    #     Subsignal("counter_a", Pins(32)),
-    #     Subsignal("tick_b", Pins(1)),
-    #     Subsignal("counter_b", Pins(32)),
-    # ),
-    # ("jtag_clk", 0, Pins(1)),
-    # ("jtag_rst", 0, Pins(1)),
-    ("jtag", 0,
-        Subsignal("tck", Pins(1)),
-        Subsignal("tms", Pins(1)),
-        Subsignal("tdi", Pins(1)),
-        Subsignal("tdo", Pins(1)),
-        Subsignal("trst", Pins(1)),
-        Subsignal("reset", Pins(1)),
-        Subsignal("drck", Pins(1)),
-        Subsignal("shift", Pins(1)),
-        Subsignal("sel", Pins(1)),
+    ("qspiflash", 0,
+        Subsignal("sclk", Pins(1)),
+        Subsignal("rst", Pins(1)),
+        Subsignal("csn", Pins(1)),
+
+        Subsignal("si_i", Pins(1)),
+        Subsignal("si_o", Pins(1)),
+        Subsignal("si_oe", Pins(1)),
+
+        Subsignal("so_o", Pins(1)),
+        Subsignal("so_i", Pins(1)),
+        Subsignal("so_oe", Pins(1)),
+
+        Subsignal("wp_i", Pins(1)),
+        Subsignal("wp_o", Pins(1)),
+        Subsignal("wp_oe", Pins(1)),
+
+        Subsignal("sio3_i", Pins(1)),
+        Subsignal("sio3_o", Pins(1)),
+        Subsignal("sio3_oe", Pins(1)),
      ),
 ]
 
@@ -110,39 +99,35 @@ class BenchSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = CRG(platform.request("sys_clk"))
 
-        # Ticker A
-        # self.submodules.ticker_a = TickerZeroToMax(self.platform.request("ticker_zero_to_max"), max_cnt=15)
-        # Ticker B
-        # self.submodules.ticker_b = BeatTickerZeroToMax(self.platform.request("beat_ticker"), max_cnt_a=5, max_cnt_b=7)
-        # JTAG Hello
-        self.jtag_pads = jtag_pads = self.platform.request("jtag")
-        # jtag_clk = self.platform.request("jtag_clk")
-        # jtag_rst = self.platform.request("jtag_rst")
-        # self.submodules.jtag_hello = JTAGHello(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo,
-        #           self.crg.cd_sys.rst, jtag_pads)
-        # self.comb += jtag_pads.shift.eq(1) # what was this for
-        # self.submodules.jev_tap = JTAGTAPFSM(jtag_pads.tms, jtag_pads.tck, ResetSignal("sys"))
 
-        self.submodules.jev_tap = JTAGTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtag_pads.tdo, ResetSignal("sys"))
+        self.qspi_pads = qp = self.platform.request("qspiflash")
 
-        self.std_tdo = std_tdo = Signal()
-        self.submodules.std_tap = StdTAP(jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, std_tdo, jtag_pads.trst)
+        self.qspi_si_ts = sit = TSTriple()
+        sit.i = qp.si_i
+        sit.o = qp.si_o
+        sit.oe = qp.si_oe
 
-        foo = self.jev_tap.state_fsm.TEST_LOGIC_RESET
-        print(foo)
+        self.qspi_so_ts = sot = TSTriple()
+        sot.i = qp.so_i
+        sot.o = qp.so_o
+        sot.oe = qp.so_oe
+
+        self.qspi_wp_ts = wpt = TSTriple()
+        wpt.i = qp.wp_i
+        wpt.o = qp.wp_o
+        wpt.oe = qp.wp_oe
+
+        self.qspi_sio3_ts = sio3t = TSTriple()
+        sio3t.i = qp.sio3_i
+        sio3t.o = qp.sio3_o
+        sio3t.oe = qp.sio3_oe
+
+        self.submodules.qspi_model = qspi_model = MacronixModel(self.platform, qp.sclk, self.crg.cd_sys.rst, qp.csn, sit, sot, wpt, sio3t)
 
         if dump:
-            with open('jev_tap.v', 'w') as f:
-                f.write(str(verilog.convert(self.jev_tap)))
-            with open('std_tap.v', 'w') as f:
-                f.write(str(verilog.convert(self.std_tap)))
+            with open('qspi_model.v', 'w') as f:
+                f.write(str(verilog.convert(self.qspi_model)))
             sys.exit(0)
-
-        self.mohor_tdo = mohor_tdo = Signal()
-        self.specials.mohor_tap = MacronixModel(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, mohor_tdo, jtag_pads.trst)
-
-        self.jtaglet_tdo = jtaglet_tdo = Signal()
-        self.specials.jtaglet_tap = JtagletJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtaglet_tdo, jtag_pads.trst)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
 

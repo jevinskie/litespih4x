@@ -17,42 +17,52 @@ _MODEL_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MODEL_VERILOG_NAME)
 
 
 class MacronixModelImpl(Module):
-    def __init__(self, sclk: Signal, rst: Signal, csn: Signal, psink: Signal,
-                 si_i: Signal, si_o: Signal,
-                 so_o: Signal, so_i: Signal,
-                 wp_o: Signal, wp_i: Signal,
-                 sio3_i: Signal, sio3_o: Signal):
+    def __init__(self, sclk: Signal, rst: Signal, csn: Signal,
+                 si: TSTriple, so: TSTriple, wp: TSTriple, sio3: TSTriple):
         self.rstn = rstn = ~rst
 
         # # #
 
         self.specials += Instance("MX25U25635F",
-              i_PSINK = psink,
               i_RESET = rstn,
               i_SCLK = sclk,
               i_CS = csn,
-              i_SI_i = si_i,
-              i_SO_i = so_i,
-              i_WP_i = wp_i,
-              i_SIO3_i = sio3_i,
-              o_SI_o = si_o,
-              o_SO_o = so_o,
-              o_WP_o = wp_o,
-              o_SIO3_o = sio3_o,
+              i_SI_i = si.i,
+              i_SO_i = so.i,
+              i_WP_i = wp.i,
+              i_SIO3_i = sio3.i,
+              o_SI_o = si.o,
+              o_SO_o = so.o,
+              o_WP_o = wp.o,
+              o_SIO3_o = sio3.o,
+              o_SI_oe = si.oe,
+              o_SO_oe = si.oe,
+              o_WP_oe = wp.oe,
+              o_SIO3_oe = sio3.oe,
           )
 
 
-class MacronixModel(Special):
-    def __init__(self, platform, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
+class MacronixModelSpecial(Special):
+    def __init__(self, platform, sclk: Signal, rst: Signal, csn: Signal,
+                 si: TSTriple, so: TSTriple, wp: TSTriple, sio3: TSTriple):
         super().__init__()
-        self.tms = tms
-        self.tck = tck
-        self.tdi = tdi
-        self.tdo = tdo
-        self.trst = trst
+        self.sclk = sclk
+        self.rst = rst
+        self.csn = csn
+        self.si = si
+        self.so = so
+        self.wp = wp
+        self.sio3 = sio3
 
-        platform.add_source(str(_MODEL_TAP_VERILOG_PATH), 'veriliog')
+        platform.add_source(str(_MODEL_TAP_VERILOG_PATH), 'verilog')
 
     @staticmethod
     def lower(dr):
-        return MacronixModelImpl(dr.tms, dr.tck, dr.tdi, dr.tdo, dr.trst)
+        return MacronixModelImpl(dr.sclk, dr.rst, dr.csn, dr.si, dr.so, dr.wp, dr.sio3)
+
+class MacronixModel(Module):
+    def __init__(self, platform, sclk: Signal, rst: Signal, csn: Signal,
+                 si: TSTriple, so: TSTriple, wp: TSTriple, sio3: TSTriple):
+        # # #
+
+        self.specials += MacronixModelSpecial(platform, sclk, rst, csn, si, so, wp, sio3)
