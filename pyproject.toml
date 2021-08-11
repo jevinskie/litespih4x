@@ -1,14 +1,13 @@
 [tool.poetry]
-name = "litejtag-ext"
+name = "litespih4x"
 version = "0.1.0"
-description = ""
+description = "spi mux and flash emulator and mitm and puppies"
 authors = ["Jevin Sweval <jevinsweval@gmail.com>"]
 
 [tool.poe.tasks]
 test = "pytest"
 test-v = "pytest -vvvv"
 test-vv = "pytest -vvvv --capture=tee-sys"
-print-reg = "poetry run ./examples/jtag_hello_max10_dev_kit.py"
 ipython = "poetry run ipython"
 
 [tool.pytest.ini_options]
