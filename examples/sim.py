@@ -14,7 +14,7 @@ from litex.build.sim.config import SimConfig
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
+from litespih4x.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
 
 
 # IOs ----------------------------------------------------------------------------------------------

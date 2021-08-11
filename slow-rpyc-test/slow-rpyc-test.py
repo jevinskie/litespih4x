@@ -44,12 +44,23 @@ def get_child_srv(build_name='slow_rpyc_test'):
     srv = start_sim_server(None)
     return srv
 
-parent_srv = get_parent_srv()
-print(f'parent_srv: {parent_srv}')
+if 'child' not in sys.argv:
+    parent_srv = get_parent_srv()
+    print(f'parent_srv: {parent_srv}')
 
-print(f'parent_srv: soc: {parent_srv.srv.service.exposed_soc}')
+    print(f'parent_srv: soc: {parent_srv.srv.service.exposed_soc}')
 
-child_srv = get_child_srv()
-print(f'child_srv: {child_srv}')
-print(f'child_srv: soc: {child_srv.root.soc}')
+    try:
+        r = subprocess.run(["make"])
+        if r != 0:
+            raise OSError("Subprocess failed")
+    except:
+        pass
 
+    # while True:
+    #     time.sleep(1)
+
+else:
+    child_srv = get_child_srv()
+    print(f'child_srv: {child_srv}')
+    print(f'child_srv: soc: {child_srv.root.soc}')

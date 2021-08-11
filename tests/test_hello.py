@@ -1,6 +1,6 @@
-import litejtag_ext
-from litejtag_ext.hello import JTAGHello
+import litespih4x
+from litespih4x.hello import JTAGHello
 
 
 def test_version():
-    assert litejtag_ext.__version__ == '0.1.0'
+    assert litespih4x.__version__ == '0.1.0'

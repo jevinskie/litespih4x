@@ -17,7 +17,7 @@ from litex.soc.interconnect.csr import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litejtag_ext.hello import JTAGHello
+from litespih4x.hello import JTAGHello
 from litex.soc.cores.jtag import JTAGPHY, MAX10JTAG, JTAGTAPFSM
 
 # Bench SoC ----------------------------------------------------------------------------------------

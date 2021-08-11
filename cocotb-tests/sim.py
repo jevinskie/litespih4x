@@ -21,11 +21,11 @@ from litex.build.sim.common import CocotbVCDDumperSpecial
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litejtag_ext.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
-from litejtag_ext.mohor_tap import MohorJTAGTAP
-from litejtag_ext.jtaglet_tap import JtagletJTAGTAP
-from litejtag_ext.tap import JTAGTAP
-from litejtag_ext.std_tap import StdTAP
+from litespih4x.hello import TickerZeroToMax, BeatTickerZeroToMax, JTAGHello
+from litespih4x.macronix_model import MacronixModel
+from litespih4x.jtaglet_tap import JtagletJTAGTAP
+from litespih4x.tap import JTAGTAP
+from litespih4x.std_tap import StdTAP
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -139,7 +139,7 @@ class BenchSoC(SoCCore):
             sys.exit(0)
 
         self.mohor_tdo = mohor_tdo = Signal()
-        self.specials.mohor_tap = MohorJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, mohor_tdo, jtag_pads.trst)
+        self.specials.mohor_tap = MacronixModel(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, mohor_tdo, jtag_pads.trst)
 
         self.jtaglet_tdo = jtaglet_tdo = Signal()
         self.specials.jtaglet_tap = JtagletJTAGTAP(self.platform, jtag_pads.tms, jtag_pads.tck, jtag_pads.tdi, jtaglet_tdo, jtag_pads.trst)

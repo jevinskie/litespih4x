@@ -10,27 +10,38 @@ from rich import print
 from migen import *
 from migen.fhdl.specials import Special
 
-from .data import mohor as data_mod
+from .data import macronix as data_mod
 from importlib_resources import files
-_MOHOR_TAP_VERILOG_NAME: Final = 'tap_top.v'
-_MOHOR_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MOHOR_TAP_VERILOG_NAME)
+_MODEL_VERILOG_NAME: Final = 'MX25U25635F.v'
+_MODEL_TAP_VERILOG_PATH: Final = files(data_mod).joinpath(_MODEL_VERILOG_NAME)
 
 
-class MohorJTAGTAPImpl(Module):
+class MacronixModelImpl(Module):
     def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
+        # module
+        # MX25U25635F(SCLK,
+        #             CS,
+        #             SI,
+        #             SO,
+        #             WP,
+        #        `ifdef MX25U25635FM
+        #             RESET,
+        #        `endif
+        #             SIO3 );
 
         # # #
 
         self.specials += Instance("tap_top",
-              i_tms_pad_i  = tms,
-              i_tck_pad_i  = tck,
-              i_trst_pad_i = trst,
-              i_tdi_pad_i  = tdi,
-              o_tdo_pad_o  = tdo,
+              i_SCLK = tms,
+              i_CS = tck,
+              i_SI = trst,
+              o_SO = tdi,
+              i_WP = wp,
+              i_SIO3 = tdo,
           )
 
 
-class MohorJTAGTAP(Special):
+class MacronixModel(Special):
     def __init__(self, platform, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, trst: Signal):
         super().__init__()
         self.tms = tms
@@ -39,8 +50,8 @@ class MohorJTAGTAP(Special):
         self.tdo = tdo
         self.trst = trst
 
-        platform.add_source(str(_MOHOR_TAP_VERILOG_PATH), 'veriliog')
+        platform.add_source(str(_MODEL_TAP_VERILOG_PATH), 'veriliog')
 
     @staticmethod
     def lower(dr):
-        return MohorJTAGTAPImpl(dr.tms, dr.tck, dr.tdi, dr.tdo, dr.trst)
+        return MacronixModelImpl(dr.tms, dr.tck, dr.tdi, dr.tdo, dr.trst)
