@@ -64,7 +64,14 @@ module MX25U25635F( SCLK,
 `ifdef MX25U25635FM
                     RESET,
 `endif
-                    SIO3 );
+                    SIO3,
+
+                    SI_i, SI_o, SI_oe,
+                    SO_i, SO_o, SO_oe,
+                    WP_i, WP_o, WP_oe,
+                    SIO3_i, SIO3_o, SIO3_oe,
+
+                    );
 
 // *============================================================================================== 
 // * Declaration of ports (input, output, inout)
@@ -78,6 +85,19 @@ module MX25U25635F( SCLK,
     input  RESET;   // Hardware Reset Pin, Active Low
 `endif
     inout  SIO3;    // Serial Input/Output SIO3
+
+    input SI_i;
+    input SO_i;
+    input WP_i;
+    input SIO3_i;
+    output SI_o;
+    output SO_o;
+    output WP_o;
+    output SIO3_o;
+    output SI_oe;
+    output SO_oe;
+    output WP_oe;
+    output SIO3_oe;
 
 // *============================================================================================== 
 // * Declaration of parameter (parameter)

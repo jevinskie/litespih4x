@@ -187,43 +187,72 @@ def main():
 class Sigs:
     clk: ModifiableObject
     rst: ModifiableObject
-    tck: ModifiableObject
-    tms: ModifiableObject
-    tdi: ModifiableObject
-    tdo: ModifiableObject
-    trst: ModifiableObject
-    TLR: ModifiableObject
+    csn: ModifiableObject
+
+    si_i: ModifiableObject
+    si_o: ModifiableObject
+    si_oe: ModifiableObject
+
+
+    so_i: ModifiableObject
+    so_o: ModifiableObject
+    so_oe: ModifiableObject
+
+    wp_i: ModifiableObject
+    wp_o: ModifiableObject
+    wp_oe: ModifiableObject
+
+    sio3_i: ModifiableObject
+    sio3_o: ModifiableObject
+    sio3_oe: ModifiableObject
 
 
 sigs = None
 soc = None
 ns = None
 
-def nol(sig: Signal) -> str:
-    return sig.name_override
 
-def nsl(sig: Signal) -> str:
-    return ns.pnd[sig]
+def get_sig_dict(t, p):
+    def helper(platform, soc, ns):
+        def nol(sig: Signal) -> str:
+            return sig.name_override
+
+        def nsl(sig: Signal) -> str:
+            return ns.pnd[sig]
+
+        return {
+            'clk': getattr(t, nol(soc.crg.cd_sys.clk)),
+            'rst': getattr(t, nol(soc.crg.cd_sys.rst)),
+            'csn': getattr(t, nsl(p.csn)),
+
+            'si_i': getattr(t, nsl(p.si_i)),
+            'si_o': getattr(t, nsl(p.si_o)),
+            'si_oe': getattr(t, nsl(p.si_oe)),
+
+            'so_i': getattr(t, nsl(p.so_i)),
+            'so_o': getattr(t, nsl(p.so_o)),
+            'so_oe': getattr(t, nsl(p.so_oe)),
+
+            'wp_i': getattr(t, nsl(p.wp_i)),
+            'wp_o': getattr(t, nsl(p.wp_o)),
+            'wp_oe': getattr(t, nsl(p.wp_oe)),
+
+            'sio3_i': getattr(t, nsl(p.sio3_i)),
+            'sio3_o': getattr(t, nsl(p.sio3_o)),
+            'sio3_oe': getattr(t, nsl(p.sio3_oe)),
+        }
+
+    return srv.root.call_on_server(helper)
+
 
 if cocotb.top is not None:
     soc = srv.root.soc
     ns = srv.root.ns
-    j = soc.jtag_pads
-    t = cocotb.top
-    jf = soc.jev_tap.state_fsm
+    pads = soc.qspi_pads
 
-    d = {}
-    # FIXME: why doesnt nsl work for CRG signals?
-    d['clk']  = getattr(t, nol(soc.crg.cd_sys.clk))
-    d['rst']  = getattr(t, nol(soc.crg.cd_sys.rst))
-    d['tck']  = getattr(t, nsl(j.tck))
-    d['tms']  = getattr(t, nsl(j.tms))
-    d['tdi']  = getattr(t, nsl(j.tdi))
-    d['tdo']  = getattr(t, nsl(j.tdo))
-    d['trst'] = getattr(t, nsl(j.trst))
-    d['TLR']  = getattr(t, nsl(jf.TEST_LOGIC_RESET))
-
+    d = get_sig_dict(cocotb.top, pads)
     sigs = Sigs(**d)
+
 
 def xbits(n, hi, lo):
     return (n >> lo) & (2**(hi+1 - lo) - 1)
