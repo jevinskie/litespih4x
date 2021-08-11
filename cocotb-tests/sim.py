@@ -187,6 +187,9 @@ def main():
 class Sigs:
     clk: ModifiableObject
     rst: ModifiableObject
+
+    sclk: ModifiableObject
+    srst: ModifiableObject
     csn: ModifiableObject
 
     si_i: ModifiableObject
@@ -223,6 +226,9 @@ def get_sig_dict(t, p):
         return {
             'clk': getattr(t, nol(soc.crg.cd_sys.clk)),
             'rst': getattr(t, nol(soc.crg.cd_sys.rst)),
+
+            'sclk': getattr(t, nsl(p.sclk)),
+            'srst': getattr(t, nsl(p.rst)),
             'csn': getattr(t, nsl(p.csn)),
 
             'si_i': getattr(t, nsl(p.si_i)),
@@ -260,156 +266,57 @@ def xbits(n, hi, lo):
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
 
-async def tick_tms(dut, tms: int) -> None:
-    dut._log.info(f'tick_tms_internal tms: {tms} tck: {sigs.tck.value}')
-    sigs.tms <= tms
-    await ReadOnly()
-    assert sigs.tck.value == 0
-    await tclkh
-    sigs.tck <= 1
-    await tclkh
-    sigs.tck <= 0
-
-tick_tms_ext = cocotb.function(tick_tms)
-
-
-async def tick_tdi(dut, tdi: BitSequence) -> BitSequence:
-    dut._log.info(f'tick_tdi_bs_internal {tdi} {int(tdi)} tck: {sigs.tck.value}')
-    tdo = BitSequence()
-    for di in tdi:
-        dut._log.info(f'tick_tdi_bs_internal bit {di}')
-        sigs.tdi <= di
+async def tick_si(dut, si: BitSequence) -> BitSequence:
+    dut._log.info(f'tick_si {si} {int(si)} tck: {sigs.sclk.value}')
+    so = BitSequence()
+    sigs.csn <= 0
+    await tclk
+    for di in si:
+        dut._log.info(f'tick_si bit {di}')
+        sigs.si_o <= si
         await ReadOnly()
-        assert sigs.tck.value == 0
+        assert sigs.sclk.value == 0
         await tclkh
-        sigs.tck <= 1
-        tdo += BitSequence(sigs.tdo.value.value, length=1)
+        sigs.sclk <= 1
+        so += BitSequence(sigs.so_i.value.value, length=1)
         await tclkh
-        sigs.tck <= 0
+        sigs.sclk <= 0
+    sigs.csn <= 1
+    await tclk
     await NextTimeStep()
-    return tdo
+    return so
 
-tick_tdi_ext = cocotb.function(tick_tdi)
+tick_si_ext = cocotb.function(tick_si)
 
-async def tick_tdo(dut, nbits: int) -> BitSequence:
+async def tick_so(dut, nbits: int) -> BitSequence:
     # dut._log.info(f'tick_tdo {nbits}')
-    tdi = BitSequence(0, length=nbits)
-    tdo = await tick_tdi(dut, tdi)
-    return tdo
+    si = BitSequence(0, length=nbits)
+    so = await tick_si(dut, si)
+    return so
 
-tick_tdo_ext = cocotb.function(tick_tdo)
-
-
-class SimJtagController(JtagController):
-    def __init__(self, dut, trst: bool = False, frequency: float = 20e6):
-        self.dut = dut
-        self.trst = trst
-        assert not trst
-        self.freq = frequency
-        self.p = dut._log.info
-        self.p('SimJtagController __init__')
-
-    def configure(self, url: str) -> None:
-        raise NotImplementedError
-
-    def close(self, freeze: bool = False) -> None:
-        raise NotImplementedError
-
-    def purge(self) -> None:
-        raise NotImplementedError
-
-    def reset(self, sync: bool = False) -> None:
-        raise NotImplementedError
-
-    def sync(self) -> None:
-        raise NotImplementedError
-
-    def write_tms(self, tms: BitSequence,
-                  should_read: bool=False) -> None:
-        self.p(f'write_tms(should_read={should_read}) with {tms}')
-        for b in tms:
-            tick_tms_ext(self.dut, b)
-
-    def read(self, length: int) -> BitSequence:
-        self.p(f'read({length})')
-        tdo = tick_tdo_ext(self.dut, length)
-        return tdo
-
-    def write(self, out: Union[BitSequence, str], use_last: bool = True):
-        self.p(f'write(use_last={use_last}) with {out}')
-        tick_tdi_ext(self.dut, out)
-
-
-    def write_with_read(self, out: BitSequence,
-                        use_last: bool = False) -> int:
-        raise NotImplementedError
-
-    def read_from_buffer(self, length) -> BitSequence:
-        raise NotImplementedError
+tick_so_ext = cocotb.function(tick_so)
 
 
 @cocotb.test()
 async def reset_tap(dut):
     fork_clk()
-    sigs.tck <= 0
-    sigs.tms <= 0
-    sigs.tdi <= 0
-    sigs.tdo <= 1
-    sigs.trst <= 0
+
+    sigs.sclk <= 0
+    sigs.si_i <= 0
+    sigs.so_i <= 0
+    sigs.wp_i <= 1 # FIXME
+    sigs.sio3_i <= 0
+
     sigs.rst <= 0
+    sigs.srst <= 0
     await tclk
-    sigs.trst <= 1
     sigs.rst <= 1
+    sigs.srst <= 1
     await tclk
-    sigs.trst <= 0
     sigs.rst <= 0
+    sigs.srst <= 0
     await tclk
-    print(f'at end of reset tck: {sigs.tck.value}')
-
-@cocotb.test(skip=False)
-async def openocd_srv(dut):
-    fork_clk()
-    p = dut._log.info
-    p("Running openocd_srv...")
-    await tmr(2*clkper_ns)
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(('localhost', 2430))
-    s.listen(1)
-    conn, addr = s.accept()
-    while True:
-        cmd = conn.recv(1)
-        if cmd is None:
-            break
-        if cmd == b'B':
-            p('BLINK ON')
-        elif cmd == b'b':
-            p('BLINK OFF')
-        elif cmd == b'R':
-            conn.sendall(bytes([ord(str(sigs.tdo.value))]))
-        elif cmd == b'Q':
-            p('QUIT req')
-            s.close()
-            break
-        elif b'0' <= cmd <= b'7':
-            v = int(cmd.decode('utf-8'))
-            sigs.tck <= (v & 2**2) >> 2
-            sigs.tms <= (v & 2**1) >> 1
-            sigs.tdi <= (v & 2**0) >> 0
-            await tclkh
-        elif cmd == b'r' or cmd == b's':
-            sigs.trst <= 0
-            await tclk
-        elif cmd == b't' or cmd == b'u':
-            sigs.trst <= 1
-            await tclk
-        else:
-            raise ValueError
-
-    await tmr(4*clkper_ns)
-    p("Running openocd_srv...done")
-
-
+    print(f'at end of reset sclk: {sigs.sclk.value}')
 
 @cocotb.test(skip=True)
 async def read_idcode(dut):
@@ -417,62 +324,9 @@ async def read_idcode(dut):
     dut._log.info("Running read_idcode...")
     await tmr(2*clkper_ns)
 
-    jte = JtagEngine()
-    jte._ctrl = SimJtagController(dut)
-
-    # await ext(jte.change_state)('capture_ir')
-    # assert dut.CAPTURE_IR.value == 1
-    # dut._log.info('in capture-ir')
-
-    # await tmr(2*clkper_ns)
-
-
-    dut._log.info('shifting idcode instruction out')
-    await ext(jte.write_ir)(IDCODE)
-    await tmr(clkper_ns)
-
-    await tmr(2*clkper_ns)
-
-    await tmr(2*clkper_ns)
-
-    dut._log.info('changing state after write_ir')
-    await ext(jte.change_state)('test_logic_reset')
-    assert sigs.TLR.value == 1
-    await tmr(2 * clkper_ns)
-
-    read_idcode = await ext(jte.read_dr)(32)
-    # assert dut.update_dr.value == 1
-    await tmr(clkper_ns)
-    dut._log.info(f'read_idcode: {hex(int(read_idcode))} {read_idcode}')
-
-
-
     await tmr(4*clkper_ns)
     dut._log.info("Running read_idcode...done")
 
-
-
-@cocotb.test(skip=False)
-async def reset_to_e1d(dut):
-    fork_clk()
-    dut._log.info("Running reset_to_e1d...")
-    await tmr(2*clkper_ns)
-
-    jte = JtagEngine()
-    jte._ctrl = SimJtagController(dut)
-
-    dut._log.info('going to exit_1_dr')
-    await ext(jte.change_state)('exit_1_dr')
-    # assert dut.exit1_dr.value == 1
-    assert jte.state_machine.state() == jte.state_machine.states['exit_1_dr']
-    await tmr(clkper_ns)
-
-    dut._log.info('going to shift_ir')
-    await ext(jte.change_state)('shift_ir')
-    # assert dut.shift_ir.value == 1
-    await tmr(clkper_ns)
-
-    dut._log.info("Running reset_to_e1d...done")
 
 if __name__ == "__main__":
     main()

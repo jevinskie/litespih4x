@@ -106,7 +106,8 @@ module MX25U25635F( SCLK,
     /* Density STATE parameter                                              */                  
     /*----------------------------------------------------------------------*/
     parameter   A_MSB           = 24,            
-                TOP_Add         = 25'h1ffffff,
+//                 TOP_Add         = 25'h1ffffff,
+                TOP_Add         = 25'h1ffff,
                 A_MSB_OTP       = 8,                
                 Secur_TOP_Add   = 9'h1ff,
                 Sector_MSB      = 12,
