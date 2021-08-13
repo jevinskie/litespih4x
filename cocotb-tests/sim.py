@@ -341,7 +341,7 @@ async def read_idcode(dut):
     dut._log.info("Running read_idcode...")
     await tmr(2*clkper_ns)
 
-    si = BitSequence(0x9f0000, msb=True)
+    si = BitSequence(0x9f000000, msb=True)
     so = await tick_si(dut, si)
     dut._log.info(f"si: {si} so: {so}")
 
