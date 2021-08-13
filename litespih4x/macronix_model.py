@@ -36,7 +36,7 @@ class MacronixModelImpl(Module):
               o_WP_o = wp.o,
               o_SIO3_o = sio3.o,
               o_SI_oe = si.oe,
-              o_SO_oe = si.oe,
+              o_SO_oe = so.oe,
               o_WP_oe = wp.oe,
               o_SIO3_oe = sio3.oe,
           )
