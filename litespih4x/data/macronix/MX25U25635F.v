@@ -39,7 +39,8 @@
     /* all the parameters users may need to change                          */
     /*----------------------------------------------------------------------*/
         `define Vtclqv 6  //30pf:8ns, 15pf:6ns
-        `define File_Name         "none"     // Flash data file name for normal array
+        `define File_Name         "none"
+        // `define File_Name         "all-ff.hex"     // Flash data file name for normal array
         `define File_Name_Secu    "none"     // Flash data file name for security region
         `define File_Name_SFDP    "none"     // Flash data file name for SFDP region
         `define VSecur_Reg1_0     2'b00      // security register[1:0]
@@ -106,8 +107,10 @@ module MX25U25635F( SCLK,
     /* Density STATE parameter                                              */                  
     /*----------------------------------------------------------------------*/
     parameter   A_MSB           = 24,            
-//                 TOP_Add         = 25'h1ffffff,
-                TOP_Add         = 25'h1ffff,
+                // TOP_Add         = 25'h1ffffff,
+                TOP_Add         = 25'h1fffff, // divide by 16
+                // TOP_Add         = 25'h1ffff, // divide by 256
+                // TOP_Add         = 25'h1ffff,
                 A_MSB_OTP       = 8,                
                 Secur_TOP_Add   = 9'h1ff,
                 Sector_MSB      = 12,
@@ -735,6 +738,28 @@ module MX25U25635F( SCLK,
     assign   SI     = SI_OUT_EN ? SIO0_Out_Reg : 1'bz ;
     assign   WP     = WP_OUT_EN   ? SIO2_Out_Reg : 1'bz ;
     assign   SIO3   = SIO3_OUT_EN ? SIO3_Out_Reg : 1'bz ;
+
+
+    assign SI = SI_i;
+    // assign SI = SI_i ? ~SI_OUT_EN : 1'bz;
+    assign SI_o = SIO0_Out_Reg;
+    assign SI_oe = SI_OUT_EN;
+
+    // assign SO = SO_i;
+    // assign SO = SO_i ? ~SO_OUT_EN : 1'bz;
+    assign SO_o = SIO1_Out_Reg;
+    assign SO_oe = SO_OUT_EN;
+
+    assign WP = WP_i;
+    // assign WP = WP_i ? ~WP_OUT_EN : 1'bz;
+    assign WP_o = SIO2_Out_Reg;
+    assign WP_oe = WP_OUT_EN;
+
+    assign SIO3 = SIO3_i;
+    // assign SIO3 = SIO3_i ? ~SIO3_OUT_EN : 1'bz;
+    assign SIO3_o = SIO3_Out_Reg;
+    assign SIO3_oe = SIO3_OUT_EN;
+
 `ifdef MX25U25635FM
     assign   RESETB_INT = (RESET === 1'b1 || RESET === 1'b0) ? RESET : 1'b1;
 `endif
@@ -854,7 +879,7 @@ module MX25U25635F( SCLK,
         if ( Bit == 7 && CS_INT == 1'b0 && ~HPM_RD && ( !EN_Boot || FBE ) ) begin
             STATE = `CMD_STATE;
             CMD_BUS = SI_Reg[7:0];
-            //$display( $time,"SI_Reg[7:0]= %h ", SI_Reg[7:0] );
+            $display( $time,"SI_Reg[7:0]= %h ", SI_Reg[7:0] );
             if ( During_RST_REC )
                 $display ($time," During reset recovery time, there is command. \n");
         end
@@ -868,7 +893,7 @@ module MX25U25635F( SCLK,
         if ( (EN4XIO_Read_Mode && (Bit == 1 || (ENQUAD && Bit==7))) && CS_INT == 1'b0
              && HPM_RD && (SI_Reg[7:0]== RSTEN || SI_Reg[7:0]== RST)) begin
             CMD_BUS = SI_Reg[7:0];
-            //$display( $time,"SI_Reg[7:0]= %h ", SI_Reg[7:0] );
+            $display( $time,"SI_Reg[7:0]= %h ", SI_Reg[7:0] );
         end
 
         if ( CS == 1'b1 && RST_CMD_EN &&
@@ -894,7 +919,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin 
-                                    // $display( $time, " Enter Write Enable Function ..." );
+                                    $display( $time, " Enter Write Enable Function ..." );
                                     write_enable;
                                 end
                                 else if ( Bit > 7 )
@@ -908,7 +933,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && (!WIP || During_Susp_Wait) && Chip_EN && ~HPM_RD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin 
-                                    // $display( $time, " Enter Write Disable Function ..." );
+                                    $display( $time, " Enter Write Disable Function ..." );
                                     write_disable;
                                 end
                                 else if ( Bit > 7 )
@@ -933,7 +958,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && !EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    // $display( $time, " Enter 4-byte mode ..." );
+                                    $display( $time, " Enter 4-byte mode ..." );
                                     CR[5] <= 1'b1;
                                     EN4B_Mode <= 1'b1;
                                 end
@@ -948,7 +973,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && !EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    // $display( $time, " Exit 4-byte mode ..." );
+                                    $display( $time, " Exit 4-byte mode ..." );
                                     CR[5] <= 1'b0;
                                     EN4B_Mode <= 1'b0;
                                 end
@@ -1421,7 +1446,7 @@ module MX25U25635F( SCLK,
                     RDP, RES:
                         begin
                             if ( (!WIP || During_Susp_Wait) && Chip_EN && ~HPM_RD ) begin
-                                // $display( $time, " Enter Release from Deep Power Down Function ..." );
+                                $display( $time, " Enter Release from Deep Power Down Function ..." );
                                 if ( !CR[5] ) begin
                                     RES_Mode = 1'b1;
                                 end
@@ -1524,7 +1549,7 @@ module MX25U25635F( SCLK,
                     RDSCUR: 
                         begin
                             if ( !DP_Mode && Chip_EN && ~HPM_RD) begin 
-                                // $display( $time, " Enter Read Secur_Register Function ..." );
+                                $display( $time, " Enter Read Secur_Register Function ..." );
                                 Read_SHSL = 1'b1;
                                 RDSCUR_Mode = 1'b1;
                             end
@@ -1550,7 +1575,7 @@ module MX25U25635F( SCLK,
                     RDEAR: 
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD) begin 
-                                // $display( $time, " Enter Read Extended_Address_Register Function ..." );
+                                $display( $time, " Enter Read Extended_Address_Register Function ..." );
                                 Read_SHSL = 1'b1;
                                 RDEAR_Mode = 1'b1;
                             end
@@ -2262,7 +2287,7 @@ module MX25U25635F( SCLK,
         begin
             //$display( $time, " Old Status Register = %b", Status_Reg );
             Status_Reg[1] = 1'b1; 
-            // $display( $time, " New Status Register = %b", Status_Reg );
+            $display( $time, " New Status Register = %b", Status_Reg );
         end
     endtask // write_enable
     

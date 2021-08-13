@@ -36,6 +36,15 @@ from rich import inspect as rinspect
 srv: Final = start_sim_server()
 ext: Final = cocotb.external
 
+usec = 1000
+poweronper: Final = 10_000+50
+# resetper = 300*usec
+resetper: Final = 10_000
+
+flash_offset: Final = 0x100000
+word0: Final = 0x00000093
+word1: Final = 0x00000193
+
 Ftck_mhz: Final = 20
 clkper_ns: Final = 1_000 / Ftck_mhz
 tclk: Final = Timer(clkper_ns, units='ns')
@@ -273,12 +282,12 @@ async def tick_si(dut, si: BitSequence) -> BitSequence:
     await tclk
     for di in si:
         dut._log.info(f'tick_si bit {di}')
-        sigs.si_o <= si
+        sigs.si_i <= di
         await ReadOnly()
         assert sigs.sclk.value == 0
         await tclkh
         sigs.sclk <= 1
-        so += BitSequence(sigs.so_i.value.value, length=1)
+        so += BitSequence(sigs.so_o.value.value, length=1)
         await tclkh
         sigs.sclk <= 0
     sigs.csn <= 1
@@ -302,27 +311,36 @@ async def reset_tap(dut):
     fork_clk()
 
     sigs.sclk <= 0
+    sigs.csn <= 1
     sigs.si_i <= 0
     sigs.so_i <= 0
     sigs.wp_i <= 1 # FIXME
     sigs.sio3_i <= 0
 
     sigs.rst <= 0
-    sigs.srst <= 0
-    await tclk
-    sigs.rst <= 1
     sigs.srst <= 1
     await tclk
-    sigs.rst <= 0
+    sigs.rst <= 1
     sigs.srst <= 0
     await tclk
+    await Timer(3, units='ms')
+    # await Timer(poweronper, units='ns')
+    # await Timer(resetper, units='ns')
+    sigs.rst <= 0
+    sigs.srst <= 1
+    await tclk
+    await Timer(resetper, units='ns')
     print(f'at end of reset sclk: {sigs.sclk.value}')
 
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def read_idcode(dut):
     fork_clk()
     dut._log.info("Running read_idcode...")
     await tmr(2*clkper_ns)
+
+    si = BitSequence(0x9f0000, msb=True)
+    so = await tick_si(dut, si)
+    dut._log.info(f"si: {si} so: {so}")
 
     await tmr(4*clkper_ns)
     dut._log.info("Running read_idcode...done")
