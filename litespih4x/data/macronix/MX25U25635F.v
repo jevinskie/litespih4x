@@ -157,7 +157,9 @@ module MX25U25635F( SCLK,
                 tREADY2_R       = 40_000,  // hardware reset recovery time for read
                 tREADY2_D       = 40_000,  // hardware reset recovery time for instruction decoding phase
                 tREADY2_W       = 40_000_000,  // hardware reset recovery time for WRSR
-                tVSL            = 1500_000;     // Time delay to chip select allowed
+                // tVSL            = 1500_000;     // Time delay to chip select allowed
+                tVSL            = 10;     // Time delay to chip select allowed
+
 
     parameter   tESL            = 20_000,       // delay after sector erase suspend command
                 tPSL            = 20_000,       // delay after sector program suspend command
@@ -238,10 +240,12 @@ module MX25U25635F( SCLK,
                     fFBSCLK3  = 108,   // Clock Frequence for Fast Boot Read 
                     fFBSCLK4  = `F133 ? 133 : 108,   // Clock Frequence for Fast Boot Read 
 
-                    tRLRH   = 10_000,   // hardware reset pulse
+                    // tRLRH   = 10_000,   // hardware reset pulse
+                    tRLRH   = 10,
                     tRS     = 15,     // reset setup time
                     tRH     = 15,     // reset hold time
-                    tRHSL   = 10_000,  // RESET# high before CS# low
+                    // tRHSL   = 10_000,  // RESET# high before CS# low
+                    tRHSL   = 10,
                     tDP     = 10_000,
                     tRES1   = 10_000,
                     tRES2   = 10_000;
