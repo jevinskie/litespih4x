@@ -320,16 +320,19 @@ async def reset_tap(dut):
     sigs.rst <= 0
     sigs.srst <= 1
     await tclk
+
+    await Timer(2*10, units='ns') # tVSL
+
     sigs.rst <= 1
     sigs.srst <= 0
     await tclk
+    await Timer(2*(15+1), units='us')
+    await Timer(2*(10+1), units='ns') # tRLRH
     # await Timer(2000, units='us')
-    await Timer(2*poweronper, units='ns')
-    await Timer(2*resetper, units='ns')
     sigs.rst <= 0
     sigs.srst <= 1
     await tclk
-    await Timer(2*resetper, units='ns')
+    await Timer(2*35, units='ns') # tREADY1
     print(f'at end of reset sclk: {sigs.sclk.value}')
 
 @cocotb.test(skip=False)

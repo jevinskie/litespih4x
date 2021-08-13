@@ -154,8 +154,10 @@ module MX25U25635F( SCLK,
                 tREADY2_SE      = 12_000_000,  // hardware reset recovery time for sector ers
                 tREADY2_BE      = 25_000_000,  // hardware reset recovery time for block ers
                 tREADY2_CE      = 100_000_000,  // hardware reset recovery time for chip ers
-                tREADY2_R       = 40_000,  // hardware reset recovery time for read
-                tREADY2_D       = 40_000,  // hardware reset recovery time for instruction decoding phase
+                // tREADY2_R       = 40_000,  // hardware reset recovery time for read
+                // tREADY2_D       = 40_000,  // hardware reset recovery time for instruction decoding phase
+                tREADY2_R       = 40,
+                tREADY2_D       = 40,
                 tREADY2_W       = 40_000_000,  // hardware reset recovery time for WRSR
                 // tVSL            = 1500_000;     // Time delay to chip select allowed
                 tVSL            = 10;     // Time delay to chip select allowed
@@ -797,7 +799,9 @@ module MX25U25635F( SCLK,
     /* power on                                                             */
     /*----------------------------------------------------------------------*/
     initial begin 
-        Chip_EN   <= #tVSL 1'b1;// Time delay to chip select allowed 
+        Chip_EN   <= #tVSL 1'b1;// Time delay to chip select allowed
+        #tVSL;
+        $display( $time, " Chip_EN tVSL expired, enabled\n");
     end
     
     /*----------------------------------------------------------------------*/
@@ -830,7 +834,7 @@ module MX25U25635F( SCLK,
             SIO3_IN_EN  = 1'b1;
         end
         if ( EN4XIO_Read_Mode == 1'b1 ) begin
-            //$display( $time, " Enter READX4 Function ..." );
+            $display( $time, " Enter READX4 Function ..." );
             Read_SHSL = 1'b1;
             STATE   <= `CMD_STATE;
             Read_4XIO_Mode = 1'b1; 
@@ -950,7 +954,7 @@ module MX25U25635F( SCLK,
                   RDID:
                       begin
                           if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                              //$display( $time, " Enter Read ID Function ..." );
+                              $display( $time, " Enter Read ID Function ..." );
                                Read_SHSL = 1'b1;
                                RDID_Mode = 1'b1;
                            end
@@ -991,7 +995,7 @@ module MX25U25635F( SCLK,
                    QPIID:
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && ENQUAD ) begin
-                                //$display( $time, " Enter Read ID Function ..." );
+                                $display( $time, " Enter Read ID Function ..." );
                                 Read_SHSL = 1'b1;
                                 RDID_Mode = 1'b1;
                             end
@@ -1003,7 +1007,7 @@ module MX25U25635F( SCLK,
                     RDSR:
                         begin 
                             if ( !DP_Mode && Chip_EN && ~HPM_RD) begin 
-                                //$display( $time, " Enter Read Status Function ..." );
+                                $display( $time, " Enter Read Status Function ..." );
                                 Read_SHSL = 1'b1;
                                 RDSR_Mode = 1'b1 ;
                             end
@@ -1014,7 +1018,7 @@ module MX25U25635F( SCLK,
                     RDCR:
                         begin
                             if ( !DP_Mode && Chip_EN && ~HPM_RD) begin
-                                //$display( $time, " Enter Read Configuration Status Function ..." );
+                                $display( $time, " Enter Read Configuration Status Function ..." );
                                 Read_SHSL = 1'b1;
                                 RDCR_Mode = 1'b1 ;
                             end
@@ -1031,12 +1035,12 @@ module MX25U25635F( SCLK,
                                         Status_Reg[1] = 1'b0; 
                                     end
                                     else if (CS_INT == 1'b1 && Bit == 15) begin 
-                                        //$display( $time, " Enter Write Status Function ..." ); 
+                                        $display( $time, " Enter Write Status Function ..." ); 
                                         ->WRSR_Event;
                                         WRSR_Mode = 1'b1;
                                     end 
                                     else if (CS_INT == 1'b1 && Bit == 23) begin                  
-                                        //$display( $time, " Enter Write Status Function ..." ); 
+                                        $display( $time, " Enter Write Status Function ..." ); 
                                         ->WRSR_Event;
                                         WRSR2_Mode = 1'b1;
                                     end
@@ -1056,7 +1060,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD ) begin  // no WEL
                                 if ( CS_INT == 1'b1 && Bit == 15 ) begin
-                                    //$display( $time, " Enter Set Burst Length Function ..." );
+                                    $display( $time, " Enter Set Burst Length Function ..." );
                                     EN_Burst = !SI_Reg[4];
                                     if ( SI_Reg[7:5]==3'b000 && SI_Reg[3:2]==2'b00 ) begin
                                         if ( SI_Reg[1:0]==2'b00 )
@@ -1082,7 +1086,7 @@ module MX25U25635F( SCLK,
                     READ1X: 
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Read Data Function ..." );
+                                $display( $time, " Enter Read Data Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 31 && !CR[5]) || (Bit == 39 && CR[5]) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1100,7 +1104,7 @@ module MX25U25635F( SCLK,
                     READ4B: 
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Read Data Function ..." );
+                                $display( $time, " Enter Read Data Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( Bit == 39  ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1116,7 +1120,7 @@ module MX25U25635F( SCLK,
                     FASTREAD1X:
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Fast Read Data Function ..." );
+                                $display( $time, " Enter Fast Read Data Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 31 && !CR[5]) || (Bit == 39 && CR[5]) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1134,7 +1138,7 @@ module MX25U25635F( SCLK,
                     FASTREAD4B:
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Fast Read Data Function ..." );
+                                $display( $time, " Enter Fast Read Data Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( Bit == 39 ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1157,7 +1161,7 @@ module MX25U25635F( SCLK,
                                     end
                                 end
                                 if ( CS_INT == 1'b1 && ((Bit == 31 && !CR[5]) || (Bit == 39 && CR[5])) ) begin
-                                    //$display( $time, " Enter Sector Erase Function ..." );
+                                    $display( $time, " Enter Sector Erase Function ..." );
                                     ->SE_4K_Event;
                                     SE_4K_Mode = 1'b1;
                                 end
@@ -1176,7 +1180,7 @@ module MX25U25635F( SCLK,
                                     Address = SI_Reg [A_MSB:0];
                                 end
                                 if ( CS_INT == 1'b1 && Bit == 39 ) begin
-                                    //$display( $time, " Enter Sector Erase Function ..." );
+                                    $display( $time, " Enter Sector Erase Function ..." );
                                     ->SE_4K_Event;
                                     SE_4K_Mode = 1'b1;
                                 end
@@ -1197,7 +1201,7 @@ module MX25U25635F( SCLK,
                                     end
                                 end
                                 if ( CS_INT == 1'b1 && ((Bit == 31 && !CR[5]) || (Bit == 39 && CR[5])) ) begin
-                                    //$display( $time, " Enter Block Erase Function ..." );
+                                    $display( $time, " Enter Block Erase Function ..." );
                                     ->BE_Event;
                                     BE_Mode = 1'b1;
                                     BE64K_Mode = 1'b1;
@@ -1217,7 +1221,7 @@ module MX25U25635F( SCLK,
                                     Address = SI_Reg [A_MSB:0];
                                 end
                                 if ( CS_INT == 1'b1 && Bit == 39 ) begin
-                                    //$display( $time, " Enter Block Erase Function ..." );
+                                    $display( $time, " Enter Block Erase Function ..." );
                                     ->BE_Event;
                                     BE_Mode = 1'b1;
                                     BE64K_Mode = 1'b1;
@@ -1239,7 +1243,7 @@ module MX25U25635F( SCLK,
                                     end
                                 end
                                 if ( CS_INT == 1'b1 && ((Bit == 31 && !CR[5]) || (Bit == 39 && CR[5])) ) begin
-                                    //$display( $time, " Enter Block 32K Erase Function ..." );
+                                    $display( $time, " Enter Block 32K Erase Function ..." );
                                     ->BE32K_Event;
                                     BE_Mode = 1'b1;
                                     BE32K_Mode = 1'b1;
@@ -1259,7 +1263,7 @@ module MX25U25635F( SCLK,
                                     Address = SI_Reg [A_MSB:0];
                                 end
                                 if ( CS_INT == 1'b1 && Bit == 39  ) begin
-                                    //$display( $time, " Enter Block 32K Erase Function ..." );
+                                    $display( $time, " Enter Block 32K Erase Function ..." );
                                     ->BE32K_Event;
                                     BE_Mode = 1'b1;
                                     BE32K_Mode = 1'b1;
@@ -1275,7 +1279,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !Secur_Mode &&  Chip_EN && ~HPM_RD && !EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    //$display( $time, " Enter Suspend Function ..." );
+                                    $display( $time, " Enter Suspend Function ..." );
                                     ->Susp_Event;
                                 end
                                 else if ( Bit > 7 )
@@ -1289,7 +1293,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    //$display( $time, " Enter Resume Function ..." );
+                                    $display( $time, " Enter Resume Function ..." );
                                     Secur_Mode = 1'b0;
                                     ->Resume_Event;
                                 end
@@ -1304,7 +1308,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && WEL && !Secur_Mode && Chip_EN && ~HPM_RD && !EPSUSP) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    //$display( $time, " Enter Chip Erase Function ..." );
+                                    $display( $time, " Enter Chip Erase Function ..." );
                                     ->CE_Event;
                                     CE_Mode = 1'b1 ;
                                 end 
@@ -1327,7 +1331,7 @@ module MX25U25635F( SCLK,
                                 end
 
                                 if ( (Bit == 31 && !CR[5]) || (Bit == 39 && CR[5]) ) begin
-                                    //$display( $time, " Enter Page Program Function ..." );
+                                    $display( $time, " Enter Page Program Function ..." );
                                     if ( CS_INT == 1'b0 ) begin
                                         ->PP_Event;
                                         PP_1XIO_Mode = 1'b1;
@@ -1354,7 +1358,7 @@ module MX25U25635F( SCLK,
                                 end
 
                                 if ( Bit == 39 ) begin
-                                    //$display( $time, " Enter Page Program Function ..." );
+                                    $display( $time, " Enter Page Program Function ..." );
                                     if ( CS_INT == 1'b0 ) begin
                                         ->PP_Event;
                                         PP_1XIO_Mode = 1'b1;
@@ -1371,7 +1375,7 @@ module MX25U25635F( SCLK,
                     SFDP_READ:
                         begin
                             if ( !DP_Mode && !Secur_Mode && !WIP && Chip_EN && ~HPM_RD && !CR[5] ) begin
-                                //$display( $time, " Enter SFDP read mode ..." );
+                                $display( $time, " Enter SFDP read mode ..." );
                                 if ( Bit == 31 ) begin
                                     Address = SI_Reg [A_MSB:0];
                                     load_address(Address);
@@ -1394,7 +1398,7 @@ module MX25U25635F( SCLK,
                     RDFBR:
                         begin 
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin 
-                                //$display( $time, " Enter Read Fast Boot Register Function ..." );
+                                $display( $time, " Enter Read Fast Boot Register Function ..." );
                                 Read_SHSL = 1'b1;
                                 RDFBR_Mode = 1'b1 ;
                             end
@@ -1406,7 +1410,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && WEL && Chip_EN && !Secur_Mode && ~HPM_RD && !EPSUSP && !ENQUAD ) begin
                                 if ( CS_INT == 1'b0 && Bit == 7 ) begin
-                                    //$display( $time, " Enter Write Fast Boot Register Function ..." ); 
+                                    $display( $time, " Enter Write Fast Boot Register Function ..." ); 
                                     ->WRFBR_Event;
                                     WRFBR_Mode = 1'b1;
                                 end    
@@ -1421,7 +1425,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && WEL && Chip_EN && !Secur_Mode && ~HPM_RD && !EPSUSP && !ENQUAD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    //$display( $time, " Enter Erase Fast Boot Register Function ..." );
+                                    $display( $time, " Enter Erase Fast Boot Register Function ..." );
                                     ->ESFBR_Event;
                                     ESFBR_Mode = 1'b1;
                                 end
@@ -1436,7 +1440,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !WIP && Chip_EN && ~HPM_RD && !EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 && DP_Mode == 1'b0 ) begin
-                                    //$display( $time, " Enter Deep Power Down Function ..." );
+                                    $display( $time, " Enter Deep Power Down Function ..." );
                                     tDP_Chk = 1'b1;
                                     DP_Mode = 1'b1;
                                 end
@@ -1482,7 +1486,7 @@ module MX25U25635F( SCLK,
                                 if ( Bit == 31 ) begin
                                     Address = SI_Reg[A_MSB:0] ;
                                 end
-                                //$display( $time, " Enter Read Electronic Manufacturer & ID Function ..." );
+                                $display( $time, " Enter Read Electronic Manufacturer & ID Function ..." );
                                 Read_SHSL = 1'b1;
                                 REMS_Mode = 1'b1;
                             end
@@ -1492,7 +1496,7 @@ module MX25U25635F( SCLK,
                     READ2X: 
                         begin 
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter READX2 Function ..." );
+                                $display( $time, " Enter READX2 Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 19 && !CR[5]) || (Bit == 23 && CR[5]) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1509,7 +1513,7 @@ module MX25U25635F( SCLK,
                     READ2X4B: 
                         begin 
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter READX2 Function ..." );
+                                $display( $time, " Enter READX2 Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( Bit == 23 ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1526,7 +1530,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin  
-                                    //$display( $time, " Enter ENSO  Function ..." );
+                                    $display( $time, " Enter ENSO  Function ..." );
                                     enter_secured_otp;
                                 end
                                 else if ( Bit > 7 )
@@ -1540,7 +1544,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin  
-                                    //$display( $time, " Enter EXSO  Function ..." );
+                                    $display( $time, " Enter EXSO  Function ..." );
                                     exit_secured_otp;
                                 end
                                 else if ( Bit > 7 )
@@ -1566,7 +1570,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && WEL && !Secur_Mode && Chip_EN && ~HPM_RD && !EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin  
-                                    //$display( $time, " Enter WRSCUR Secur_Register Function ..." );
+                                    $display( $time, " Enter WRSCUR Secur_Register Function ..." );
                                     ->WRSCUR_Event;
                                 end
                                 else if ( Bit > 7 )
@@ -1591,7 +1595,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && WEL && !Secur_Mode && Chip_EN && ~HPM_RD && !EPSUSP ) begin
                                 if ( CS_INT == 1'b1 && Bit == 15 ) begin  
-                                    //$display( $time, " Enter WREAR Extended_Address_Register Function ..." );
+                                    $display( $time, " Enter WREAR Extended_Address_Register Function ..." );
                                     ->WREAR_Event;
                                 end
                                 else if ( CS_INT == 1'b1 && (Bit > 15 || Bit < 15) )
@@ -1604,7 +1608,7 @@ module MX25U25635F( SCLK,
                     READ4X:
                         begin
                             if ( !DP_Mode && !WIP && (Status_Reg[6]|ENQUAD) && Chip_EN && ~HPM_RD ) begin
-                                //$display( $time, " Enter READX4 Function ..." );
+                                $display( $time, " Enter READX4 Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 13 && !CR[5] && !ENQUAD) || (Bit == 31 && !CR[5] && ENQUAD) || (Bit == 15 && CR[5] && !ENQUAD) || (Bit == 39 && CR[5] && ENQUAD) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1624,7 +1628,7 @@ module MX25U25635F( SCLK,
                     READ4X_TOP:
                         begin
                             if ( !DP_Mode && !WIP && (Status_Reg[6]|ENQUAD) && Chip_EN && ~HPM_RD && !CR[5] ) begin
-                                //$display( $time, " Enter READX4 Function ..." );
+                                $display( $time, " Enter READX4 Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 13 && !ENQUAD) || (Bit == 31 && ENQUAD) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1643,7 +1647,7 @@ module MX25U25635F( SCLK,
                     READ4X4B:
                         begin
                             if ( !DP_Mode && !WIP && (Status_Reg[6]|ENQUAD) && Chip_EN && ~HPM_RD ) begin
-                                //$display( $time, " Enter READX4 Function ..." );
+                                $display( $time, " Enter READX4 Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 15 && !ENQUAD) || (Bit == 39 && ENQUAD) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1660,7 +1664,7 @@ module MX25U25635F( SCLK,
                     DREAD:
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Fast Read dual output Function ..." );
+                                $display( $time, " Enter Fast Read dual output Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 31 && !CR[5]) || (Bit == 39 && CR[5]) ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1677,7 +1681,7 @@ module MX25U25635F( SCLK,
                     DREAD4B:
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Fast Read dual output Function ..." );
+                                $display( $time, " Enter Fast Read dual output Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( Bit == 39 ) begin
                                     Address = SI_Reg [A_MSB:0];
@@ -1693,7 +1697,7 @@ module MX25U25635F( SCLK,
                     QREAD:
                         begin
                             if ( !DP_Mode && !WIP && Status_Reg[6] && Chip_EN  && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Fast Read quad output Function ..." );
+                                $display( $time, " Enter Fast Read quad output Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( (Bit == 31 && !CR[5]) || (Bit == 39 && CR[5]) ) begin 
                                    Address = SI_Reg [A_MSB:0];
@@ -1711,7 +1715,7 @@ module MX25U25635F( SCLK,
                     QREAD4B:
                         begin
                             if ( !DP_Mode && !WIP && Status_Reg[6] && Chip_EN  && ~HPM_RD && !ENQUAD ) begin
-                                //$display( $time, " Enter Fast Read quad output Function ..." );
+                                $display( $time, " Enter Fast Read quad output Function ..." );
                                 Read_SHSL = 1'b1;
                                 if ( Bit == 39 ) begin 
                                    Address = SI_Reg [A_MSB:0];
@@ -1740,7 +1744,7 @@ module MX25U25635F( SCLK,
                                 WP_IN_EN    = 1'b1;
                                 SIO3_IN_EN  = 1'b1;
                                 if ( CS_INT == 0 && ((Bit == 13 && !CR[5]) || (Bit == 15 && CR[5])) ) begin
-                                    //$display( $time, " Enter 4io Page Program Function ..." );
+                                    $display( $time, " Enter 4io Page Program Function ..." );
                                     ->PP_Event;
                                     PP_4XIO_Mode= 1'b1;
                                 end
@@ -1769,7 +1773,7 @@ module MX25U25635F( SCLK,
                                 WP_IN_EN    = 1'b1;
                                 SIO3_IN_EN  = 1'b1;
                                 if ( CS_INT == 0 && Bit == 15 ) begin
-                                    //$display( $time, " Enter 4io Page Program Function ..." );
+                                    $display( $time, " Enter 4io Page Program Function ..." );
                                     ->PP_Event;
                                     PP_4XIO_Mode= 1'b1;
                                 end
@@ -1785,7 +1789,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && !ENQUAD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    //$display( $time, " Enable Quad I/O Function ..." );
+                                    $display( $time, " Enable Quad I/O Function ..." );
                                     ENQUAD = 1'b1;
                                 end
                                 else if ( Bit > 7 )
@@ -1799,7 +1803,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( !DP_Mode && !WIP && Chip_EN && ~HPM_RD && ENQUAD ) begin
                                 if ( CS_INT == 1'b1 && Bit == 7 ) begin
-                                    //$display( $time, " Exiting QPI mode ..." );
+                                    $display( $time, " Exiting QPI mode ..." );
                                     ENQUAD = 1'b0;
                                 end
                                 else if ( Bit > 7 )
@@ -1813,7 +1817,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( Chip_EN ) begin
                                 if ( CS_INT == 1'b1 && (Bit == 7 || (EN4XIO_Read_Mode && Bit == 1)) ) begin
-                                    //$display( $time, " Reset enable ..." );
+                                    $display( $time, " Reset enable ..." );
                                     ->RST_EN_Event;
                                 end
                                 else if ( Bit > 7 )
@@ -1827,7 +1831,7 @@ module MX25U25635F( SCLK,
                         begin
                             if ( Chip_EN && RST_CMD_EN ) begin
                                 if ( CS_INT == 1'b1 && (Bit == 7 || (EN4XIO_Read_Mode && Bit == 1)) ) begin
-                                    //$display( $time, " Reset memory ..." );
+                                    $display( $time, " Reset memory ..." );
                                     ->RST_Event;
                                 end
                                 else if ( Bit > 7 )
@@ -2289,7 +2293,7 @@ module MX25U25635F( SCLK,
     /*----------------------------------------------------------------------*/
     task write_enable;
         begin
-            //$display( $time, " Old Status Register = %b", Status_Reg );
+            $display( $time, " Old Status Register = %b", Status_Reg );
             Status_Reg[1] = 1'b1; 
             $display( $time, " New Status Register = %b", Status_Reg );
         end
@@ -2300,9 +2304,9 @@ module MX25U25635F( SCLK,
     /*----------------------------------------------------------------------*/
     task write_disable;
         begin
-            //$display( $time, " Old Status Register = %b", Status_Reg );
+            $display( $time, " Old Status Register = %b", Status_Reg );
             Status_Reg[1]  = 1'b0;
-            //$display( $time, " New Status Register = %b", Status_Reg );
+            $display( $time, " New Status Register = %b", Status_Reg );
         end
     endtask // write_disable
     
@@ -2486,7 +2490,7 @@ module MX25U25635F( SCLK,
     reg [7:0] Status_Reg_Up;
     reg [7:0] CR_Up;
         begin
-            //$display( $time, " Old Status Register = %b", Status_Reg );
+            $display( $time, " Old Status Register = %b", Status_Reg );
           if (WRSR_Mode == 1'b0 && WRSR2_Mode == 1'b1) begin
             Status_Reg_Up = SI_Reg[15:8] ;
             CR_Up = SI_Reg [7:0];
@@ -3353,9 +3357,9 @@ module MX25U25635F( SCLK,
     /*----------------------------------------------------------------------*/
     task enter_secured_otp;
         begin
-            //$display( $time, " Enter secured OTP mode  = %b",  Secur_Mode );
+            $display( $time, " Enter secured OTP mode  = %b",  Secur_Mode );
             Secur_Mode= 1;
-            //$display( $time, " New Enter  secured OTP mode  = %b",  Secur_Mode );
+            $display( $time, " New Enter  secured OTP mode  = %b",  Secur_Mode );
         end
     endtask // enter_secured_otp
 
@@ -3364,9 +3368,9 @@ module MX25U25635F( SCLK,
     /*----------------------------------------------------------------------*/
     task exit_secured_otp;
         begin
-            //$display( $time, " Enter secured OTP mode  = %b",  Secur_Mode );
+            $display( $time, " Enter secured OTP mode  = %b",  Secur_Mode );
             Secur_Mode = 0;
-            //$display( $time,  " New Enter secured OTP mode  = %b",  Secur_Mode );
+            $display( $time,  " New Enter secured OTP mode  = %b",  Secur_Mode );
         end
     endtask
 
@@ -3496,7 +3500,7 @@ module MX25U25635F( SCLK,
         reg [7:0] EA_Reg_Up;
         begin
             WREAR_Mode       = 1'b1;
-            //$display( $time, " Old Extended Address Register = %b", EA_Reg );
+            $display( $time, " Old Extended Address Register = %b", EA_Reg );
             EA_Reg_Up = SI_Reg[7:0];
 
             Status_Reg[0]   = 1'b1;
