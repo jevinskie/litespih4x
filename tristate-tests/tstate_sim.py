@@ -49,42 +49,6 @@ async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
 
 
-class TristateModelImpl(Module):
-    def __init__(self, clk: Signal, rst: Signal, sio3: TSTriple):
-
-        self.SIO3_io = SIO3_io = Signal()
-
-        sio3.get_tristate(SIO3_io)
-
-        # # #
-
-        self.specials += Instance("TristateModelHand",
-              i_clk = clk,
-              i_rst = rst,
-              i_SIO3 = SIO3_io,
-          )
-
-
-class TristateModelSpecial(Special):
-    def __init__(self, platform, clk: Signal, rst: Signal, sio3: TSTriple):
-        super().__init__()
-        self.clk = clk
-        self.rst = rst
-        self.sio3 = sio3
-
-        platform.add_source(str(_TRISTATE_VERILOG_PATH), 'verilog')
-
-    @staticmethod
-    def lower(dr):
-        return TristateModelImpl(dr.clk, dr.rst, dr.sio3)
-
-class TristateModel(Module):
-    def __init__(self, platform, clk: Signal, rst: Signal, sio3: TSTriple):
-        # # #
-        self.specials += TristateModelSpecial(platform, clk, rst, sio3)
-
-
-
 # IOs ----------------------------------------------------------------------------------------------
 
 _io = [
@@ -137,8 +101,6 @@ class BenchSoC(SoCCore):
         self.qspi_pads = qp = self.platform.request("qspiflash_real")
         self.rf_sio3_ts = rf_sio3_ts = TSTriple()
         self.specials += rf_sio3_ts.get_tristate(qp.sio3)
-
-        self.submodules.ts_model = ts_model = TristateModel(self.platform, qp.clk, qp.rst, rf_sio3_ts)
 
         if dump:
             with open('ts_model_genned.v', 'w') as f:
