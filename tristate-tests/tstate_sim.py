@@ -22,6 +22,7 @@ from litex.build.sim.common import CocotbVCDDumperSpecial
 
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
+from litex.soc.interconnect import wishbone
 
 from litespih4x.macronix_model import MacronixModel
 
@@ -104,9 +105,15 @@ class BenchSoC(SoCCore):
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
 
+        # self.wb_dummy_tap = wb_dummy_tap = wishbone.Interface()
+        # self.add_wb_master(wb_dummy_tap, 'wb_dummy_tap')
+
+        self.wb_sim_tap = wb_sim_tap = wishbone.Interface()
+        self.add_wb_master(wb_sim_tap, 'wb_sim_tap')
+
         if dump:
-            with open('ts_model_genned.v', 'w') as f:
-                f.write(str(verilog.convert(self.ts_model)))
+            with open('dump.v', 'w') as f:
+                f.write(str(verilog.convert(self)))
             sys.exit(0)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
@@ -226,6 +233,17 @@ if cocotb.top is not None:
     d['qr'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_real))
     d['qe'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_emu))
     sigs = Sigs(**d)
+
+    wb_bus = WishboneMaster(cocotb.top, "wb_sim_tap", sigs.clk,
+                          width=32,   # size of data bus
+                          timeout=10, # in clock cycle number
+                          signals_dict={"cyc":   "cyc",
+                                        "stb":   "stb",
+                                        "we":    "we",
+                                        "adr":   "adr",
+                                        "datwr": "dat_w",
+                                        "datrd": "dat_r",
+                                         "ack":  "ack" })
 
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
