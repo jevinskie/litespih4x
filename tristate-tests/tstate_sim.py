@@ -31,10 +31,6 @@ from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
 from cocotb.clock import Clock
 from cocotb.handle import SimHandleBase, ModifiableObject
 
-
-_TRISTATE_VERILOG_NAME: Final = 'TristateModuleHand.v'
-_TRISTATE_VERILOG_PATH: Final = Path(__file__).parent.joinpath(_TRISTATE_VERILOG_NAME)
-
 import attr
 from rich import inspect as rinspect
 
@@ -56,24 +52,23 @@ async def tmr(ns: float) -> None:
 _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
-    ("sio3", 0, Pins(1)),
     ("qspiflash_real", 0,
-        Subsignal("clk", Pins(1)),
-        Subsignal("rst", Pins(1)),
-
+        Subsignal("sclk", Pins(1)),
+        Subsignal("rstn", Pins(1)),
+        Subsignal("csn", Pins(1)),
+        Subsignal("si", Pins(1)),
+        Subsignal("so", Pins(1)),
+        Subsignal("wp", Pins(1)),
         Subsignal("sio3", Pins(1)),
-
-        # Subsignal("sio3_i", Pins(1)),
-        # Subsignal("sio3_o", Pins(1)),
-        # Subsignal("sio3_oe", Pins(1)),
      ),
     ("qspiflash_emu", 0,
-
+        Subsignal("sclk", Pins(1)),
+        Subsignal("rstn", Pins(1)),
+        Subsignal("csn", Pins(1)),
+        Subsignal("si", Pins(1)),
+        Subsignal("so", Pins(1)),
+        Subsignal("wp", Pins(1)),
         Subsignal("sio3", Pins(1)),
-
-     # Subsignal("sio3_i", Pins(1)),
-     # Subsignal("sio3_o", Pins(1)),
-     # Subsignal("sio3_oe", Pins(1)),
      ),
 ]
 
@@ -101,16 +96,10 @@ class BenchSoC(SoCCore):
         self.submodules.crg = CRG(platform.request("sys_clk"), rst=platform.request("sys_rst"))
 
 
-        self.qspi_pads = qp = self.platform.request("qspiflash_real")
-        self.rf_sio3_ts = rf_sio3_ts = TSTriple()
-        self.specials += rf_sio3_ts.get_tristate(qp.sio3)
+        self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
+        self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wp, qr.sio3)
 
-        self.sio3 = sio3 = platform.request("sio3")
-
-        self.submodules.tms_a = tms_a = TristateModelHand(sio3)
-        self.submodules.tms_b = tms_b = TristateModelHand(sio3, xor_o=1, xor_oe=0)
-
-        # self.platform.add_source(str(Path('TristateModelHand.v').resolve()), 'verilog')
+        self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
 
         if dump:
             with open('ts_model_genned.v', 'w') as f:
@@ -173,41 +162,66 @@ def main():
     )
 
 @attr.s(auto_attribs=True)
+class QSPISigs:
+    sclk: ModifiableObject
+    rstn: ModifiableObject
+    csn: ModifiableObject
+    si: ModifiableObject
+    so: ModifiableObject
+    wp: ModifiableObject
+    sio3: ModifiableObject
+
+@attr.s(auto_attribs=True)
 class Sigs:
     clk: ModifiableObject
     rst: ModifiableObject
 
-    sio3: ModifiableObject
-
+    qr: QSPISigs
+    qe: QSPISigs
 
 sigs = None
 soc = None
 ns = None
 
 
-def get_sig_dict(t, p):
+def nol(sig: Signal) -> str:
+    return sig.name_override
+
+
+def nsl(sig: Signal) -> str:
+    return ns.pnd[sig]
+
+def get_qspisigs_dict(t, p):
     def helper(platform, soc, ns):
-        def nol(sig: Signal) -> str:
-            return sig.name_override
-
-        def nsl(sig: Signal) -> str:
-            return ns.pnd[sig]
-
         return {
-            'clk':  getattr(t, 'sys_clk'),
-            'rst':  getattr(t, 'sys_rst'),
-            'sio3': getattr(t, 'sio3'),
+            'sclk':  getattr(t, nsl(p.sclk)),
+            'rstn':  getattr(t, nsl(p.rstn)),
+            'csn': getattr(t, nsl(p.rstn)),
+            'si': getattr(t, nsl(p.si)),
+            'so': getattr(t, nsl(p.so)),
+            'wp': getattr(t, nsl(p.wp)),
+            'sio3': getattr(t, nsl(p.sio3)),
         }
+    return srv.root.call_on_server(helper)
 
+def get_sigs_dict(t):
+    def helper(platform, soc, ns):
+        return {
+            'clk':  getattr(t, nol(soc.crg.cd_sys.clk)),
+            'rst':  getattr(t, nol(soc.crg.cd_sys.rst)),
+        }
     return srv.root.call_on_server(helper)
 
 
 if cocotb.top is not None:
     soc = srv.root.soc
     ns = srv.root.ns
-    pads = soc.qspi_pads
+    pads_real = soc.qspi_pads_real
+    pads_emu = soc.qspi_pads_emu
 
-    d = get_sig_dict(cocotb.top, pads)
+    d = get_sigs_dict(cocotb.top)
+    d['qr'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_real))
+    d['qe'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_emu))
     sigs = Sigs(**d)
 
 def fork_clk():
