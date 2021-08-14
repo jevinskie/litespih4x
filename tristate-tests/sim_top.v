@@ -1,7 +1,7 @@
 module sim_top
     (
-        input clk,
-        input rst,
+        input sys_clk,
+        input sys_rst,
         inout sio3
     );
 

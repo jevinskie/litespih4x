@@ -168,26 +168,7 @@ class Sigs:
     clk: ModifiableObject
     rst: ModifiableObject
 
-    sclk: ModifiableObject
-    srst: ModifiableObject
-    csn: ModifiableObject
-
-    si_i: ModifiableObject
-    si_o: ModifiableObject
-    si_oe: ModifiableObject
-
-
-    so_i: ModifiableObject
-    so_o: ModifiableObject
-    so_oe: ModifiableObject
-
-    wp_i: ModifiableObject
-    wp_o: ModifiableObject
-    wp_oe: ModifiableObject
-
-    sio3_i: ModifiableObject
-    sio3_o: ModifiableObject
-    sio3_oe: ModifiableObject
+    sio3: ModifiableObject
 
 
 sigs = None
@@ -204,28 +185,9 @@ def get_sig_dict(t, p):
             return ns.pnd[sig]
 
         return {
-            'clk': getattr(t, nol(soc.crg.cd_sys.clk)),
-            'rst': getattr(t, nol(soc.crg.cd_sys.rst)),
-
-            'sclk': getattr(t, nsl(p.sclk)),
-            'srst': getattr(t, nsl(p.rst)),
-            'csn': getattr(t, nsl(p.csn)),
-
-            'si_i': getattr(t, nsl(p.si_i)),
-            'si_o': getattr(t, nsl(p.si_o)),
-            'si_oe': getattr(t, nsl(p.si_oe)),
-
-            'so_i': getattr(t, nsl(p.so_i)),
-            'so_o': getattr(t, nsl(p.so_o)),
-            'so_oe': getattr(t, nsl(p.so_oe)),
-
-            'wp_i': getattr(t, nsl(p.wp_i)),
-            'wp_o': getattr(t, nsl(p.wp_o)),
-            'wp_oe': getattr(t, nsl(p.wp_oe)),
-
-            'sio3_i': getattr(t, nsl(p.sio3_i)),
-            'sio3_o': getattr(t, nsl(p.sio3_o)),
-            'sio3_oe': getattr(t, nsl(p.sio3_oe)),
+            'clk': 'clk',
+            'rst': 'rst',
+            'sio3': 'sio3',
         }
 
     return srv.root.call_on_server(helper)

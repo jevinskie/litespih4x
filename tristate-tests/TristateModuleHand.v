@@ -2,10 +2,10 @@ module TristateModelHand
     (
         input clk,
         input rst,
-        inout SIO3
+        inout sio3
     );
 
-    assign SIO3 = 1'b0;
+    assign sio3 = 1'b0;
 
 endmodule
 
