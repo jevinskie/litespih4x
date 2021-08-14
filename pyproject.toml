@@ -59,6 +59,9 @@ pythondata-misc-usb_ohci = { path = "../pythondata-misc-usb_ohci", develop = tru
 pythondata-software-compiler_rt = { path = "../pythondata-software-compiler_rt", develop = true }
 
 cocotb = { path = "../cocotb", develop = true }
+cocotbext-spi = { path = "../cocotbext-spi", develop = true }
+cocotbext-wishbone = { path = "../cocotbext-wishbone", develop = true }
+
 cocotb-coverage = "^1.1.0"
 
 pydigitalwavetools = {git = "https://github.com/Nic30/pyDigitalWaveTools"}
