@@ -24,12 +24,15 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
 from litespih4x.macronix_model import MacronixModel
-from TristateModelHand import TristateModelHand
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
 from cocotb.clock import Clock
 from cocotb.handle import SimHandleBase, ModifiableObject
+from cocotb_bus.bus import Bus
+
+from cocotbext.wishbone.driver import WishboneMaster
+from cocotbext.wishbone.driver import WBOp
 
 import attr
 from rich import inspect as rinspect
