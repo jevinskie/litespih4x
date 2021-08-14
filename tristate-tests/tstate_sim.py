@@ -108,7 +108,7 @@ class BenchSoC(SoCCore):
         self.sio3 = sio3 = platform.request("sio3")
 
         self.submodules.tms_a = tms_a = TristateModelHand(sio3)
-        self.submodules.tms_b = tms_b = TristateModelHand(sio3, xor_o=1, xor_oe=1)
+        self.submodules.tms_b = tms_b = TristateModelHand(sio3, xor_o=1, xor_oe=0)
 
         # self.platform.add_source(str(Path('TristateModelHand.v').resolve()), 'verilog')
 
