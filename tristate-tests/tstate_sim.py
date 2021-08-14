@@ -114,7 +114,7 @@ _io = [
 
 class Platform(SimPlatform):
     def __init__(self, toolchain="cocotb"):
-        super().__init__("SIM", _io, toolchain=toolchain)
+        super().__init__("tstate_sim", _io, name="tstate_sim", toolchain=toolchain)
 
 
 # Bench SoC ----------------------------------------------------------------------------------------
@@ -156,11 +156,11 @@ class BenchSoC(SoCCore):
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="LiteJTAG Simulation")
+    parser = argparse.ArgumentParser(description="Tristate Simulation")
     parser.add_argument("--build", default=True,  action="store_true",     help="Build simulation")
     genopts = parser.add_mutually_exclusive_group()
-    genopts.add_argument("--run",   default=False, action="store_true",     help="Run simulation")
-    genopts.add_argument("--dump",  default=False, action="store_true",     help="Dump module")
+    genopts.add_argument("--run",   default=False, action="store_true",    help="Run simulation")
+    genopts.add_argument("--dump",  default=False, action="store_true",    help="Dump module")
     parser.add_argument("--toolchain",            default="cocotb",        help="Simulation toolchain")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-fst",            action="store_true",     help="Enable FST tracing (default=VCD)")
@@ -169,6 +169,7 @@ def main():
     parser.add_argument("--trace-exit",           action="store_true",     help="End simulation once trace finishes")
     parser.add_argument("--sim-end",              default="-1",            help="Time to end simulation (ps)")
     parser.add_argument("--sim-debug",            action="store_true",     help="Add simulation debugging modules")
+    parser.add_argument("--sim-top", default=None,                         help="Use a custom file for the top sim module")
     args = parser.parse_args()
     try:
         args.trace_start = int(args.trace_start)
@@ -193,6 +194,7 @@ def main():
         trace_end   = args.trace_end,
         trace_exit  = args.trace_exit,
         sim_end     = args.sim_end,
+        sim_top     = args.sim_top,
         module      = sys.modules[__name__],
         soc         = soc,
         build       = args.build,
