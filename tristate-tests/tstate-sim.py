@@ -5,12 +5,14 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 import argparse
+from pathlib import Path
 import socket
 import time
 from typing import Final
 
 from migen import *
 from migen.fhdl import verilog
+from migen.fhdl.specials import Special
 
 from litex.build.generic_platform import *
 from litex.build.sim import SimPlatform
@@ -28,7 +30,9 @@ from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
 from cocotb.clock import Clock
 from cocotb.handle import SimHandleBase, ModifiableObject
 
-from pyftdi.jtag import *
+
+_TRISTATE_VERILOG_NAME: Final = 'TristateModuleHand.v'
+_TRISTATE_VERILOG_PATH: Final = Path(__file__).parent.joinpath(_TRISTATE_VERILOG_NAME)
 
 import attr
 from rich import inspect as rinspect
@@ -36,52 +40,73 @@ from rich import inspect as rinspect
 srv: Final = start_sim_server()
 ext: Final = cocotb.external
 
-usec = 1000
-poweronper: Final = 10_000+50
-# resetper = 300*usec
-resetper: Final = 10_000
-
-flash_offset: Final = 0x100000
-word0: Final = 0x00000093
-word1: Final = 0x00000193
-
 Ftck_mhz: Final = 20
 clkper_ns: Final = 1_000 / Ftck_mhz
 tclk: Final = Timer(clkper_ns, units='ns')
 tclkh: Final = Timer(clkper_ns/2, units='ns')
-# IDCODE: Final = BitSequence('0000000110', msb=True, length=10)
-# IDCODE: Final = BitSequence('0000000110')
-# IDCODE: Final = BitSequence('0010')
-IDCODE: Final = BitSequence('00010', msb=True)
 
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
+
+
+class TristateModelImpl(Module):
+    def __init__(self, clk: Signal, rst: Signal, sio3: TSTriple):
+
+        self.SIO3_io = SIO3_io = Signal()
+
+        sio3.get_tristate(SIO3_io)
+
+        # # #
+
+        self.specials += Instance("TristateModelHand",
+              i_clk = clk,
+              i_rst = rst,
+              i_SIO3 = SIO3_io,
+          )
+
+
+class TristateModelSpecial(Special):
+    def __init__(self, platform, clk: Signal, rst: Signal, sio3: TSTriple):
+        super().__init__()
+        self.clk = clk
+        self.rst = rst
+        self.sio3 = sio3
+
+        platform.add_source(str(_TRISTATE_VERILOG_PATH), 'verilog')
+
+    @staticmethod
+    def lower(dr):
+        return TristateModelImpl(dr.clk, dr.rst, dr.sio3)
+
+class TristateModel(Module):
+    def __init__(self, platform, clk: Signal, rst: Signal, sio3: TSTriple):
+        # # #
+        self.specials += TristateModelSpecial(platform, clk, rst, sio3)
+
+
 
 # IOs ----------------------------------------------------------------------------------------------
 
 _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
-    ("qspiflash", 0,
-        Subsignal("sclk", Pins(1)),
+    ("qspiflash_real", 0,
+        Subsignal("clk", Pins(1)),
         Subsignal("rst", Pins(1)),
-        Subsignal("csn", Pins(1)),
 
-        Subsignal("si_i", Pins(1)),
-        Subsignal("si_o", Pins(1)),
-        Subsignal("si_oe", Pins(1)),
+        Subsignal("sio3", Pins(1)),
 
-        Subsignal("so_o", Pins(1)),
-        Subsignal("so_i", Pins(1)),
-        Subsignal("so_oe", Pins(1)),
+        # Subsignal("sio3_i", Pins(1)),
+        # Subsignal("sio3_o", Pins(1)),
+        # Subsignal("sio3_oe", Pins(1)),
+     ),
+    ("qspiflash_emu", 0,
 
-        Subsignal("wp_i", Pins(1)),
-        Subsignal("wp_o", Pins(1)),
-        Subsignal("wp_oe", Pins(1)),
+        Subsignal("sio3", Pins(1)),
 
-        Subsignal("sio3_i", Pins(1)),
-        Subsignal("sio3_o", Pins(1)),
-        Subsignal("sio3_oe", Pins(1)),
+     # Subsignal("sio3_i", Pins(1)),
+     # Subsignal("sio3_o", Pins(1)),
+     # Subsignal("sio3_oe", Pins(1)),
      ),
 ]
 
@@ -101,7 +126,7 @@ class BenchSoC(SoCCore):
 
         # SoCMini ----------------------------------------------------------------------------------
         SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
-            ident          = "LiteJTAG cocotb Simulation",
+            ident          = "LiteSPIh4x cocotb tristate sim",
             ident_version  = True
         )
 
@@ -109,33 +134,15 @@ class BenchSoC(SoCCore):
         self.submodules.crg = CRG(platform.request("sys_clk"))
 
 
-        self.qspi_pads = qp = self.platform.request("qspiflash")
+        self.qspi_pads = qp = self.platform.request("qspiflash_real")
+        self.rf_sio3_ts = rf_sio3_ts = TSTriple()
+        self.specials += rf_sio3_ts.get_tristate(qp.sio3)
 
-        self.qspi_si_ts = sit = TSTriple()
-        sit.i = qp.si_i
-        sit.o = qp.si_o
-        sit.oe = qp.si_oe
-
-        self.qspi_so_ts = sot = TSTriple()
-        sot.i = qp.so_i
-        sot.o = qp.so_o
-        sot.oe = qp.so_oe
-
-        self.qspi_wp_ts = wpt = TSTriple()
-        wpt.i = qp.wp_i
-        wpt.o = qp.wp_o
-        wpt.oe = qp.wp_oe
-
-        self.qspi_sio3_ts = sio3t = TSTriple()
-        sio3t.i = qp.sio3_i
-        sio3t.o = qp.sio3_o
-        sio3t.oe = qp.sio3_oe
-
-        self.submodules.qspi_model = qspi_model = MacronixModel(self.platform, qp.sclk, self.crg.cd_sys.rst, qp.csn, sit, sot, wpt, sio3t)
+        self.submodules.ts_model = ts_model = TristateModel(self.platform, qp.clk, qp.rst, rf_sio3_ts)
 
         if dump:
-            with open('qspi_model.v', 'w') as f:
-                f.write(str(verilog.convert(self.qspi_model)))
+            with open('ts_model_genned.v', 'w') as f:
+                f.write(str(verilog.convert(self.ts_model)))
             sys.exit(0)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
@@ -268,85 +275,13 @@ if cocotb.top is not None:
     d = get_sig_dict(cocotb.top, pads)
     sigs = Sigs(**d)
 
-
-def xbits(n, hi, lo):
-    return (n >> lo) & (2**(hi+1 - lo) - 1)
-
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
-
-async def tick_si(dut, si: BitSequence) -> BitSequence:
-    dut._log.info(f'tick_si {si} {int(si)} tck: {sigs.sclk.value}')
-    so = BitSequence()
-    sigs.csn <= 0
-    await tclk
-    for di in si:
-        dut._log.info(f'tick_si bit {di}')
-        sigs.si_i <= di
-        await ReadOnly()
-        assert sigs.sclk.value == 0
-        await tclkh
-        sigs.sclk <= 1
-        so += BitSequence(sigs.so_o.value.value, length=1)
-        await tclkh
-        sigs.sclk <= 0
-    sigs.csn <= 1
-    await tclk
-    await NextTimeStep()
-    return so
-
-tick_si_ext = cocotb.function(tick_si)
-
-async def tick_so(dut, nbits: int) -> BitSequence:
-    # dut._log.info(f'tick_tdo {nbits}')
-    si = BitSequence(0, length=nbits)
-    so = await tick_si(dut, si)
-    return so
-
-tick_so_ext = cocotb.function(tick_so)
 
 
 @cocotb.test()
 async def reset_tap(dut):
     fork_clk()
-
-    sigs.sclk <= 0
-    sigs.csn <= 1
-    sigs.si_i <= 0
-    sigs.so_i <= 0
-    sigs.wp_i <= 1 # FIXME
-    sigs.sio3_i <= 0
-
-    sigs.rst <= 0
-    sigs.srst <= 1
-    await tclk
-
-    await Timer(2*10, units='ns') # tVSL
-
-    sigs.rst <= 1
-    sigs.srst <= 0
-    await tclk
-    await Timer(2*(15+1), units='us')
-    await Timer(2*(10+1), units='ns') # tRLRH
-    # await Timer(2000, units='us')
-    sigs.rst <= 0
-    sigs.srst <= 1
-    await tclk
-    await Timer(2*35, units='ns') # tREADY1
-    print(f'at end of reset sclk: {sigs.sclk.value}')
-
-@cocotb.test(skip=False)
-async def read_idcode(dut):
-    fork_clk()
-    dut._log.info("Running read_idcode...")
-    await tmr(2*clkper_ns)
-
-    si = BitSequence(0x9f000000, msb=True)
-    so = await tick_si(dut, si)
-    dut._log.info(f"si: {si} so: {so}")
-
-    await tmr(4*clkper_ns)
-    dut._log.info("Running read_idcode...done")
 
 
 if __name__ == "__main__":
