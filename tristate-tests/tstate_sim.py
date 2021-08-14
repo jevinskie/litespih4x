@@ -44,6 +44,7 @@ Ftck_mhz: Final = 20
 clkper_ns: Final = 1_000 / Ftck_mhz
 tclk: Final = Timer(clkper_ns, units='ns')
 tclkh: Final = Timer(clkper_ns/2, units='ns')
+tclk2: Final = Timer(clkper_ns*2, units='ns')
 
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
@@ -102,6 +103,8 @@ class BenchSoC(SoCCore):
         self.rf_sio3_ts = rf_sio3_ts = TSTriple()
         self.specials += rf_sio3_ts.get_tristate(qp.sio3)
 
+        self.platform.add_source(str(Path('TristateModuleHand.v').resolve()), 'verilog')
+
         if dump:
             with open('ts_model_genned.v', 'w') as f:
                 f.write(str(verilog.convert(self.ts_model)))
@@ -144,7 +147,6 @@ def main():
 
     sim_config = SimConfig()
     sim_config.add_clocker("sys_clk", freq_hz=1e6)
-    # sim_config.add_clocker("jtag_tck", freq_hz=1e6//16)
 
     soc     = BenchSoC(toolchain=args.toolchain, dump=args.dump, sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
     builder = Builder(soc, csr_csv="csr.csv", compile_software=False)
@@ -185,9 +187,9 @@ def get_sig_dict(t, p):
             return ns.pnd[sig]
 
         return {
-            'clk': 'clk',
-            'rst': 'rst',
-            'sio3': 'sio3',
+            'clk':  getattr(t, 'sys_clk'),
+            'rst':  getattr(t, 'sys_rst'),
+            'sio3': getattr(t, 'sio3'),
         }
 
     return srv.root.call_on_server(helper)
@@ -209,6 +211,18 @@ def fork_clk():
 async def reset_tap(dut):
     fork_clk()
 
+    sigs.clk <= 0
+    sigs.rst <= 0
+
+    await tclk2
+
+    sigs.rst <= 1
+
+    await tclk2
+
+    sigs.rst <= 0
+
+    await tclk2
 
 if __name__ == "__main__":
     main()
