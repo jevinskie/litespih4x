@@ -5,12 +5,19 @@ module sim_top
         inout sio3
     );
 
-
-TristateModelHand tmh(
-    .clk(sys_clk),
-    .rst(sys_rst),
+tstate_sim tss(
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
     .sio3(sio3)
 );
+
+`ifdef UNDEF
+TristateModelHand tmh(
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .sio3(sio3)
+);
+`endif
 
 
 // the "macro" to dump signals

@@ -24,6 +24,7 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
 from litespih4x.macronix_model import MacronixModel
+from TristateModelHand import TristateModelHand
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -55,6 +56,7 @@ async def tmr(ns: float) -> None:
 _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
+    ("sio3", 0, Pins(1)),
     ("qspiflash_real", 0,
         Subsignal("clk", Pins(1)),
         Subsignal("rst", Pins(1)),
@@ -96,14 +98,15 @@ class BenchSoC(SoCCore):
         )
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = CRG(platform.request("sys_clk"))
+        self.submodules.crg = CRG(platform.request("sys_clk"), rst=platform.request("sys_rst"))
 
 
         self.qspi_pads = qp = self.platform.request("qspiflash_real")
         self.rf_sio3_ts = rf_sio3_ts = TSTriple()
         self.specials += rf_sio3_ts.get_tristate(qp.sio3)
 
-        self.platform.add_source(str(Path('TristateModuleHand.v').resolve()), 'verilog')
+        self.submodules.tms = tms = TristateModelHand(platform.request("sio3"))
+        self.platform.add_source(str(Path('TristateModelHand.v').resolve()), 'verilog')
 
         if dump:
             with open('ts_model_genned.v', 'w') as f:
