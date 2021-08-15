@@ -67,10 +67,10 @@ module MX25U25635F( SCLK,
 `endif
                     SIO3,
 
-                    SI_i, SI_o, SI_oe,
-                    SO_i, SO_o, SO_oe,
-                    WP_i, WP_o, WP_oe,
-                    SIO3_i, SIO3_o, SIO3_oe,
+//                     SI_i, SI_o, SI_oe,
+//                     SO_i, SO_o, SO_oe,
+//                     WP_i, WP_o, WP_oe,
+//                     SIO3_i, SIO3_o, SIO3_oe,
 
                     );
 
@@ -87,18 +87,18 @@ module MX25U25635F( SCLK,
 `endif
     inout  SIO3;    // Serial Input/Output SIO3
 
-    input SI_i;
-    input SO_i;
-    input WP_i;
-    input SIO3_i;
-    output SI_o;
-    output SO_o;
-    output WP_o;
-    output SIO3_o;
-    output SI_oe;
-    output SO_oe;
-    output WP_oe;
-    output SIO3_oe;
+//     input SI_i;
+//     input SO_i;
+//     input WP_i;
+//     input SIO3_i;
+//     output SI_o;
+//     output SO_o;
+//     output WP_o;
+//     output SIO3_o;
+//     output SI_oe;
+//     output SO_oe;
+//     output WP_oe;
+//     output SIO3_oe;
 
 // *============================================================================================== 
 // * Declaration of parameter (parameter)
@@ -746,25 +746,25 @@ module MX25U25635F( SCLK,
     assign   SIO3   = SIO3_OUT_EN ? SIO3_Out_Reg : 1'bz ;
 
 
-    assign SI = SI_i;
-    // assign SI = SI_i ? ~SI_OUT_EN : 1'bz;
-    assign SI_o = SIO0_Out_Reg;
-    assign SI_oe = SI_OUT_EN;
+//     assign SI = SI_i;
+//     assign SI = SI_i ? ~SI_OUT_EN : 1'bz;
+//     assign SI_o = SIO0_Out_Reg;
+//     assign SI_oe = SI_OUT_EN;
 
-    // assign SO = SO_i;
-    // assign SO = SO_i ? ~SO_OUT_EN : 1'bz;
-    assign SO_o = SIO1_Out_Reg;
-    assign SO_oe = SO_OUT_EN;
+//     assign SO = SO_i;
+//     assign SO = SO_i ? ~SO_OUT_EN : 1'bz;
+//     assign SO_o = SIO1_Out_Reg;
+//     assign SO_oe = SO_OUT_EN;
 
-    assign WP = WP_i;
-    // assign WP = WP_i ? ~WP_OUT_EN : 1'bz;
-    assign WP_o = SIO2_Out_Reg;
-    assign WP_oe = WP_OUT_EN;
+//     assign WP = WP_i;
+//     assign WP = WP_i ? ~WP_OUT_EN : 1'bz;
+//     assign WP_o = SIO2_Out_Reg;
+//     assign WP_oe = WP_OUT_EN;
 
-    assign SIO3 = SIO3_i;
-    // assign SIO3 = SIO3_i ? ~SIO3_OUT_EN : 1'bz;
-    assign SIO3_o = SIO3_Out_Reg;
-    assign SIO3_oe = SIO3_OUT_EN;
+//     assign SIO3 = SIO3_i;
+//     assign SIO3 = SIO3_i ? ~SIO3_OUT_EN : 1'bz;
+//     assign SIO3_o = SIO3_Out_Reg;
+//     assign SIO3_oe = SIO3_OUT_EN;
 
 `ifdef MX25U25635FM
     assign   RESETB_INT = (RESET === 1'b1 || RESET === 1'b0) ? RESET : 1'b1;
