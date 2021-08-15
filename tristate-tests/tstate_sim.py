@@ -4,6 +4,8 @@
 # Copyright (c) 2021 Jevin Sweval <jevinsweval@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
 import socket
@@ -25,6 +27,7 @@ from litex.soc.integration.builder import *
 from litex.soc.interconnect import wishbone
 
 from litespih4x.macronix_model import MacronixModel
+from litespih4x.emu import FlashEmu
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -50,7 +53,24 @@ tclk2: Final = Timer(clkper_ns*2, units='ns')
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
 
-# import pydevd
+SigObj = Signal
+if cocotb.top is not None:
+    SigObj = ModifiableObject
+
+@attr.s(auto_attribs=True)
+class QSPISigs:
+    sclk: SigObj
+    rstn: SigObj
+    csn: SigObj
+    si: SigObj
+    so: SigObj
+    wp: SigObj
+    sio3: SigObj
+
+    @classmethod
+    def from_pads(cls, pads: Record) -> QSPISigs:
+        sig_dict = {p[0]: getattr(pads, p[0]) for p in pads.layout}
+        return cls(**sig_dict)
 
 # IOs ----------------------------------------------------------------------------------------------
 
@@ -102,12 +122,12 @@ class BenchSoC(SoCCore):
 
 
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
+        qspi_sigs = QSPISigs.from_pads(qr)
+        print(f'qspi_sigs: {qspi_sigs}')
         self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wp, qr.sio3)
 
-        self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
 
-        # self.wb_dummy_tap = wb_dummy_tap = wishbone.Interface()
-        # self.add_wb_master(wb_dummy_tap, 'wb_dummy_tap')
+        self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
 
         self.wb_sim_tap = wb_sim_tap = wishbone.Interface()
         self.add_wb_master(wb_sim_tap, 'wb_sim_tap')
@@ -172,15 +192,7 @@ def main():
         run         = args.run,
     )
 
-@attr.s(auto_attribs=True)
-class QSPISigs:
-    sclk: ModifiableObject
-    rstn: ModifiableObject
-    csn: ModifiableObject
-    si: ModifiableObject
-    so: ModifiableObject
-    wp: ModifiableObject
-    sio3: ModifiableObject
+
 
 @attr.s(auto_attribs=True)
 class Sigs:
