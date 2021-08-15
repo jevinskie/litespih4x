@@ -79,10 +79,10 @@ class FlashEmu(Module):
         #     qrs.sio3.eq(qes.sio3),
         # ]
 
-        esi = Signal()
-        eso = Signal()
-        ewpn = Signal()
-        esio3 = Signal()
+        self.esi = Signal()
+        self.eso = Signal()
+        self.ewpn = Signal()
+        self.esio3 = Signal()
 
         # self.comb += [
         #     esi.eq(esi_ts.i),

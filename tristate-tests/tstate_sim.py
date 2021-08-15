@@ -311,10 +311,10 @@ async def tick_si(dut, q: QSPISigs, si: BitSequence, write_only=False) -> BitSeq
     return so
 
 
-async def tick_so(dut, q: QSPISigs, nbits: int) -> BitSequence:
+async def tick_so(dut, q: QSPISigs, nbits: int, write_only=False) -> BitSequence:
     # dut._log.info(f'tick_tdo {nbits}')
     si = BitSequence(0, length=nbits)
-    so = await tick_si(dut, q, si)
+    so = await tick_si(dut, q, si, write_only=write_only)
     return so
 
 
@@ -393,6 +393,17 @@ async def read_flash_id(dut):
     flash_id = so
 
     dut._log.info(f'flash_id: {flash_id}')
+
+
+@cocotb.test(skip=True)
+async def reset_flash_cnt(dut):
+    fork_clk()
+    await reset_flash(sigs.qe)
+
+@cocotb.test(skip=True)
+async def inc_flash_cnt(dut):
+    fork_clk()
+    await tick_so(dut, sigs.qe, 16, write_only=True)
 
 
 if __name__ == "__main__":
