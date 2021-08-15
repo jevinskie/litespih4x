@@ -229,7 +229,7 @@ if cocotb.top is not None:
     ns = srv.root.ns
     pads_real = soc.qspi_pads_real
     pads_emu = soc.qspi_pads_emu
-
+    soc.csr.regions['identifier_mem']
     d = get_sigs_dict(cocotb.top)
     d['qr'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_real))
     d['qe'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_emu))
@@ -266,6 +266,25 @@ async def reset_tap(dut):
     sigs.rst <= 0
 
     await tclk2
+
+
+@cocotb.test()
+async def read_wb_soc_id(dut):
+    fork_clk()
+
+    dut._log.info(f'bus: {wb_bus}')
+    soc_id = ''
+    soc_id_region = soc.csr.regions['identifier_mem']
+    soc_id_ptr = soc_id_region.origin // (soc_id_region.busword // 8)
+    dut._log.info(f'soc_id_ptr: {soc_id_ptr:x}')
+    while True:
+        wb_res = await wb_bus.send_cycle([WBOp(soc_id_ptr)])
+        wb_chr = wb_res[0].datrd
+        if wb_chr == 0:
+            break
+        soc_id += chr(wb_chr)
+        soc_id_ptr += 1
+    dut._log.info(f'soc_id: {soc_id}')
 
 if __name__ == "__main__":
     main()

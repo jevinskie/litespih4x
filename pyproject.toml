@@ -67,7 +67,7 @@ cocotb-coverage = "^1.1.0"
 
 pydigitalwavetools = {git = "https://github.com/Nic30/pyDigitalWaveTools"}
 importlib-resources = "^5.2.0"
-rpyc = "^5.0.1"
+rpyc = { path = "../rpyc", develop = true }
 pyftdi = "^0.53.2"
 toolz = "^0.11.1"
 
