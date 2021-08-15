@@ -285,6 +285,7 @@ async def read_wb_soc_id(dut):
         soc_id += chr(wb_chr)
         soc_id_ptr += 1
     dut._log.info(f'soc_id: {soc_id}')
+    assert 'LiteSPIh4x' in soc_id
 
 if __name__ == "__main__":
     main()
