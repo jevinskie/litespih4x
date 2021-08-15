@@ -27,7 +27,7 @@ from litex.soc.integration.builder import *
 from litex.soc.interconnect import wishbone
 
 from litespih4x.macronix_model import MacronixModel
-from litespih4x.emu import FlashEmu
+from litespih4x.emu import FlashEmu, QSPISigs
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -44,33 +44,22 @@ from rich import inspect as rinspect
 srv: Final = start_sim_server()
 ext: Final = cocotb.external
 
-Ftck_mhz: Final = 20
-clkper_ns: Final = 1_000 / Ftck_mhz
+Fsys_clk_mhz = 100
+Fqspiclk_mhz: Final = 25
+
+clkper_ns: Final = 1_000 / Fsys_clk_mhz
 tclk: Final = Timer(clkper_ns, units='ns')
 tclkh: Final = Timer(clkper_ns/2, units='ns')
 tclk2: Final = Timer(clkper_ns*2, units='ns')
 
+qclkper_ns: Final = 1_000 / Fqspiclk_mhz
+qtclk: Final = Timer(qclkper_ns, units='ns')
+qtclkh: Final = Timer(qclkper_ns/2, units='ns')
+qtclk2: Final = Timer(qclkper_ns*2, units='ns')
+
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
 
-SigObj = Signal
-if cocotb.top is not None:
-    SigObj = ModifiableObject
-
-@attr.s(auto_attribs=True)
-class QSPISigs:
-    sclk: SigObj
-    rstn: SigObj
-    csn: SigObj
-    si: SigObj
-    so: SigObj
-    wp: SigObj
-    sio3: SigObj
-
-    @classmethod
-    def from_pads(cls, pads: Record) -> QSPISigs:
-        sig_dict = {p[0]: getattr(pads, p[0]) for p in pads.layout}
-        return cls(**sig_dict)
 
 # IOs ----------------------------------------------------------------------------------------------
 
@@ -122,12 +111,16 @@ class BenchSoC(SoCCore):
 
 
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
-        qspi_sigs = QSPISigs.from_pads(qr)
-        print(f'qspi_sigs: {qspi_sigs}')
+        self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
+        print(f'qpsi_real_sigs: {qrs}')
         self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wp, qr.sio3)
 
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
+        self.qpsi_emu_sigs = qes = QSPISigs.from_pads(qe)
+        print(f'qpsi_emu_sigs: {qes}')
+        self.submodules.qspi_emu = FlashEmu(qrs, qes)
+
 
         self.wb_sim_tap = wb_sim_tap = wishbone.Interface()
         self.add_wb_master(wb_sim_tap, 'wb_sim_tap')
@@ -259,36 +252,37 @@ if cocotb.top is not None:
                                          "ack":  "ack" })
 
 def fork_clk():
-    cocotb.fork(Clock(cocotb.top.sys_clk, 10, units="ns").start())
+    cocotb.fork(Clock(cocotb.top.sys_clk, clkper_ns, units="ns").start())
 
-
-@cocotb.test()
-async def reset_tap(dut):
-    fork_clk()
-
+async def reset(dut):
     sigs.clk <= 0
     sigs.rst <= 0
 
-    await tclk2
+    await tclk
 
     sigs.rst <= 1
 
-    await tclk2
+    await tclk
 
     sigs.rst <= 0
 
-    await tclk2
+    await tclk
 
+
+@cocotb.test()
+async def initial_reset(dut):
+    fork_clk()
+    await reset(dut)
 
 @cocotb.test(skip=True)
 async def read_wb_soc_id(dut):
     fork_clk()
 
-    dut._log.info(f'bus: {wb_bus}')
+    # dut._log.info(f'bus: {wb_bus}')
     soc_id = ''
     soc_id_region = soc.csr.regions['identifier_mem']
     soc_id_ptr = soc_id_region.origin // (soc_id_region.busword // 8)
-    dut._log.info(f'soc_id_ptr: {soc_id_ptr:x}')
+    # dut._log.info(f'soc_id_ptr: {soc_id_ptr:x}')
     while True:
         wb_res = await wb_bus.send_cycle([WBOp(soc_id_ptr)])
         wb_chr = wb_res[0].datrd
