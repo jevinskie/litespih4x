@@ -285,10 +285,11 @@ async def spi_txfr_start(dut, q: QSPISigs):
 
 async def spi_txfr_end(dut, q: QSPISigs):
     assert q.csn.value == 0
+    await qtclk
     q.csn <= 1
     # dut._log.info('-- BEGIN')
-    await qtclk
     dut._log.info('-- SPI END')
+    await qtclk
 
 
 async def tick_si(dut, q: QSPISigs, si: BitSequence, write_only=False) -> BitSequence:
@@ -387,8 +388,9 @@ async def read_flash_id(dut):
     so = await tick_so(dut, sigs.qe, 3*8)
     await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
-    print(f'so: {so}')
+    # print(f'so: {so}')
     # print(f'so2: {so2}')
+    flash_id = so
 
     dut._log.info(f'flash_id: {flash_id}')
 
