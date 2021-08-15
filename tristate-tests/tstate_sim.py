@@ -15,7 +15,7 @@ from migen.fhdl import verilog
 from migen.fhdl.specials import Special
 
 from litex.build.generic_platform import *
-from litex.build.sim import SimPlatform
+from litex.build.sim.platform import SimPlatform
 from litex.build.sim.config import SimConfig
 from litex.build.sim.cocotb import start_sim_server
 from litex.build.sim.common import CocotbVCDDumperSpecial
@@ -50,6 +50,7 @@ tclk2: Final = Timer(clkper_ns*2, units='ns')
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
 
+# import pydevd
 
 # IOs ----------------------------------------------------------------------------------------------
 
