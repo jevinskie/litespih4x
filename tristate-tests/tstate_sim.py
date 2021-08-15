@@ -275,35 +275,46 @@ def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, clkper_ns, units="ns").start())
 
 
-async def tick_si(dut, q: QSPISigs, si: BitSequence) -> BitSequence:
-    dut._log.info(f'tick_si {si} {int(si)} tck: {q.sclk.value}')
-    so = BitSequence()
+async def spi_txfr_start(dut, q: QSPISigs):
+    dut._log.info('-- SPI BEGIN')
+    assert q.csn.value == 1
     q.csn <= 0
-    await tclk
+    # dut._log.info('-- BEGIN')
+    await qtclk
+
+
+async def spi_txfr_end(dut, q: QSPISigs):
+    assert q.csn.value == 0
+    q.csn <= 1
+    # dut._log.info('-- BEGIN')
+    await qtclk
+    dut._log.info('-- SPI END')
+
+
+async def tick_si(dut, q: QSPISigs, si: BitSequence, write_only=False) -> BitSequence:
+    so = None
+    if not write_only:
+        so = BitSequence()
     for di in si:
-        dut._log.info(f'tick_si bit {di}')
+        # dut._log.info(f'tick_si bit {di}')
         q.si <= di
         await ReadOnly()
         assert q.sclk.value == 0
         await qtclkh
         q.sclk <= 1
-        # so += BitSequence(q.so.value.value, length=1)
+        if not write_only:
+            so += BitSequence(q.so.value.value, length=1)
         await qtclkh
         q.sclk <= 0
-    q.csn <= 1
-    await qtclk
     await NextTimeStep()
     return so
 
-tick_si_ext = cocotb.function(tick_si)
 
 async def tick_so(dut, q: QSPISigs, nbits: int) -> BitSequence:
     # dut._log.info(f'tick_tdo {nbits}')
     si = BitSequence(0, length=nbits)
     so = await tick_si(dut, q, si)
     return so
-
-tick_so_ext = cocotb.function(tick_so)
 
 
 async def reset_soc(dut):
@@ -370,8 +381,11 @@ async def read_flash_id(dut):
     fork_clk()
     flash_id = None
 
-    cmd = BitSequence(0x9f000000, msb=True)
-    so = await tick_si(dut, sigs.qe, cmd)
+    cmd = BitSequence(0x9f, msb=True)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    so = await tick_so(dut, sigs.qe, 3*8)
+    await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
     print(f'so: {so}')
     # print(f'so2: {so2}')
