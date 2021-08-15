@@ -27,7 +27,7 @@ class QSPISigs:
     csn: SigType
     si: SigType
     so: SigType
-    wp: SigType
+    wpn: SigType
     sio3: SigType
 
     @classmethod
@@ -49,43 +49,63 @@ class FlashEmu(Module):
 
         self.rsi_ts = rsi_ts = TSTriple()
         self.rso_ts = rso_ts = TSTriple()
-        self.rwp_ts = rwp_ts = TSTriple()
+        self.rwpn_ts = rwpn_ts = TSTriple()
         self.rsio3_ts = rsio3_ts = TSTriple()
 
         self.specials += rsi_ts.get_tristate(qrs.si)
         self.specials += rso_ts.get_tristate(qrs.so)
-        self.specials += rwp_ts.get_tristate(qrs.wp)
+        self.specials += rwpn_ts.get_tristate(qrs.wpn)
         self.specials += rsio3_ts.get_tristate(qrs.sio3)
 
 
         self.esi_ts = esi_ts = TSTriple()
         self.eso_ts = eso_ts = TSTriple()
-        self.ewp_ts = ewp_ts = TSTriple()
+        self.ewpn_ts = ewpn_ts = TSTriple()
         self.esio3_ts = esio3_ts = TSTriple()
 
         self.specials += esi_ts.get_tristate(qes.si)
         self.specials += eso_ts.get_tristate(qes.so)
-        self.specials += ewp_ts.get_tristate(qes.wp)
+        self.specials += ewpn_ts.get_tristate(qes.wpn)
         self.specials += esio3_ts.get_tristate(qes.sio3)
 
+
+        # self.comb += [
+        #     qrs.sclk.eq(qes.sclk),
+        #     qrs.rstn.eq(qes.rstn),
+        #     qrs.csn.eq(qes.csn),
+        #     qrs.si.eq(qes.si),
+        #     qrs.so.eq(qes.so),
+        #     qrs.wpn.eq(qes.wpn),
+        #     qrs.sio3.eq(qes.sio3),
+        # ]
+
+        esi = Signal()
+        eso = Signal()
+        ewpn = Signal()
+        esio3 = Signal()
+
+        self.comb += [
+            esi.eq(esi_ts.i),
+            eso.eq(rso_ts.i),
+        ]
 
         self.comb += [
             qrs.sclk.eq(qes.sclk),
             qrs.rstn.eq(qes.rstn),
             qrs.csn.eq(qes.csn),
-            qrs.si.eq(qes.si),
-            qrs.so.eq(qes.so),
-            qrs.wp.eq(qes.wp),
-            qrs.sio3.eq(qes.sio3),
+            rsi_ts.o.eq(esi),
+            eso_ts.o.eq(eso),
         ]
 
         self.comb += [
             esi_ts.oe.eq(0),
             eso_ts.oe.eq(1),
-            ewp_ts.oe.eq(0),
-            esio3_ts.oe.eq(0),
         ]
 
+        self.comb += [
+            rsi_ts.oe.eq(1),
+            rso_ts.oe.eq(0),
+        ]
 
         self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(FSM())
         self.idle = idle = Signal()

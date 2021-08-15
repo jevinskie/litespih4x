@@ -41,6 +41,8 @@ from cocotbext.wishbone.driver import WBOp
 import attr
 from rich import inspect as rinspect
 
+from pyftdi.jtag import BitSequence
+
 srv: Final = start_sim_server()
 ext: Final = cocotb.external
 
@@ -57,6 +59,24 @@ qtclk: Final = Timer(qclkper_ns, units='ns')
 qtclkh: Final = Timer(qclkper_ns/2, units='ns')
 qtclk2: Final = Timer(qclkper_ns*2, units='ns')
 
+
+# tRLRH_ns = 10 * 1_000
+tRLRH_ns = 10
+tRLRH: Final = Timer(2*tRLRH_ns, units='ns')
+
+# tRHSL_ns = 10 * 1_000
+tRHSL_ns = 10
+tRHSL: Final = Timer(2*tRHSL_ns, units='ns')
+
+# tREADY2_ROLL_ns = 40 * 1_000
+tREADY2_ROLL_ns = 40
+tREADY2_ROLL: Final = Timer(2*tREADY2_ROLL_ns, units='ns')
+
+# tVSL_ns = 1500 * 1_000
+tVSL_ns = 10
+tVSL: Final = Timer(2*tVSL_ns, units='ns')
+
+
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
 
@@ -72,7 +92,7 @@ _io = [
         Subsignal("csn", Pins(1)),
         Subsignal("si", Pins(1)),
         Subsignal("so", Pins(1)),
-        Subsignal("wp", Pins(1)),
+        Subsignal("wpn", Pins(1)),
         Subsignal("sio3", Pins(1)),
      ),
     ("qspiflash_emu", 0,
@@ -81,7 +101,7 @@ _io = [
         Subsignal("csn", Pins(1)),
         Subsignal("si", Pins(1)),
         Subsignal("so", Pins(1)),
-        Subsignal("wp", Pins(1)),
+        Subsignal("wpn", Pins(1)),
         Subsignal("sio3", Pins(1)),
      ),
 ]
@@ -113,7 +133,7 @@ class BenchSoC(SoCCore):
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
         self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
         print(f'qpsi_real_sigs: {qrs}')
-        self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wp, qr.sio3)
+        self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3)
 
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
@@ -212,10 +232,10 @@ def get_qspisigs_dict(t, p):
         return {
             'sclk':  getattr(t, nsl(p.sclk)),
             'rstn':  getattr(t, nsl(p.rstn)),
-            'csn': getattr(t, nsl(p.rstn)),
+            'csn': getattr(t, nsl(p.csn)),
             'si': getattr(t, nsl(p.si)),
             'so': getattr(t, nsl(p.so)),
-            'wp': getattr(t, nsl(p.wp)),
+            'wpn': getattr(t, nsl(p.wpn)),
             'sio3': getattr(t, nsl(p.sio3)),
         }
     return srv.root.call_on_server(helper)
@@ -254,7 +274,39 @@ if cocotb.top is not None:
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, clkper_ns, units="ns").start())
 
-async def reset(dut):
+
+async def tick_si(dut, q: QSPISigs, si: BitSequence) -> BitSequence:
+    dut._log.info(f'tick_si {si} {int(si)} tck: {q.sclk.value}')
+    so = BitSequence()
+    q.csn <= 0
+    await tclk
+    for di in si:
+        dut._log.info(f'tick_si bit {di}')
+        q.si <= di
+        await ReadOnly()
+        assert q.sclk.value == 0
+        await qtclkh
+        q.sclk <= 1
+        so += BitSequence(q.so.value.value, length=1)
+        await qtclkh
+        q.sclk <= 0
+    q.csn <= 1
+    await qtclk
+    await NextTimeStep()
+    return so
+
+tick_si_ext = cocotb.function(tick_si)
+
+async def tick_so(dut, q: QSPISigs, nbits: int) -> BitSequence:
+    # dut._log.info(f'tick_tdo {nbits}')
+    si = BitSequence(0, length=nbits)
+    so = await tick_si(dut, q, si)
+    return so
+
+tick_so_ext = cocotb.function(tick_so)
+
+
+async def reset_soc(dut):
     sigs.clk <= 0
     sigs.rst <= 0
 
@@ -268,11 +320,30 @@ async def reset(dut):
 
     await tclk
 
+async def reset_flash(q: QSPISigs):
+    q.sclk <= 0
+    q.rstn <= 1
+    q.csn <= 1
+    q.si <= 0
+    q.wpn <= 0
+
+    await tVSL
+
+    q.rstn <= 0
+
+    await tRLRH
+
+    q.rstn <= 1
+
+    await tRHSL
+    await tREADY2_ROLL
 
 @cocotb.test()
 async def initial_reset(dut):
     fork_clk()
-    await reset(dut)
+    await reset_soc(dut)
+    await reset_flash(sigs.qe)
+
 
 @cocotb.test(skip=True)
 async def read_wb_soc_id(dut):
@@ -293,6 +364,19 @@ async def read_wb_soc_id(dut):
     dut._log.info(f'soc_id: {soc_id}')
     assert 'LiteSPIh4x' in soc_id
 
+
+@cocotb.test()
+async def read_flash_id(dut):
+    fork_clk()
+    flash_id = None
+
+    cmd = BitSequence(0x9f000000, msb=True)
+    so = await tick_si(dut, sigs.qe, cmd)
+    # so2 = await tick_so(dut, sigs.qe, 8*3)
+    print(f'so: {so}')
+    # print(f'so2: {so2}')
+
+    dut._log.info(f'flash_id: {flash_id}')
 
 
 if __name__ == "__main__":
