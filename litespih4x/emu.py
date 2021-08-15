@@ -84,17 +84,17 @@ class FlashEmu(Module):
         ewpn = Signal()
         esio3 = Signal()
 
-        self.comb += [
-            esi.eq(esi_ts.i),
-            eso.eq(rso_ts.i),
-        ]
+        # self.comb += [
+        #     esi.eq(esi_ts.i),
+        #     eso.eq(rso_ts.i),
+        # ]
 
         self.comb += [
             qrs.sclk.eq(qes.sclk),
             qrs.rstn.eq(qes.rstn),
             qrs.csn.eq(qes.csn),
-            rsi_ts.o.eq(esi),
-            eso_ts.o.eq(eso),
+            rsi_ts.o.eq(esi_ts.i),
+            eso_ts.o.eq(rso_ts.i),
         ]
 
         self.comb += [

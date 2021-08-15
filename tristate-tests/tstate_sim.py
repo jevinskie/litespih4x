@@ -287,7 +287,7 @@ async def tick_si(dut, q: QSPISigs, si: BitSequence) -> BitSequence:
         assert q.sclk.value == 0
         await qtclkh
         q.sclk <= 1
-        so += BitSequence(q.so.value.value, length=1)
+        # so += BitSequence(q.so.value.value, length=1)
         await qtclkh
         q.sclk <= 0
     q.csn <= 1
