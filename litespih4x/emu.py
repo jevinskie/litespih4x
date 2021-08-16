@@ -109,7 +109,7 @@ class FlashEmu(Module):
 
         self.idcode = idcode = Signal(24, reset=0xc22539)
 
-        ctrl_fsm = FSM(reset_state='standby')
+        ctrl_fsm = FSM(reset_state='cmd')
         self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
 
         # ctrl_fsm = FSM(reset_state='cmd')
