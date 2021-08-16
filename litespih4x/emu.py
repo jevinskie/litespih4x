@@ -38,7 +38,7 @@ class QSPISigs:
 
 class FSMBug(Module):
     def __init__(self):
-        self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='cmd')
+        self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='standby')
         ctrl_fsm.act('standby',
             NextState('cmd'),
         )
