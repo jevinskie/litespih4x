@@ -36,6 +36,21 @@ class QSPISigs:
         return cls(**sig_dict)
 
 
+class FSMBug(Module):
+    def __init__(self):
+        self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='cmd')
+        ctrl_fsm.act('standby',
+            NextState('cmd'),
+        )
+        ctrl_fsm.act('cmd',
+            NextState('standby'),
+        )
+
+        self.cnt = cnt = Signal(16)
+        self.sync += cnt.eq(cnt + 1)
+
+
+
 class FlashEmu(Module):
     def __init__(self, qrs: QSPISigs, qes: QSPISigs):
         self.qrs = qrs
@@ -47,24 +62,24 @@ class FlashEmu(Module):
         self.comb += ResetSignal('spi').eq(~qes.rstn)
         # self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys"))
 
-        self.rsi_ts = rsi_ts = TSTriple()
-        self.rso_ts = rso_ts = TSTriple()
+        # self.rsi_ts = rsi_ts = TSTriple()
+        # self.rso_ts = rso_ts = TSTriple()
         # self.rwpn_ts = rwpn_ts = TSTriple()
         # self.rsio3_ts = rsio3_ts = TSTriple()
 
-        self.specials += rsi_ts.get_tristate(qrs.si)
-        self.specials += rso_ts.get_tristate(qrs.so)
+        # self.specials += rsi_ts.get_tristate(qrs.si)
+        # self.specials += rso_ts.get_tristate(qrs.so)
         # self.specials += rwpn_ts.get_tristate(qrs.wpn)
         # self.specials += rsio3_ts.get_tristate(qrs.sio3)
 
 
-        self.esi_ts = esi_ts = TSTriple()
-        self.eso_ts = eso_ts = TSTriple()
+        # self.esi_ts = esi_ts = TSTriple()
+        # self.eso_ts = eso_ts = TSTriple()
         # self.ewpn_ts = ewpn_ts = TSTriple()
         # self.esio3_ts = esio3_ts = TSTriple()
 
-        self.specials += esi_ts.get_tristate(qes.si)
-        self.specials += eso_ts.get_tristate(qes.so)
+        # self.specials += esi_ts.get_tristate(qes.si)
+        # self.specials += eso_ts.get_tristate(qes.so)
         # self.specials += ewpn_ts.get_tristate(qes.wpn)
         # self.specials += esio3_ts.get_tristate(qes.sio3)
 
@@ -79,8 +94,8 @@ class FlashEmu(Module):
         #     qrs.sio3.eq(qes.sio3),
         # ]
 
-        self.esi = esi = Signal()
-        self.eso = eso = Signal()
+        # self.esi = esi = Signal()
+        # self.eso = eso = Signal()
         # self.ewpn = ewpn = Signal()
         # self.esio3 = esio3 = Signal()
 
@@ -89,28 +104,31 @@ class FlashEmu(Module):
         #     eso.eq(rso_ts.i),
         # ]
 
-        self.comb += [
-            qrs.sclk.eq(qes.sclk),
-            qrs.rstn.eq(qes.rstn),
-            qrs.csn.eq(qes.csn),
-            rsi_ts.o.eq(esi_ts.i),
-            eso_ts.o.eq(rso_ts.i),
-        ]
+        # self.comb += [
+        #     qrs.sclk.eq(qes.sclk),
+        #     qrs.rstn.eq(qes.rstn),
+        #     qrs.csn.eq(qes.csn),
+        #     rsi_ts.o.eq(esi_ts.i),
+        #     eso_ts.o.eq(rso_ts.i),
+        # ]
+        #
+        # self.comb += [
+        #     esi_ts.oe.eq(0),
+        #     eso_ts.oe.eq(1),
+        # ]
+        #
+        # self.comb += [
+        #     rsi_ts.oe.eq(1),
+        #     rso_ts.oe.eq(0),
+        # ]
 
-        self.comb += [
-            esi_ts.oe.eq(0),
-            eso_ts.oe.eq(1),
-        ]
+        # self.idcode = idcode = Signal(24, reset=0xc22539)
 
-        self.comb += [
-            rsi_ts.oe.eq(1),
-            rso_ts.oe.eq(0),
-        ]
+        # ctrl_fsm = FSM(reset_state='standby')
+        # self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+        # self.submodules.ctrl_fsm = ctrl_fsm
 
-        self.idcode = idcode = Signal(24, reset=0xc22539)
-
-        ctrl_fsm = FSM(reset_state='cmd')
-        self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+        self.submodules.ctrl_fsm = ctrl_fsm = FSMBug()
 
         # ctrl_fsm = FSM(reset_state='cmd')
         # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
@@ -119,12 +137,12 @@ class FlashEmu(Module):
         # self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='cmd')
         # ClockDomainsRenamer('spi')(ctrl_fsm)
 
-        ctrl_fsm.act('standby',
-            NextState('cmd'),
-        )
-        ctrl_fsm.act('cmd',
-            NextState('standby'),
-        )
+        # ctrl_fsm.act('standby',
+        #     NextState('cmd'),
+        # )
+        # ctrl_fsm.act('cmd',
+        #     NextState('standby'),
+        # )
         # ctrl_fsm.act('bad_cmd',
         #      NextState('fast_boot'),
         # )
@@ -132,7 +150,7 @@ class FlashEmu(Module):
         #     NextState('standby'),
         # )
 
-        self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8)
+        # self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8)
         #
         # cmd_fsm = FSM(reset_state='rdid')
         # cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
@@ -169,5 +187,5 @@ class FlashEmu(Module):
         # dummy = cmd_fsm.ongoing('rdid')
 
 
-        self.cnt = cnt = Signal(16)
-        self.sync.spi += cnt.eq(cnt + 1)
+        # self.cnt = cnt = Signal(16)
+        # self.sync.spi += cnt.eq(cnt + 1)
