@@ -79,10 +79,10 @@ class FlashEmu(Module):
         #     qrs.sio3.eq(qes.sio3),
         # ]
 
-        self.esi = Signal()
-        self.eso = Signal()
-        self.ewpn = Signal()
-        self.esio3 = Signal()
+        self.esi = esi = Signal()
+        self.eso = eso = Signal()
+        self.ewpn = ewpn = Signal()
+        self.esio3 = esio3 = Signal()
 
         # self.comb += [
         #     esi.eq(esi_ts.i),
@@ -107,17 +107,52 @@ class FlashEmu(Module):
             rso_ts.oe.eq(0),
         ]
 
-        self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(FSM())
-        self.idle = idle = Signal()
-        self.twiddle = twiddle =Signal()
-        ctrl_fsm.act('idle',
-            idle.eq(1),
-            NextState('twiddle'),
+        self.idcode = idcode = Signal(24, reset=0xc22539)
+
+        # ctrl_fsm = FSM(reset_state='cmd')
+        # self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+        #
+        # # ctrl_fsm = FSM(reset_state='cmd')
+        # # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+        # # self.submodules += ctrl_fsm
+        #
+        # # self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='cmd')
+        # # ClockDomainsRenamer('spi')(ctrl_fsm)
+        #
+        # ctrl_fsm.act('standby',
+        #     NextState('cmd'),
+        # )
+        # ctrl_fsm.act('cmd',
+        #     NextState('bad_cmd'),
+        # )
+        # ctrl_fsm.act('bad_cmd',
+        #      NextState('fast_boot'),
+        # )
+        # ctrl_fsm.act('fast_boot',
+        #     NextState('standby'),
+        # )
+
+        self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8)
+
+        cmd_fsm = FSM(reset_state='cmd_read')
+        self.submodules.cmd_fsm = cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
+
+        rdid_flag = Signal()
+
+        cmd_fsm.act('cmd_read',
+            NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
+            If(cmd_bit_cnt == 7,
+                NextState('rdid'),
+            ),
         )
-        ctrl_fsm.act('twiddle',
-            twiddle.eq(1),
-            NextState('idle'),
+
+        cmd_fsm.act('rdid',
+            rdid_flag.eq(1),
+            NextState('rdid'),
         )
+
+        # dummy = cmd_fsm.ongoing('rdid')
+
 
         self.cnt = cnt = Signal(16)
         self.sync.spi += cnt.eq(cnt + 1)

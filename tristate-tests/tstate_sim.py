@@ -147,7 +147,7 @@ class BenchSoC(SoCCore):
 
         if dump:
             with open('dump.v', 'w') as f:
-                f.write(str(verilog.convert(self)))
+                f.write(str(verilog.convert(self.qspi_emu)))
             sys.exit(0)
 
         self.specials.vcddumper = CocotbVCDDumperSpecial()
@@ -162,7 +162,7 @@ class BenchSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="Tristate Simulation")
-    parser.add_argument("--build", default=True,  action="store_true",     help="Build simulation")
+    parser.add_argument("--build", default=False,  action="store_true",     help="Build simulation")
     genopts = parser.add_mutually_exclusive_group()
     genopts.add_argument("--run",   default=False, action="store_true",    help="Run simulation")
     genopts.add_argument("--dump",  default=False, action="store_true",    help="Dump module")
