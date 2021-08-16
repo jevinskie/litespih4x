@@ -130,20 +130,21 @@ class BenchSoC(SoCCore):
         self.submodules.crg = CRG(platform.request("sys_clk"), rst=platform.request("sys_rst"))
 
 
-        self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
-        self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
+        # self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
+        # self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
         # print(f'qpsi_real_sigs: {qrs}')
-        self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3)
+        # self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3)
 
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
         self.qpsi_emu_sigs = qes = QSPISigs.from_pads(qe)
         # print(f'qpsi_emu_sigs: {qes}')
+        qrs = None
         self.submodules.qspi_emu = FlashEmu(qrs, qes)
 
 
-        self.wb_sim_tap = wb_sim_tap = wishbone.Interface()
-        self.add_wb_master(wb_sim_tap, 'wb_sim_tap')
+        # self.wb_sim_tap = wb_sim_tap = wishbone.Interface()
+        # self.add_wb_master(wb_sim_tap, 'wb_sim_tap')
 
         if dump:
             with open('dump.v', 'w') as f:
@@ -212,7 +213,7 @@ class Sigs:
     clk: ModifiableObject
     rst: ModifiableObject
 
-    qr: QSPISigs
+    # qr: QSPISigs
     qe: QSPISigs
 
 sigs = None
@@ -252,24 +253,24 @@ def get_sigs_dict(t):
 if cocotb.top is not None:
     soc = srv.root.soc
     ns = srv.root.ns
-    pads_real = soc.qspi_pads_real
+    # pads_real = soc.qspi_pads_real
     pads_emu = soc.qspi_pads_emu
 
     d = get_sigs_dict(cocotb.top)
-    d['qr'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_real))
+    # d['qr'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_real))
     d['qe'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_emu))
     sigs = Sigs(**d)
 
-    wb_bus = WishboneMaster(cocotb.top, "wb_sim_tap", sigs.clk,
-                          width=32,   # size of data bus
-                          timeout=10, # in clock cycle number
-                          signals_dict={"cyc":   "cyc",
-                                        "stb":   "stb",
-                                        "we":    "we",
-                                        "adr":   "adr",
-                                        "datwr": "dat_w",
-                                        "datrd": "dat_r",
-                                         "ack":  "ack" })
+    # wb_bus = WishboneMaster(cocotb.top, "wb_sim_tap", sigs.clk,
+    #                       width=32,   # size of data bus
+    #                       timeout=10, # in clock cycle number
+    #                       signals_dict={"cyc":   "cyc",
+    #                                     "stb":   "stb",
+    #                                     "we":    "we",
+    #                                     "adr":   "adr",
+    #                                     "datwr": "dat_w",
+    #                                     "datrd": "dat_r",
+    #                                      "ack":  "ack" })
 
 def fork_clk():
     cocotb.fork(Clock(cocotb.top.sys_clk, clkper_ns, units="ns").start())

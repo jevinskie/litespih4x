@@ -57,9 +57,9 @@ class FlashEmu(Module):
         self.qes = qes
 
 
-        self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
-        self.comb += ClockSignal('spi').eq(qes.sclk)
-        self.comb += ResetSignal('spi').eq(~qes.rstn)
+        # self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
+        # self.comb += ClockSignal('spi').eq(qes.sclk)
+        # self.comb += ResetSignal('spi').eq(~qes.rstn)
         # self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys"))
 
         # self.rsi_ts = rsi_ts = TSTriple()
