@@ -49,24 +49,24 @@ class FlashEmu(Module):
 
         self.rsi_ts = rsi_ts = TSTriple()
         self.rso_ts = rso_ts = TSTriple()
-        self.rwpn_ts = rwpn_ts = TSTriple()
-        self.rsio3_ts = rsio3_ts = TSTriple()
+        # self.rwpn_ts = rwpn_ts = TSTriple()
+        # self.rsio3_ts = rsio3_ts = TSTriple()
 
         self.specials += rsi_ts.get_tristate(qrs.si)
         self.specials += rso_ts.get_tristate(qrs.so)
-        self.specials += rwpn_ts.get_tristate(qrs.wpn)
-        self.specials += rsio3_ts.get_tristate(qrs.sio3)
+        # self.specials += rwpn_ts.get_tristate(qrs.wpn)
+        # self.specials += rsio3_ts.get_tristate(qrs.sio3)
 
 
         self.esi_ts = esi_ts = TSTriple()
         self.eso_ts = eso_ts = TSTriple()
-        self.ewpn_ts = ewpn_ts = TSTriple()
-        self.esio3_ts = esio3_ts = TSTriple()
+        # self.ewpn_ts = ewpn_ts = TSTriple()
+        # self.esio3_ts = esio3_ts = TSTriple()
 
         self.specials += esi_ts.get_tristate(qes.si)
         self.specials += eso_ts.get_tristate(qes.so)
-        self.specials += ewpn_ts.get_tristate(qes.wpn)
-        self.specials += esio3_ts.get_tristate(qes.sio3)
+        # self.specials += ewpn_ts.get_tristate(qes.wpn)
+        # self.specials += esio3_ts.get_tristate(qes.sio3)
 
 
         # self.comb += [
@@ -81,8 +81,8 @@ class FlashEmu(Module):
 
         self.esi = esi = Signal()
         self.eso = eso = Signal()
-        self.ewpn = ewpn = Signal()
-        self.esio3 = esio3 = Signal()
+        # self.ewpn = ewpn = Signal()
+        # self.esio3 = esio3 = Signal()
 
         # self.comb += [
         #     esi.eq(esi_ts.i),
@@ -109,22 +109,22 @@ class FlashEmu(Module):
 
         self.idcode = idcode = Signal(24, reset=0xc22539)
 
+        ctrl_fsm = FSM(reset_state='standby')
+        self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+
         # ctrl_fsm = FSM(reset_state='cmd')
-        # self.submodules.ctrl_fsm = ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
-        #
-        # # ctrl_fsm = FSM(reset_state='cmd')
-        # # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
-        # # self.submodules += ctrl_fsm
-        #
-        # # self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='cmd')
-        # # ClockDomainsRenamer('spi')(ctrl_fsm)
-        #
-        # ctrl_fsm.act('standby',
-        #     NextState('cmd'),
-        # )
-        # ctrl_fsm.act('cmd',
-        #     NextState('bad_cmd'),
-        # )
+        # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+        # self.submodules += ctrl_fsm
+
+        # self.submodules.ctrl_fsm = ctrl_fsm = FSM(reset_state='cmd')
+        # ClockDomainsRenamer('spi')(ctrl_fsm)
+
+        ctrl_fsm.act('standby',
+            NextState('cmd'),
+        )
+        ctrl_fsm.act('cmd',
+            NextState('standby'),
+        )
         # ctrl_fsm.act('bad_cmd',
         #      NextState('fast_boot'),
         # )
@@ -133,23 +133,38 @@ class FlashEmu(Module):
         # )
 
         self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8)
-
-        cmd_fsm = FSM(reset_state='cmd_read')
-        self.submodules.cmd_fsm = cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
-
-        rdid_flag = Signal()
-
-        cmd_fsm.act('cmd_read',
-            NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
-            If(cmd_bit_cnt == 7,
-                NextState('rdid'),
-            ),
-        )
-
-        cmd_fsm.act('rdid',
-            rdid_flag.eq(1),
-            NextState('rdid'),
-        )
+        #
+        # cmd_fsm = FSM(reset_state='rdid')
+        # cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
+        # cmd_fsm = ResetInserter()(cmd_fsm)
+        # self.submodules.cmd_fsm = cmd_fsm
+        #
+        # cmd_read_flag = Signal()
+        # rdid_flag = Signal()
+        # rd_flag = Signal()
+        #
+        #
+        #
+        #
+        #
+        # cmd_fsm.act('cmd_read',
+        #     cmd_read_flag.eq(1),
+        #     NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
+        #     # If(cmd_bit_cnt == 7,
+        #     #     NextState('rdid'),
+        #     # ),
+        #     NextState('rdid'),
+        # )
+        #
+        # cmd_fsm.act('rdid',
+        #     rdid_flag.eq(1),
+        #     NextState('cmd_read'),
+        # )
+        #
+        # cmd_fsm.act('rd',
+        #     rd_flag.eq(1),
+        #     NextState('cmd_read'),
+        # )
 
         # dummy = cmd_fsm.ongoing('rdid')
 

@@ -132,13 +132,13 @@ class BenchSoC(SoCCore):
 
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
         self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
-        print(f'qpsi_real_sigs: {qrs}')
+        # print(f'qpsi_real_sigs: {qrs}')
         self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3)
 
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
         self.qpsi_emu_sigs = qes = QSPISigs.from_pads(qe)
-        print(f'qpsi_emu_sigs: {qes}')
+        # print(f'qpsi_emu_sigs: {qes}')
         self.submodules.qspi_emu = FlashEmu(qrs, qes)
 
 
@@ -344,6 +344,12 @@ async def reset_flash(q: QSPISigs):
     q.rstn <= 0
 
     await tRLRH
+
+    for i in range(5):
+        q.sclk <= 1
+        await qtclkh
+        q.sclk <= 0
+        await qtclkh
 
     q.rstn <= 1
 
