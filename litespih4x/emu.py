@@ -222,13 +222,13 @@ class FlashEmu(Module):
             ),
             addr_next.eq(addr + 1),
             NextValue(dr_bit_cnt, dr_bit_cnt + 1),
-            NextValue(dr, foo[1:]),
+            NextValue(dr, Cat(0, foo[:-1])),
             If(dr_bit_cnt == 7,
                NextValue(addr, addr_next),
                # NextValue(dr, fmrp.dat_r),
             ),
             eso_oe.eq(1),
-            eso.eq(foo[0]),
+            eso.eq(foo[-1]),
         )
 
         self.cnt = cnt = Signal(16)
