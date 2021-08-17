@@ -388,7 +388,7 @@ async def read_flash_id(dut):
     fork_clk()
     flash_id = None
 
-    cmd = BitSequence(0x9f, msb=True)
+    cmd = BitSequence(0x9f, msb=True, length=8)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
     so = await tick_so(dut, sigs.qe, 3*8)
@@ -400,6 +400,22 @@ async def read_flash_id(dut):
 
     dut._log.info(f'flash_id: {flash_id}')
 
+@cocotb.test(skip=False)
+async def read_first_four_bytes(dut):
+    fork_clk()
+    first_four_bytes = None
+
+    cmd = BitSequence(0x03000000, msb=True, length=32)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    so = await tick_so(dut, sigs.qe, 4*8)
+    await spi_txfr_end(dut, sigs.qe)
+    # so2 = await tick_so(dut, sigs.qe, 8*3)
+    # print(f'so: {so}')
+    # print(f'so2: {so2}')
+    first_four_bytes = so
+
+    dut._log.info(f'first_four_bytes: {first_four_bytes}')
 
 @cocotb.test(skip=True)
 async def reset_flash_cnt(dut):
