@@ -159,6 +159,7 @@ class FlashEmu(Module):
         self.addr_next = addr_next = Signal(24)
         self.addr_cnt = addr_cnt = Signal(max=24)
         self.dr = dr = Signal(8)
+        self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
 
         self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
@@ -180,8 +181,10 @@ class FlashEmu(Module):
             NextValue(idcode_cnt, 0),
 
             NextValue(addr_cnt, 0),
+            NextValue(dr_bit_cnt, 0),
 
             If(cmd_bit_cnt == 7,
+               NextValue(cmd_bit_cnt, 0),
                 If(cmd_next == CMD_READ,
                     NextState('read_get_addr'),
                 ).Elif(cmd_next == CMD_RDID,
@@ -206,14 +209,26 @@ class FlashEmu(Module):
             addr_next.eq(Cat(esi, addr[:-1])),
             NextValue(addr, addr_next),
             NextValue(addr_cnt, addr_cnt + 1),
-            NextValue(dr, addr_next),
             If(addr_cnt == 23,
                NextState('read_get_data'),
             )
         )
+        self.foo = foo = Signal(8)
         cmd_fsm.act('read_get_data',
+            If(dr_bit_cnt == 0,
+                foo.eq(fmrp.dat_r)
+            ).Else(
+                foo.eq(dr)
+            ),
+            addr_next.eq(addr + 1),
+            NextValue(dr_bit_cnt, dr_bit_cnt + 1),
+            NextValue(dr, foo[1:]),
+            If(dr_bit_cnt == 7,
+               NextValue(addr, addr_next),
+               # NextValue(dr, fmrp.dat_r),
+            ),
             eso_oe.eq(1),
-            eso.eq(1),
+            eso.eq(foo[0]),
         )
 
         self.cnt = cnt = Signal(16)
