@@ -383,7 +383,7 @@ async def read_wb_soc_id(dut):
     assert 'LiteSPIh4x' in soc_id
 
 
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def read_flash_id(dut):
     fork_clk()
     flash_id = None

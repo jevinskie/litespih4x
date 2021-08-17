@@ -36,6 +36,10 @@ class QSPISigs:
         return cls(**sig_dict)
 
 
+CMD_READ: Final = 0x03
+CMD_RDID: Final = 0x9f
+
+
 class FlashEmu(Module):
     def __init__(self, qrs: QSPISigs, qes: QSPISigs):
         self.qrs = qrs
@@ -49,24 +53,24 @@ class FlashEmu(Module):
 
         self.rsi_ts = rsi_ts = TSTriple()
         self.rso_ts = rso_ts = TSTriple()
-        self.rwpn_ts = rwpn_ts = TSTriple()
-        self.rsio3_ts = rsio3_ts = TSTriple()
+        # self.rwpn_ts = rwpn_ts = TSTriple()
+        # self.rsio3_ts = rsio3_ts = TSTriple()
 
         self.specials += rsi_ts.get_tristate(qrs.si)
         self.specials += rso_ts.get_tristate(qrs.so)
-        self.specials += rwpn_ts.get_tristate(qrs.wpn)
-        self.specials += rsio3_ts.get_tristate(qrs.sio3)
+        # self.specials += rwpn_ts.get_tristate(qrs.wpn)
+        # self.specials += rsio3_ts.get_tristate(qrs.sio3)
 
 
         self.esi_ts = esi_ts = TSTriple()
         self.eso_ts = eso_ts = TSTriple()
-        self.ewpn_ts = ewpn_ts = TSTriple()
-        self.esio3_ts = esio3_ts = TSTriple()
+        # self.ewpn_ts = ewpn_ts = TSTriple()
+        # self.esio3_ts = esio3_ts = TSTriple()
 
         self.specials += esi_ts.get_tristate(qes.si)
         self.specials += eso_ts.get_tristate(qes.so)
-        self.specials += ewpn_ts.get_tristate(qes.wpn)
-        self.specials += esio3_ts.get_tristate(qes.sio3)
+        # self.specials += ewpn_ts.get_tristate(qes.wpn)
+        # self.specials += esio3_ts.get_tristate(qes.sio3)
 
 
         # self.comb += [
@@ -81,8 +85,8 @@ class FlashEmu(Module):
 
         self.esi = esi = Signal()
         self.eso = eso = Signal()
-        self.ewpn = ewpn = Signal()
-        self.esio3 = esio3 = Signal()
+        # self.ewpn = ewpn = Signal()
+        # self.esio3 = esio3 = Signal()
 
         # self.comb += [
         #     esi.eq(esi_ts.i),
@@ -93,6 +97,7 @@ class FlashEmu(Module):
             qrs.sclk.eq(qes.sclk),
             qrs.rstn.eq(qes.rstn),
             qrs.csn.eq(qes.csn),
+            esi.eq(esi_ts.i),
             rsi_ts.o.eq(esi_ts.i),
             eso_ts.o.eq(rso_ts.i),
         ]
@@ -109,42 +114,54 @@ class FlashEmu(Module):
 
         self.idcode = idcode = Signal(24, reset=0xc22539)
 
-        ctrl_fsm = FSM(reset_state='cmd')
-        ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
-        # ctrl_fsm = ResetInserter()(ctrl_fsm)
-        self.submodules.ctrl_fsm = ctrl_fsm
-
-        ctrl_fsm.act('standby',
-            NextState('cmd'),
-        )
-        ctrl_fsm.act('cmd',
-            NextState('standby'),
-        )
-        ctrl_fsm.act('bad_cmd',
-             NextState('fast_boot'),
-        )
-        ctrl_fsm.act('fast_boot',
-            NextState('standby'),
-        )
+        # ctrl_fsm = FSM(reset_state='cmd')
+        # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
+        # # ctrl_fsm = ResetInserter()(ctrl_fsm)
+        # self.submodules.ctrl_fsm = ctrl_fsm
+        #
+        # ctrl_fsm.act('standby',
+        #     NextState('cmd'),
+        # )
+        # ctrl_fsm.act('cmd',
+        #     NextState('standby'),
+        # )
+        # ctrl_fsm.act('bad_cmd',
+        #      NextState('fast_boot'),
+        # )
+        # ctrl_fsm.act('fast_boot',
+        #     NextState('standby'),
+        # )
 
         self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8)
+        self.cmd = cmd = Signal(8)
+        self.cmd_next = cmd_next = Signal(8)
 
-        cmd_fsm = FSM(reset_state='cmd_read')
+        cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
         # cmd_fsm = ResetInserter()(cmd_fsm)
         self.submodules.cmd_fsm = cmd_fsm
 
-        cmd_fsm.act('cmd_read',
+        self.get_cmd_flag = get_cmd_flag = Signal()
+        cmd_fsm.act('get_cmd',
+            get_cmd_flag.eq(cmd_bit_cnt == 7),
+            cmd_next.eq(Cat(esi, cmd[:-1])),
+            NextValue(cmd, cmd_next),
             NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
             If(cmd_bit_cnt == 7,
-                NextState('rdid'),
+                If(cmd_next == CMD_READ,
+                    NextState('read'),
+                ).Elif(cmd_next == CMD_RDID,
+                    NextState('rdid'),
+                )
             ),
         )
+        self.rdid_flag = rdid_flag = Signal()
         cmd_fsm.act('rdid',
-            NextState('cmd_read'),
+            rdid_flag.eq(1),
+            NextState('get_cmd'),
         )
-        cmd_fsm.act('rd',
-            NextState('cmd_read'),
+        cmd_fsm.act('read',
+            NextState('get_cmd'),
         )
 
         self.cnt = cnt = Signal(16)
