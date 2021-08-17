@@ -107,22 +107,22 @@ class FlashEmu(Module):
             qrs.csn.eq(qes.csn),
             esi.eq(esi_ts.i),
             rsi_ts.o.eq(esi_ts.i),
-            # eso_ts.o.eq(eso),
-            eso_ts.o.eq(rso_ts.i),
-            eso_ts.oe.eq(1),
+            eso_ts.o.eq(eso),
+            # eso_ts.o.eq(rso_ts.i),
+            # eso_ts.oe.eq(1),
         ]
 
         self.eso_delayed = eso_delayed = Signal()
-        # self.comb += eso_ts.o.eq(eso_delayed)
+        self.comb += eso_ts.o.eq(eso_delayed)
         self.sync.spi_inv += eso_delayed.eq(eso)
 
         self.eso_oe_delayed = eso_oe_delayed = Signal()
-        # self.comb += eso_ts.oe.eq(eso_oe_delayed)
+        self.comb += eso_ts.oe.eq(eso_oe_delayed)
         self.sync.spi_inv += eso_oe_delayed.eq(eso_oe)
 
         self.comb += [
             esi_ts.oe.eq(0),
-            # eso_oe.eq(0),
+            eso_oe.eq(0),
         ]
 
         self.comb += [
@@ -155,6 +155,9 @@ class FlashEmu(Module):
         self.idcode = idcode = Signal(24, reset=IDCODE)
         self.idcode_cnt = idcode_cnt = Signal(max=24)
 
+        self.addr = addr = Signal(24)
+        self.addr_cnt = addr_cnt = Signal(max=24)
+
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
         # cmd_fsm = ResetInserter()(cmd_fsm)
@@ -170,9 +173,11 @@ class FlashEmu(Module):
             NextValue(idcode, idcode.reset),
             NextValue(idcode_cnt, 0),
 
+            NextValue(addr_cnt, 0),
+
             If(cmd_bit_cnt == 7,
                 If(cmd_next == CMD_READ,
-                    NextState('read'),
+                    NextState('read_get_addr'),
                 ).Elif(cmd_next == CMD_RDID,
                     NextState('rdid'),
                 )
@@ -190,8 +195,17 @@ class FlashEmu(Module):
                NextState('get_cmd'),
             )
         )
-        cmd_fsm.act('read',
-            NextState('get_cmd'),
+
+        cmd_fsm.act('read_get_addr',
+            NextValue(addr, Cat(esi, addr[:-1])),
+            NextValue(addr_cnt, addr_cnt + 1),
+            If(addr_cnt == 23,
+               NextState('read_get_data'),
+            )
+        )
+        cmd_fsm.act('read_get_data',
+            eso_oe.eq(1),
+            eso.eq(1),
         )
 
         self.cnt = cnt = Signal(16)

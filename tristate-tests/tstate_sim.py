@@ -405,10 +405,10 @@ async def read_first_four_bytes(dut):
     fork_clk()
     first_four_bytes = None
 
-    cmd = BitSequence(0x03000000, msb=True, length=32)
+    cmd = BitSequence(0x03000004, msb=True, length=32)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 4*8)
+    so = await tick_so(dut, sigs.qe, 4*8, write_only=True)
     await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
     # print(f'so: {so}')
@@ -422,7 +422,7 @@ async def reset_flash_cnt(dut):
     fork_clk()
     await reset_flash(sigs.qe)
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def inc_flash_cnt(dut):
     fork_clk()
     await tick_so(dut, sigs.qe, 16, write_only=True)
