@@ -37,7 +37,10 @@ class QSPISigs:
 
 
 CMD_READ: Final = 0x03
+
 CMD_RDID: Final = 0x9f
+# IDCODE: Final = 0xc22539
+IDCODE: Final = 0xAA550F
 
 
 class FlashEmu(Module):
@@ -99,20 +102,18 @@ class FlashEmu(Module):
             qrs.csn.eq(qes.csn),
             esi.eq(esi_ts.i),
             rsi_ts.o.eq(esi_ts.i),
-            eso_ts.o.eq(rso_ts.i),
+            eso_ts.o.eq(eso),
         ]
 
         self.comb += [
             esi_ts.oe.eq(0),
-            eso_ts.oe.eq(1),
+            eso_ts.oe.eq(0),
         ]
 
         self.comb += [
             rsi_ts.oe.eq(1),
             rso_ts.oe.eq(0),
         ]
-
-        self.idcode = idcode = Signal(24, reset=0xc22539)
 
         # ctrl_fsm = FSM(reset_state='cmd')
         # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
@@ -136,6 +137,8 @@ class FlashEmu(Module):
         self.cmd = cmd = Signal(8)
         self.cmd_next = cmd_next = Signal(8)
 
+        self.idcode = idcode = Signal(24, reset=IDCODE)
+
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
         # cmd_fsm = ResetInserter()(cmd_fsm)
@@ -151,14 +154,23 @@ class FlashEmu(Module):
                 If(cmd_next == CMD_READ,
                     NextState('read'),
                 ).Elif(cmd_next == CMD_RDID,
+                    NextValue(idcode, idcode.reset),
                     NextState('rdid'),
                 )
             ),
         )
+
+        self.idcode_cnt = idcode_cnt = Signal(max=24)
         self.rdid_flag = rdid_flag = Signal()
         cmd_fsm.act('rdid',
+            eso_ts.oe.eq(1),
             rdid_flag.eq(1),
-            NextState('get_cmd'),
+            NextValue(idcode_cnt, idcode_cnt + 1),
+            NextValue(idcode, Cat(idcode[-1], idcode[:-1])),
+            eso.eq(idcode[0]),
+            If(idcode_cnt == 23,
+               NextState('get_cmd'),
+            )
         )
         cmd_fsm.act('read',
             NextState('get_cmd'),
