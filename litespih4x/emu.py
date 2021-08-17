@@ -39,8 +39,8 @@ class QSPISigs:
 CMD_READ: Final = 0x03
 
 CMD_RDID: Final = 0x9f
-# IDCODE: Final = 0xc22539
-IDCODE: Final = 0xAA550F
+IDCODE: Final = 0xc22539
+# IDCODE: Final = 0xAA550F
 
 
 class FlashEmu(Module):
@@ -53,6 +53,10 @@ class FlashEmu(Module):
         self.comb += ClockSignal('spi').eq(qes.sclk)
         self.comb += ResetSignal('spi').eq(~qes.rstn)
         # self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys"))
+
+        self.clock_domains.cd_spi_inv = cd_spi_inv = ClockDomain('spi_inv')
+        self.comb += ClockSignal('spi_inv').eq(~qes.sclk)
+        self.comb += ResetSignal('spi_inv').eq(~qes.rstn)
 
         self.rsi_ts = rsi_ts = TSTriple()
         self.rso_ts = rso_ts = TSTriple()
@@ -88,6 +92,7 @@ class FlashEmu(Module):
 
         self.esi = esi = Signal()
         self.eso = eso = Signal()
+        self.eso_oe = eso_oe = Signal()
         # self.ewpn = ewpn = Signal()
         # self.esio3 = esio3 = Signal()
 
@@ -102,12 +107,20 @@ class FlashEmu(Module):
             qrs.csn.eq(qes.csn),
             esi.eq(esi_ts.i),
             rsi_ts.o.eq(esi_ts.i),
-            eso_ts.o.eq(eso),
+            # eso_ts.o.eq(eso),
         ]
+
+        self.eso_delayed = eso_delayed = Signal()
+        self.comb += eso_ts.o.eq(eso_delayed)
+        self.sync.spi_inv += eso_delayed.eq(eso)
+
+        self.eso_oe_delayed = eso_oe_delayed = Signal()
+        self.comb += eso_ts.oe.eq(eso_oe_delayed)
+        self.sync.spi_inv += eso_oe_delayed.eq(eso_oe)
 
         self.comb += [
             esi_ts.oe.eq(0),
-            eso_ts.oe.eq(0),
+            eso_oe.eq(0),
         ]
 
         self.comb += [
@@ -138,6 +151,7 @@ class FlashEmu(Module):
         self.cmd_next = cmd_next = Signal(8)
 
         self.idcode = idcode = Signal(24, reset=IDCODE)
+        self.idcode_cnt = idcode_cnt = Signal(max=24)
 
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
@@ -150,24 +164,26 @@ class FlashEmu(Module):
             cmd_next.eq(Cat(esi, cmd[:-1])),
             NextValue(cmd, cmd_next),
             NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
+
+            NextValue(idcode, idcode.reset),
+            NextValue(idcode_cnt, 0),
+
             If(cmd_bit_cnt == 7,
                 If(cmd_next == CMD_READ,
                     NextState('read'),
                 ).Elif(cmd_next == CMD_RDID,
-                    NextValue(idcode, idcode.reset),
                     NextState('rdid'),
                 )
             ),
         )
 
-        self.idcode_cnt = idcode_cnt = Signal(max=24)
         self.rdid_flag = rdid_flag = Signal()
         cmd_fsm.act('rdid',
-            eso_ts.oe.eq(1),
+            eso_oe.eq(1),
+            eso.eq(idcode[-1]),
             rdid_flag.eq(1),
             NextValue(idcode_cnt, idcode_cnt + 1),
-            NextValue(idcode, Cat(idcode[-1], idcode[:-1])),
-            eso.eq(idcode[0]),
+            NextValue(idcode, Cat(0, idcode[:-1])),
             If(idcode_cnt == 23,
                NextState('get_cmd'),
             )
