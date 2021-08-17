@@ -609,7 +609,8 @@ module MX25U25635F( SCLK,
     initial 
     begin : memory_initialize
         for ( i = 0; i <=  TOP_Add; i = i + 1 )
-            ARRAY[i] = 8'hff; 
+//             ARRAY[i] = 8'hff;
+            ARRAY[i] = (i & 8'hff) ^ ((i >> 8)  & 8'hff) ^ ((i >> 16) & 8'hff) ^ ((i >> 24) & 8'hff);
         if ( Init_File != "none" )
             $readmemh(Init_File,ARRAY) ;
         for( i = 0; i <=  Secur_TOP_Add; i = i + 1 ) begin
