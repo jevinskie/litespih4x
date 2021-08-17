@@ -108,19 +108,21 @@ class FlashEmu(Module):
             esi.eq(esi_ts.i),
             rsi_ts.o.eq(esi_ts.i),
             # eso_ts.o.eq(eso),
+            eso_ts.o.eq(rso_ts.i),
+            eso_ts.oe.eq(1),
         ]
 
         self.eso_delayed = eso_delayed = Signal()
-        self.comb += eso_ts.o.eq(eso_delayed)
+        # self.comb += eso_ts.o.eq(eso_delayed)
         self.sync.spi_inv += eso_delayed.eq(eso)
 
         self.eso_oe_delayed = eso_oe_delayed = Signal()
-        self.comb += eso_ts.oe.eq(eso_oe_delayed)
+        # self.comb += eso_ts.oe.eq(eso_oe_delayed)
         self.sync.spi_inv += eso_oe_delayed.eq(eso_oe)
 
         self.comb += [
             esi_ts.oe.eq(0),
-            eso_oe.eq(0),
+            # eso_oe.eq(0),
         ]
 
         self.comb += [
