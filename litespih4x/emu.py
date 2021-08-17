@@ -156,11 +156,13 @@ class FlashEmu(Module):
         self.idcode_cnt = idcode_cnt = Signal(max=24)
 
         self.addr = addr = Signal(24)
+        self.addr_next = addr_next = Signal(24)
         self.addr_cnt = addr_cnt = Signal(max=24)
+        self.dr = dr = Signal(8)
 
-        self.specials.flasm_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
-        self.specials.fmrp = fmrp = flash_mem.get_port()
-        self.comb += fmrp.adr.eq(addr)
+        self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
+        self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
+        self.comb += fmrp.adr.eq(addr_next)
 
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
@@ -201,8 +203,10 @@ class FlashEmu(Module):
         )
 
         cmd_fsm.act('read_get_addr',
-            NextValue(addr, Cat(esi, addr[:-1])),
+            addr_next.eq(Cat(esi, addr[:-1])),
+            NextValue(addr, addr_next),
             NextValue(addr_cnt, addr_cnt + 1),
+            NextValue(dr, addr_next),
             If(addr_cnt == 23,
                NextState('read_get_data'),
             )
