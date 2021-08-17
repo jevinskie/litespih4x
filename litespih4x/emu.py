@@ -158,6 +158,10 @@ class FlashEmu(Module):
         self.addr = addr = Signal(24)
         self.addr_cnt = addr_cnt = Signal(max=24)
 
+        self.specials.flasm_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
+        self.specials.fmrp = fmrp = flash_mem.get_port()
+        self.comb += fmrp.adr.eq(addr)
+
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
         # cmd_fsm = ResetInserter()(cmd_fsm)
@@ -210,3 +214,7 @@ class FlashEmu(Module):
 
         self.cnt = cnt = Signal(16)
         self.sync.spi += cnt.eq(cnt + 1)
+
+    @staticmethod
+    def val4addr(addr: int) -> int:
+        return (addr & 0xff) ^ ((addr >> 8) & 0xff) ^ ((addr >> 16) & 0xff) ^ ((addr >> 24) & 0xff)
