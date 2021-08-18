@@ -417,6 +417,24 @@ async def read_first_four_bytes(dut):
 
     dut._log.info(f'first_four_bytes: {first_four_bytes}')
 
+@cocotb.test(skip=False)
+async def read_first_four_bytes_qmode(dut):
+    fork_clk()
+    first_four_bytes = None
+
+    cmd = BitSequence(0x6b000004, msb=True, length=32)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    so = await tick_so(dut, sigs.qe, 4*8//4, write_only=True)
+    await spi_txfr_end(dut, sigs.qe)
+    # so2 = await tick_so(dut, sigs.qe, 8*3)
+    # print(f'so: {so}')
+    # print(f'so2: {so2}')
+    first_four_bytes = so
+
+    dut._log.info(f'first_four_bytes: {first_four_bytes}')
+
+
 @cocotb.test(skip=True)
 async def reset_flash_cnt(dut):
     fork_clk()

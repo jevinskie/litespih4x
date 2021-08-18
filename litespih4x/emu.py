@@ -37,6 +37,7 @@ class QSPISigs:
 
 
 CMD_READ: Final = 0x03
+CMD_QREAD: Final = 0x6b
 
 CMD_RDID: Final = 0x9f
 IDCODE: Final = 0xc22539
@@ -160,6 +161,7 @@ class FlashEmu(Module):
         self.addr_cnt = addr_cnt = Signal(max=24)
         self.dr = dr = Signal(8)
         self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
+        self.qmode = qmode = Signal()
 
         self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
@@ -182,11 +184,15 @@ class FlashEmu(Module):
 
             NextValue(addr_cnt, 0),
             NextValue(dr_bit_cnt, 0),
+            NextValue(qmode, 0),
 
             If(cmd_bit_cnt == 7,
                NextValue(cmd_bit_cnt, 0),
                 If(cmd_next == CMD_READ,
                     NextState('read_get_addr'),
+                ).Elif(cmd_next == CMD_QREAD,
+                    NextState('read_get_addr'),
+                    NextValue(qmode, 1),
                 ).Elif(cmd_next == CMD_RDID,
                     NextState('rdid'),
                 )
@@ -223,7 +229,7 @@ class FlashEmu(Module):
             addr_next.eq(addr + 1),
             NextValue(dr_bit_cnt, dr_bit_cnt + 1),
             NextValue(dr, Cat(0, foo[:-1])),
-            If(dr_bit_cnt == 7,
+            If((dr_bit_cnt == 7) | ((dr_bit_cnt == 4) & qmode),
                NextValue(addr, addr_next),
                # NextValue(dr, fmrp.dat_r),
             ),
