@@ -57,7 +57,8 @@ class FlashEmu(Module):
 
         self.clock_domains.cd_spi_inv = cd_spi_inv = ClockDomain('spi_inv')
         self.comb += ClockSignal('spi_inv').eq(~ClockSignal('spi'))
-        self.comb += ResetSignal('spi_inv').eq(ResetSignal('spi'))
+        # self.comb += ResetSignal('spi_inv').eq(ResetSignal('spi'))
+        self.specials.reset_syncer_inv = AsyncResetSingleStageSynchronizer(cd_spi_inv, ~qes.rstn | qes.csn)
 
         self.rsi_ts = rsi_ts = TSTriple()
         self.rso_ts = rso_ts = TSTriple()
@@ -118,7 +119,7 @@ class FlashEmu(Module):
         self.sync.spi_inv += eso_delayed.eq(eso)
 
         self.eso_oe_delayed = eso_oe_delayed = Signal()
-        self.comb += eso_ts.oe.eq(eso_oe_delayed & ~ResetSignal('spi'))
+        self.comb += eso_ts.oe.eq(eso_oe_delayed & ~ResetSignal('spi_inv'))
         self.sync.spi_inv += eso_oe_delayed.eq(eso_oe)
 
         self.comb += [
