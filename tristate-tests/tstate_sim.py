@@ -418,6 +418,17 @@ async def read_first_four_bytes(dut):
     dut._log.info(f'first_four_bytes: {first_four_bytes}')
 
 @cocotb.test(skip=False)
+async def enable_quad_mode(dut):
+    fork_clk()
+
+    cmd = BitSequence(0x0140, msb=True, length=16)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    await spi_txfr_end(dut, sigs.qe)
+
+    dut._log.info(f'enabled quad mode')
+
+@cocotb.test(skip=False)
 async def read_status(dut):
     fork_clk()
     status = None
