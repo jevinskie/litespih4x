@@ -76,6 +76,13 @@ tREADY2_ROLL: Final = Timer(2*tREADY2_ROLL_ns, units='ns')
 tVSL_ns = 10
 tVSL: Final = Timer(2*tVSL_ns, units='ns')
 
+# tREADY2_W_ns = 40_000_000
+tREADY2_W_ns = 40
+tREADY2_W = Timer(2*tREADY2_W_ns, units='ns')
+
+# tW_ns = 40_000_000
+tW_ns = 40
+tW = Timer(2*tW_ns, units='ns')
 
 async def tmr(ns: float) -> None:
     await Timer(ns, units='ns')
@@ -418,6 +425,31 @@ async def read_first_four_bytes(dut):
     dut._log.info(f'first_four_bytes: {first_four_bytes}')
 
 @cocotb.test(skip=False)
+async def enable_write(dut):
+    fork_clk()
+
+    cmd = BitSequence(0x06, msb=True, length=8)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    await spi_txfr_end(dut, sigs.qe)
+
+    dut._log.info(f'enabled write mode')
+
+@cocotb.test(skip=False)
+async def read_status_wel(dut):
+    fork_clk()
+    status = None
+
+    cmd = BitSequence(0x05, msb=True, length=8)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    so = await tick_so(dut, sigs.qe, 8, write_only=True)
+    await spi_txfr_end(dut, sigs.qe)
+    status = so
+
+    dut._log.info(f'status WEL: {status}')
+
+@cocotb.test(skip=False)
 async def enable_quad_mode(dut):
     fork_clk()
 
@@ -429,18 +461,35 @@ async def enable_quad_mode(dut):
     dut._log.info(f'enabled quad mode')
 
 @cocotb.test(skip=False)
-async def read_status(dut):
+async def read_status_wip(dut):
     fork_clk()
     status = None
 
     cmd = BitSequence(0x05, msb=True, length=8)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 3*8, write_only=True)
+    so = await tick_so(dut, sigs.qe, 8, write_only=True)
     await spi_txfr_end(dut, sigs.qe)
     status = so
 
-    dut._log.info(f'status: {status}')
+    dut._log.info(f'status WIP: {status}')
+
+@cocotb.test(skip=False)
+async def read_status_qe(dut):
+    fork_clk()
+    status = None
+
+    await tREADY2_W
+    await tW
+
+    cmd = BitSequence(0x05, msb=True, length=8)
+    await spi_txfr_start(dut, sigs.qe)
+    await tick_si(dut, sigs.qe, cmd, write_only=True)
+    so = await tick_so(dut, sigs.qe, 8, write_only=True)
+    await spi_txfr_end(dut, sigs.qe)
+    status = so
+
+    dut._log.info(f'status QE: {status}')
 
 @cocotb.test(skip=False)
 async def read_first_four_bytes_qmode(dut):
@@ -450,7 +499,7 @@ async def read_first_four_bytes_qmode(dut):
     cmd = BitSequence(0x6b000004, msb=True, length=32)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 4*8//4, write_only=True)
+    so = await tick_so(dut, sigs.qe, 4*8, write_only=True)
     await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
     # print(f'so: {so}')

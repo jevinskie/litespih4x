@@ -47,6 +47,8 @@ CMD_RDSR: Final = 0x05
 CMD_RDCR: Final = 0x15
 CMD_WRSR: Final = 0x01
 
+CMD_WREN: Final = 0x06
+
 class FlashEmu(Module):
     def __init__(self, qrs: QSPISigs, qes: QSPISigs):
         self.qrs = qrs

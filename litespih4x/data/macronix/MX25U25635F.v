@@ -147,7 +147,8 @@ module MX25U25635F( SCLK,
                 tBE32           = 200_000_000,    // Block 32KB erase time
                 tCE             = 200_000,      // unit is ms instead of ns  
                 tPP             = 1_000_000,      // Program time
-                tW              = 40_000_000,       // Write Status time
+                // tW              = 40_000_000,       // Write Status time
+                tW              = 40,       // Write Status time
                 tWREAR          = 40,   // Write extended address register time
                 tWRFBR          = 1_000_000,   // Write fast boot register time
                 tREADY2_P       = 310_000,  // hardware reset recovery time for pgm
@@ -158,7 +159,8 @@ module MX25U25635F( SCLK,
                 // tREADY2_D       = 40_000,  // hardware reset recovery time for instruction decoding phase
                 tREADY2_R       = 40,
                 tREADY2_D       = 40,
-                tREADY2_W       = 40_000_000,  // hardware reset recovery time for WRSR
+                // tREADY2_W       = 40_000_000,  // hardware reset recovery time for WRSR
+                tREADY2_W       = 40,  // hardware reset recovery time for WRSR
                 // tVSL            = 1500_000;     // Time delay to chip select allowed
                 tVSL            = 10;     // Time delay to chip select allowed
 
