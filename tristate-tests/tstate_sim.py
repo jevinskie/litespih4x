@@ -417,7 +417,7 @@ async def read_first_four_bytes(dut):
 
     dut._log.info(f'first_four_bytes: {first_four_bytes}')
 
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def read_first_four_bytes_qmode(dut):
     fork_clk()
     first_four_bytes = None

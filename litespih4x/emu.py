@@ -52,12 +52,10 @@ class FlashEmu(Module):
 
         self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
         self.comb += ClockSignal('spi').eq(qes.sclk & ~qes.csn & qes.rstn)
-        # self.comb += ResetSignal('spi').eq(~qes.rstn | qes.csn)
         self.specials.reset_syncer = AsyncResetSingleStageSynchronizer(cd_spi, ~qes.rstn | qes.csn)
 
         self.clock_domains.cd_spi_inv = cd_spi_inv = ClockDomain('spi_inv')
         self.comb += ClockSignal('spi_inv').eq(~ClockSignal('spi'))
-        # self.comb += ResetSignal('spi_inv').eq(ResetSignal('spi'))
         self.specials.reset_syncer_inv = AsyncResetSingleStageSynchronizer(cd_spi_inv, ~qes.rstn | qes.csn)
 
         self.rsi_ts = rsi_ts = TSTriple()
@@ -155,7 +153,6 @@ class FlashEmu(Module):
         self.cmd_next = cmd_next = Signal(8)
 
         self.idcode = idcode = Signal(24, reset=IDCODE)
-        self.idcode_cnt = idcode_cnt = Signal(max=24)
 
         self.addr = addr = Signal(24)
         self.addr_next = addr_next = Signal(24)
@@ -180,13 +177,6 @@ class FlashEmu(Module):
             NextValue(cmd, cmd_next),
             NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
 
-            NextValue(idcode, idcode.reset),
-            NextValue(idcode_cnt, 0),
-
-            NextValue(addr_cnt, 0),
-            NextValue(dr_bit_cnt, 0),
-            NextValue(qmode, 0),
-
             If(cmd_bit_cnt == 7,
                 If(cmd_next == CMD_READ,
                     NextState('read_get_addr'),
@@ -199,12 +189,9 @@ class FlashEmu(Module):
             ),
         )
 
-        self.rdid_flag = rdid_flag = Signal()
         cmd_fsm.act('rdid',
             eso_oe.eq(1),
             eso.eq(idcode[-1]),
-            rdid_flag.eq(1),
-            NextValue(idcode_cnt, idcode_cnt + 1),
             NextValue(idcode, Cat(idcode[-1], idcode[:-1])),
         )
 
@@ -216,6 +203,7 @@ class FlashEmu(Module):
                NextState('read_get_data'),
             )
         )
+
         self.foo = foo = Signal(8)
         cmd_fsm.act('read_get_data',
             If(dr_bit_cnt == 0,
