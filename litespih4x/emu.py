@@ -7,7 +7,7 @@ from __future__ import annotations
 from rich import print
 
 from migen import *
-from migen.genlib.cdc import AsyncResetSynchronizer
+from migen.genlib.resetsync import AsyncResetSynchronizer, AsyncResetSingleStageSynchronizer
 
 from typing import Final
 
@@ -52,8 +52,8 @@ class FlashEmu(Module):
 
         self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
         self.comb += ClockSignal('spi').eq(qes.sclk & ~qes.csn & qes.rstn)
-        self.comb += ResetSignal('spi').eq(~qes.rstn)
-        # self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys"))
+        # self.comb += ResetSignal('spi').eq(~qes.rstn | qes.csn)
+        self.specials.reset_syncer = AsyncResetSingleStageSynchronizer(cd_spi, ~qes.rstn | qes.csn)
 
         self.clock_domains.cd_spi_inv = cd_spi_inv = ClockDomain('spi_inv')
         self.comb += ClockSignal('spi_inv').eq(~ClockSignal('spi'))
@@ -149,8 +149,8 @@ class FlashEmu(Module):
         #     NextState('standby'),
         # )
 
-        self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8)
-        self.cmd = cmd = Signal(8)
+        self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8, reset=1)
+        self.cmd = cmd = Signal(8, reset=esi)
         self.cmd_next = cmd_next = Signal(8)
 
         self.idcode = idcode = Signal(24, reset=IDCODE)
@@ -174,8 +174,8 @@ class FlashEmu(Module):
 
         self.get_cmd_flag = get_cmd_flag = Signal()
         cmd_fsm.act('get_cmd',
-            get_cmd_flag.eq(cmd_bit_cnt == 7),
             cmd_next.eq(Cat(esi, cmd[:-1])),
+            get_cmd_flag.eq((cmd_bit_cnt == 7) & (cmd_next[0])),
             NextValue(cmd, cmd_next),
             NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
 
@@ -187,15 +187,20 @@ class FlashEmu(Module):
             NextValue(qmode, 0),
 
             If(cmd_bit_cnt == 7,
-               NextValue(cmd_bit_cnt, 0),
                 If(cmd_next == CMD_READ,
                     NextState('read_get_addr'),
-                ).Elif(cmd_next == CMD_QREAD,
-                    NextState('read_get_addr'),
-                    NextValue(qmode, 1),
                 ).Elif(cmd_next == CMD_RDID,
                     NextState('rdid'),
                 )
+               # NextValue(cmd_bit_cnt, 0),
+               #  If(cmd_next == CMD_READ,
+               #      NextState('read_get_addr'),
+               #  ).Elif(cmd_next == CMD_QREAD,
+               #      NextState('read_get_addr'),
+               #      NextValue(qmode, 1),
+               #  ).Elif(cmd_next == CMD_RDID,
+               #      NextState('rdid'),
+               #  )
             ),
         )
 
