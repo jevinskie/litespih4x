@@ -130,24 +130,6 @@ class FlashEmu(Module):
             rso_ts.oe.eq(0),
         ]
 
-        # ctrl_fsm = FSM(reset_state='cmd')
-        # ctrl_fsm = ClockDomainsRenamer('spi')(ctrl_fsm)
-        # # ctrl_fsm = ResetInserter()(ctrl_fsm)
-        # self.submodules.ctrl_fsm = ctrl_fsm
-        #
-        # ctrl_fsm.act('standby',
-        #     NextState('cmd'),
-        # )
-        # ctrl_fsm.act('cmd',
-        #     NextState('standby'),
-        # )
-        # ctrl_fsm.act('bad_cmd',
-        #      NextState('fast_boot'),
-        # )
-        # ctrl_fsm.act('fast_boot',
-        #     NextState('standby'),
-        # )
-
         self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8, reset=1)
         self.cmd = cmd = Signal(8, reset=esi)
         self.cmd_next = cmd_next = Signal(8)
@@ -185,6 +167,8 @@ class FlashEmu(Module):
                     NextValue(qmode, 1),
                 ).Elif(cmd_next == CMD_RDID,
                     NextState('rdid'),
+                ).Else(
+                    NextState('bad_cmd_err'),
                 )
             ),
         )
@@ -219,6 +203,11 @@ class FlashEmu(Module):
             ),
             eso_oe.eq(1),
             eso.eq(dr_tmp[-1]),
+        )
+
+        self.bad_cmd_err = bad_cmd_err = Signal()
+        cmd_fsm.act('bad_cmd_err',
+            bad_cmd_err.eq(1),
         )
 
         self.cnt = cnt = Signal(16)
