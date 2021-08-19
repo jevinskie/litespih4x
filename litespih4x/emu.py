@@ -118,7 +118,7 @@ class FlashEmu(Module):
         self.sync.spi_inv += eso_delayed.eq(eso)
 
         self.eso_oe_delayed = eso_oe_delayed = Signal()
-        self.comb += eso_ts.oe.eq(eso_oe_delayed & ~qes.csn & qes.rstn)
+        self.comb += eso_ts.oe.eq(eso_oe_delayed & ~ResetSignal('spi'))
         self.sync.spi_inv += eso_oe_delayed.eq(eso_oe)
 
         self.comb += [
