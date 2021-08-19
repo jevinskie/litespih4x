@@ -189,18 +189,12 @@ class FlashEmu(Module):
             If(cmd_bit_cnt == 7,
                 If(cmd_next == CMD_READ,
                     NextState('read_get_addr'),
+                ).Elif(cmd_next == CMD_QREAD,
+                    NextState('read_get_addr'),
+                    NextValue(qmode, 1),
                 ).Elif(cmd_next == CMD_RDID,
                     NextState('rdid'),
                 )
-               # NextValue(cmd_bit_cnt, 0),
-               #  If(cmd_next == CMD_READ,
-               #      NextState('read_get_addr'),
-               #  ).Elif(cmd_next == CMD_QREAD,
-               #      NextState('read_get_addr'),
-               #      NextValue(qmode, 1),
-               #  ).Elif(cmd_next == CMD_RDID,
-               #      NextState('rdid'),
-               #  )
             ),
         )
 
