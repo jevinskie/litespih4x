@@ -204,22 +204,21 @@ class FlashEmu(Module):
             )
         )
 
-        self.foo = foo = Signal(8)
+        self.dr_tmp = dr_tmp = Signal(8)
         cmd_fsm.act('read_get_data',
             If(dr_bit_cnt == 0,
-                foo.eq(fmrp.dat_r)
+                dr_tmp.eq(fmrp.dat_r)
             ).Else(
-                foo.eq(dr)
+                dr_tmp.eq(dr)
             ),
             addr_next.eq(addr + 1),
             NextValue(dr_bit_cnt, dr_bit_cnt + 1),
-            NextValue(dr, Cat(0, foo[:-1])),
+            NextValue(dr, Cat(0, dr_tmp[:-1])),
             If((dr_bit_cnt == 7) | ((dr_bit_cnt == 4) & qmode),
                NextValue(addr, addr_next),
-               # NextValue(dr, fmrp.dat_r),
             ),
             eso_oe.eq(1),
-            eso.eq(foo[-1]),
+            eso.eq(dr_tmp[-1]),
         )
 
         self.cnt = cnt = Signal(16)
