@@ -391,7 +391,7 @@ async def read_flash_id(dut):
     cmd = BitSequence(0x9f, msb=True, length=8)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 3*8)
+    so = await tick_so(dut, sigs.qe, 12*8)
     await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
     # print(f'so: {so}')

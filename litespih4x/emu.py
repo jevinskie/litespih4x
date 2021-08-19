@@ -204,10 +204,7 @@ class FlashEmu(Module):
             eso.eq(idcode[-1]),
             rdid_flag.eq(1),
             NextValue(idcode_cnt, idcode_cnt + 1),
-            NextValue(idcode, Cat(0, idcode[:-1])),
-            If(idcode_cnt == 23,
-               NextState('get_cmd'),
-            )
+            NextValue(idcode, Cat(idcode[-1], idcode[:-1])),
         )
 
         cmd_fsm.act('read_get_addr',
