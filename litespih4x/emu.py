@@ -199,10 +199,14 @@ class FlashEmu(Module):
                 dr_tmp.eq(dr)
             ),
             addr_next.eq(addr + 1),
-            NextValue(dr_bit_cnt, dr_bit_cnt + 1),
+            If(~qmode,
+                NextValue(dr_bit_cnt, dr_bit_cnt + 1),
+            ).Else(
+                NextValue(dr_bit_cnt, dr_bit_cnt + 4),
+            ),
             NextValue(dr, Cat(0, dr_tmp[:-1])),
             If((dr_bit_cnt == 7) | ((dr_bit_cnt == 4) & qmode),
-               NextValue(addr, addr_next),
+                NextValue(addr, addr_next),
             ),
             eso_oe.eq(1),
             eso.eq(dr_tmp[-1]),
