@@ -43,6 +43,9 @@ CMD_RDID: Final = 0x9f
 IDCODE: Final = 0xc22539
 # IDCODE: Final = 0xAA550F
 
+CMD_RDSR: Final = 0x05
+CMD_RDCR: Final = 0x15
+CMD_WRSR: Final = 0x01
 
 class FlashEmu(Module):
     def __init__(self, qrs: QSPISigs, qes: QSPISigs):
