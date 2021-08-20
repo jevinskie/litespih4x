@@ -22,7 +22,7 @@ from litespih4x.emu import FlashEmu
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class EmuSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(100e6), with_scope=False):
+    def __init__(self, sys_clk_freq=int(250e6), with_scope=False):
         platform = arty.Platform(variant='a7-100')
 
         # SoCMini ----------------------------------------------------------------------------------
