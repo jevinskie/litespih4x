@@ -54,9 +54,16 @@ class FlashEmu(Module):
         self.qrs = qrs
         self.qes = qes
 
-        if qrs.rstn is not None and qes.rstn is None:
+        if qrs.rstn is None:
             qrs.rstn = Signal()
             self.comb += qrs.rstn.eq(~ResetSignal())
+
+        if qes.rstn is None:
+            qes.rstn = Signal()
+            self.comb += qes.rstn.eq(~ResetSignal())
+
+        # else if both have reset, wire them up?
+
 
         self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
         self.comb += ClockSignal('spi').eq(qes.sclk & ~qes.csn & qes.rstn)
