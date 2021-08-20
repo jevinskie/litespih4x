@@ -117,7 +117,8 @@ _io = [
 
 class Platform(SimPlatform):
     def __init__(self, toolchain="cocotb"):
-        super().__init__("tstate_sim", _io, name="tstate_sim", toolchain=toolchain)
+        mname = Path(__file__).stem
+        super().__init__(mname, _io, name=mname, toolchain=toolchain)
 
 
 # Bench SoC ----------------------------------------------------------------------------------------
