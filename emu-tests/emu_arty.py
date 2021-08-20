@@ -34,17 +34,17 @@ class EmuSoC(SoCCore):
         )
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq, with_mapped_flash=False)
+        self.submodules.crg = crg = _CRG(platform, sys_clk_freq, with_mapped_flash=False)
 
         # SPI Flash Emu  ---------------------------------------------------------------------------
-        rfp = self.platform.request("spiflash")
-        qrs = QSPISigs(sclk=rfp.clk, rstn=None, csn=rfp.cs_n, si=rfp.mosi, so=rfp.miso, wpn=rfp.wp, sio3=rfp.hold)
+        # rfp = self.platform.request("spiflash")
+        # qrs = QSPISigs(sclk=rfp.clk, rstn=None, csn=rfp.cs_n, si=rfp.mosi, so=rfp.miso, wpn=rfp.wp, sio3=rfp.hold)
 
-        self.platform.add_extension(flashemu_pmod_io("pmodd"))
-        efp = self.platform.request("flashemu")
-        qes = QSPISigs(sclk=efp.clk, rstn=None, csn=efp.cs_n, si=efp.mosi, so=efp.miso, wpn=efp.wp, sio3=efp.hold)
+        # self.platform.add_extension(flashemu_pmod_io("pmodd"))
+        # efp = self.platform.request("flashemu")
+        # qes = QSPISigs(sclk=efp.clk, rstn=None, csn=efp.cs_n, si=efp.mosi, so=efp.miso, wpn=efp.wp, sio3=efp.hold)
 
-        self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
+        # self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
 
         # UART -------------------------------------------------------------------------------------
         self.add_uart('serial', baudrate=3_000_000)
@@ -58,7 +58,7 @@ class EmuSoC(SoCCore):
         # Jtagbone ---------------------------------------------------------------------------------
         self.add_jtagbone()
         # tell Vivado about the JTAG clock 40 MHz
-        self.platform.add_period_constraint(self.jtagbone_phy.cd_jtag.clk, 25)
+        # self.platform.add_period_constraint(self.jtagbone_phy.cd_jtag.clk, 25)
         # self.platform.add_platform_command(
         #     "create_clock -name jtag_clk -period 25 [get_pins -of [get_cells -hier * -filter {LIB_CELL =~ BSCAN*}] -filter {name =~ */U_ICON/*/DRCK}]"
         # )
