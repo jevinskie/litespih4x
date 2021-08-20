@@ -147,6 +147,7 @@ class FlashEmu(Module):
 
         self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8, reset=1)
         self.cmd = cmd = Signal(8, reset=esi)
+        # self.comb += cmd.eq(esi)
         self.cmd_next = cmd_next = Signal(8)
 
         self.idcode = idcode = Signal(24, reset=IDCODE)
