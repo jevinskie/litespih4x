@@ -9,7 +9,7 @@ from rich import print
 from migen import *
 from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
-from typing import Final, Optional
+from typing import Final, Optional, Union
 
 import attr
 
@@ -24,10 +24,10 @@ class QSPISigs:
     sclk: SigType
     rstn: Optional[SigType]
     csn: SigType
-    si: SigType
-    so: SigType
-    wpn: SigType
-    sio3: SigType
+    si: Union[SigType, TSTriple]
+    so: Union[SigType, TSTriple]
+    wpn: Union[SigType, TSTriple]
+    sio3: Union[SigType, TSTriple]
 
     @classmethod
     def from_pads(cls, pads: Record) -> QSPISigs:

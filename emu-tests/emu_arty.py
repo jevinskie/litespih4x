@@ -54,6 +54,11 @@ class EmuSoC(SoCCore):
 
         # Jtagbone ---------------------------------------------------------------------------------
         self.add_jtagbone()
+        # tell Vivado about the JTAG clock 40 MHz
+        self.platform.add_period_constraint(self.jtagbone_phy.cd_jtag.clk, 25)
+        # self.platform.add_platform_command(
+        #     "create_clock -name jtag_clk -period 25 [get_pins -of [get_cells -hier * -filter {LIB_CELL =~ BSCAN*}] -filter {name =~ */U_ICON/*/DRCK}]"
+        # )
 
         # scope ------------------------------------------------------------------------------------
         if with_scope:
