@@ -17,12 +17,14 @@ from litex.soc.interconnect.csr import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litespih4x.emu import FlashEmu
+from liteeth.phy.mii import LiteEthPHYMII
+
+from litespih4x.emu import FlashEmu, QSPISigs
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class EmuSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(250e6), with_scope=False):
+    def __init__(self, sys_clk_freq=int(200e6), with_scope=False):
         platform = arty.Platform(variant='a7-100')
 
         # SoCMini ----------------------------------------------------------------------------------
@@ -37,8 +39,21 @@ class EmuSoC(SoCCore):
         # SPI Flash Emu  ---------------------------------------------------------------------------
         self.clock_domains.cd_spi = ClockDomain()
 
-        # UARTBone ---------------------------------------------------------------------------------
-        self.add_uartbone(baudrate=3_000_000)
+        # UART -------------------------------------------------------------------------------------
+        self.add_uart('serial', baudrate=3_000_000)
+
+        # Etherbone --------------------------------------------------------------------------------
+        # self.submodules.ethphy = LiteEthPHYMII(
+        #     clock_pads=self.platform.request("eth_clocks"),
+        #     pads=self.platform.request("eth"))
+        # self.add_etherbone(phy=self.ethphy, ip_address='192.168.100.100')
+
+        qrs = QSPISigs(sclk=Signal(), rstn=None, csn=Signal(), si=Signal(), so=Signal(), wpn=Signal(), sio3=Signal())
+        qes = QSPISigs(sclk=Signal(), rstn=None, csn=Signal(), si=Signal(), so=Signal(), wpn=Signal(), sio3=Signal())
+        self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
+
+        # Jtagbone ---------------------------------------------------------------------------------
+        self.add_jtagbone()
 
         # scope ------------------------------------------------------------------------------------
         if with_scope:
