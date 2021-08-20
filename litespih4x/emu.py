@@ -7,12 +7,11 @@ from __future__ import annotations
 from rich import print
 
 from migen import *
-from migen.genlib.resetsync import AsyncResetSynchronizer, AsyncResetSingleStageSynchronizer
+from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
-from typing import Final
+from typing import Final, Optional
 
 import attr
-from bitstring import Bits
 
 import cocotb
 
@@ -23,7 +22,7 @@ if cocotb.top is not None:
 @attr.s(auto_attribs=True)
 class QSPISigs:
     sclk: SigType
-    rstn: SigType
+    rstn: Optional[SigType]
     csn: SigType
     si: SigType
     so: SigType
@@ -49,11 +48,15 @@ CMD_WRSR: Final = 0x01
 
 CMD_WREN: Final = 0x06
 
+
 class FlashEmu(Module):
     def __init__(self, qrs: QSPISigs, qes: QSPISigs):
         self.qrs = qrs
         self.qes = qes
 
+        if qrs.rstn is not None and qes.rstn is None:
+            qrs.rstn = Signal()
+            self.comb += qrs.rstn.eq(~ResetSignal())
 
         self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
         self.comb += ClockSignal('spi').eq(qes.sclk & ~qes.csn & qes.rstn)
