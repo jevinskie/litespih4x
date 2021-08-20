@@ -19,7 +19,7 @@ from litex.soc.integration.builder import *
 
 from liteeth.phy.mii import LiteEthPHYMII
 
-from litespih4x.emu import FlashEmu, QSPISigs
+from litespih4x.emu import FlashEmu, QSPISigs, flashemu_pmod_io
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
@@ -37,7 +37,14 @@ class EmuSoC(SoCCore):
         self.submodules.crg = _CRG(platform, sys_clk_freq, with_mapped_flash=False)
 
         # SPI Flash Emu  ---------------------------------------------------------------------------
-        self.clock_domains.cd_spi = ClockDomain()
+        rfp = self.platform.request("spiflash")
+        qrs = QSPISigs(sclk=rfp.clk, rstn=None, csn=rfp.cs_n, si=rfp.mosi, so=rfp.miso, wpn=rfp.wp, sio3=rfp.hold)
+
+        self.platform.add_extension(flashemu_pmod_io("pmodd"))
+        efp = self.platform.request("flashemu")
+        qes = QSPISigs(sclk=efp.clk, rstn=None, csn=efp.cs_n, si=efp.mosi, so=efp.miso, wpn=efp.wp, sio3=efp.hold)
+
+        self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
 
         # UART -------------------------------------------------------------------------------------
         self.add_uart('serial', baudrate=3_000_000)
@@ -47,10 +54,6 @@ class EmuSoC(SoCCore):
         #     clock_pads=self.platform.request("eth_clocks"),
         #     pads=self.platform.request("eth"))
         # self.add_etherbone(phy=self.ethphy, ip_address='192.168.100.100')
-
-        qrs = QSPISigs(sclk=Signal(), rstn=None, csn=Signal(), si=Signal(), so=Signal(), wpn=Signal(), sio3=Signal())
-        qes = QSPISigs(sclk=Signal(), rstn=None, csn=Signal(), si=Signal(), so=Signal(), wpn=Signal(), sio3=Signal())
-        self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
 
         # Jtagbone ---------------------------------------------------------------------------------
         self.add_jtagbone()

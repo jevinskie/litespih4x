@@ -9,6 +9,8 @@ from rich import print
 from migen import *
 from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
+from litex.build.generic_platform import Subsignal, Pins, IOStandard
+
 from typing import Final, Optional, Union
 
 import attr
@@ -18,6 +20,22 @@ import cocotb
 SigType = Signal
 if cocotb.top is not None:
     SigObj = cocotb.handle.ModifiableObject
+
+
+def flashemu_pmod_io(pmod):
+    return [
+        ("flashemu", 0,
+             Subsignal("cs_n", Pins(f"{pmod}:1")),
+             Subsignal("rst_n", Pins(f"{pmod}:2")),
+             Subsignal("clk", Pins(f"{pmod}:3")),
+             Subsignal("mosi", Pins(f"{pmod}:4")),
+             Subsignal("miso", Pins(f"{pmod}:5")),
+             Subsignal("wp", Pins(f"{pmod}:6")),
+             Subsignal("hold", Pins(f"{pmod}:7")),
+             IOStandard("LVCMOS33"),
+         ),
+    ]
+
 
 @attr.s(auto_attribs=True)
 class QSPISigs:
@@ -75,24 +93,24 @@ class FlashEmu(Module):
 
         self.rsi_ts = rsi_ts = TSTriple()
         self.rso_ts = rso_ts = TSTriple()
-        # self.rwpn_ts = rwpn_ts = TSTriple()
-        # self.rsio3_ts = rsio3_ts = TSTriple()
+        self.rwpn_ts = rwpn_ts = TSTriple()
+        self.rsio3_ts = rsio3_ts = TSTriple()
 
         self.specials += rsi_ts.get_tristate(qrs.si)
         self.specials += rso_ts.get_tristate(qrs.so)
-        # self.specials += rwpn_ts.get_tristate(qrs.wpn)
-        # self.specials += rsio3_ts.get_tristate(qrs.sio3)
+        self.specials += rwpn_ts.get_tristate(qrs.wpn)
+        self.specials += rsio3_ts.get_tristate(qrs.sio3)
 
 
         self.esi_ts = esi_ts = TSTriple()
         self.eso_ts = eso_ts = TSTriple()
-        # self.ewpn_ts = ewpn_ts = TSTriple()
-        # self.esio3_ts = esio3_ts = TSTriple()
+        self.ewpn_ts = ewpn_ts = TSTriple()
+        self.esio3_ts = esio3_ts = TSTriple()
 
         self.specials += esi_ts.get_tristate(qes.si)
         self.specials += eso_ts.get_tristate(qes.so)
-        # self.specials += ewpn_ts.get_tristate(qes.wpn)
-        # self.specials += esio3_ts.get_tristate(qes.sio3)
+        self.specials += ewpn_ts.get_tristate(qes.wpn)
+        self.specials += esio3_ts.get_tristate(qes.sio3)
 
 
         # self.comb += [
@@ -108,8 +126,8 @@ class FlashEmu(Module):
         self.esi = esi = Signal()
         self.eso = eso = Signal()
         self.eso_oe = eso_oe = Signal()
-        # self.ewpn = ewpn = Signal()
-        # self.esio3 = esio3 = Signal()
+        self.ewpn = ewpn = Signal()
+        self.esio3 = esio3 = Signal()
 
         # self.comb += [
         #     esi.eq(esi_ts.i),
@@ -143,13 +161,13 @@ class FlashEmu(Module):
         self.comb += [
             rsi_ts.oe.eq(1),
             rso_ts.oe.eq(0),
+            rwpn_ts.oe.eq(0),
+            rsio3_ts.oe.eq(0),
         ]
 
         self.cmd_bit_cnt = cmd_bit_cnt = Signal(max=8, reset=1)
         self.cmd = cmd = Signal(8, reset=esi, init=0)
-        # self.comb += cmd.eq(esi)
         self.cmd_next = cmd_next = Signal(8)
-        # self.sync.spi += cmd_next.eq(esi)
 
         self.idcode = idcode = Signal(24, reset=IDCODE)
 
@@ -166,7 +184,6 @@ class FlashEmu(Module):
 
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
-        # cmd_fsm = ResetInserter()(cmd_fsm)
         self.submodules.cmd_fsm = cmd_fsm
 
         self.get_cmd_flag = get_cmd_flag = Signal()
