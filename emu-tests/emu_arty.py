@@ -47,7 +47,7 @@ class EmuSoC(SoCCore):
             # hello_sigs = set(self.jtag_hello._signals)
             # hello_sigs.remove(self.jtag_hello.hello_code)
             # fsm_sigs = self.jtag_phy.tap_fsm.finalize()
-            fsm_sigs = self.jtag_phy.tap_fsm._signals + self.jtag_phy.tap_fsm.fsm._signals
+            # fsm_sigs = self.jtag_phy.tap_fsm._signals + self.jtag_phy.tap_fsm.fsm._signals
             analyzer_signals = [
                 # *phy_sigs,
                 # *hello_sigs,
