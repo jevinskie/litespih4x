@@ -27,7 +27,7 @@ from litex.soc.integration.builder import *
 from litex.soc.interconnect import wishbone
 
 from litespih4x.macronix_model import MacronixModel
-from litespih4x.emu import FlashEmu, QSPISigs
+from litespih4x.emu import FlashEmu, QSPISigs, IDCODE
 
 import cocotb
 from cocotb.triggers import Timer, ReadWrite, ReadOnly, NextTimeStep
@@ -42,6 +42,8 @@ import attr
 from rich import inspect as rinspect
 
 from pyftdi.jtag import BitSequence
+
+USE_RESET_PIN: Final = False
 
 srv: Final = start_sim_server()
 ext: Final = cocotb.external
@@ -140,14 +142,12 @@ class BenchSoC(SoCCore):
 
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
         self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
-        # print(f'qpsi_real_sigs: {qrs}')
         self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3)
 
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
         self.qpsi_emu_sigs = qes = QSPISigs.from_pads(qe)
-        # print(f'qpsi_emu_sigs: {qes}')
-        self.submodules.qspi_emu = FlashEmu(qrs, qes)
+        self.submodules.qspi_emu = FlashEmu(qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
 
 
         self.wb_sim_tap = wb_sim_tap = wishbone.Interface()

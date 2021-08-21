@@ -19,7 +19,7 @@ from litex.soc.integration.builder import *
 
 from liteeth.phy.mii import LiteEthPHYMII
 
-from litespih4x.emu import FlashEmu, QSPISigs, flashemu_pmod_io
+from litespih4x.emu import FlashEmu, QSPISigs, flashemu_pmod_io, IDCODE
 
 # Bench SoC ----------------------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ class EmuSoC(SoCCore):
         # self.platform.add_period_constraint(efp.clk, 7.5) # 1e9/133e6)
         self.platform.add_period_constraint(efp.clk, 1e9/105e6) # 1e9/133e6)
         self.platform.add_false_path_constraints(crg.cd_sys.clk, efp.clk)
-        self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
+        self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
 
         # UART -------------------------------------------------------------------------------------
         self.add_uart('serial', baudrate=3_000_000)

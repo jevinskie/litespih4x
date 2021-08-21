@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from .emu_mem import FlashEmuMem
+
 from rich import print
 
 from migen import *
@@ -19,7 +21,7 @@ import cocotb
 
 SigType = Signal
 if cocotb.top is not None:
-    SigObj = cocotb.handle.ModifiableObject
+    SigType = cocotb.handle.ModifiableObject
 
 
 def flashemu_pmod_io(pmod):
@@ -68,9 +70,12 @@ CMD_WREN: Final = 0x06
 
 
 class FlashEmu(Module):
-    def __init__(self, qrs: QSPISigs, qes: QSPISigs):
+    def __init__(self, qrs: QSPISigs, qes: QSPISigs, sz_mbit: int, idcode: int):
         self.qrs = qrs
         self.qes = qes
+        self.sz_mbit = sz_mbit
+        self.idcode = idcode = Signal(24, reset=idcode)
+
 
         if qrs.rstn is None:
             qrs.rstn = Signal()
@@ -169,8 +174,6 @@ class FlashEmu(Module):
         self.cmd = cmd = Signal(8, reset=esi, init=0)
         self.cmd_next = cmd_next = Signal(8)
 
-        self.idcode = idcode = Signal(24, reset=IDCODE)
-
         self.addr = addr = Signal(24)
         self.addr_next = addr_next = Signal(24)
         self.addr_cnt = addr_cnt = Signal(max=24)
@@ -178,8 +181,11 @@ class FlashEmu(Module):
         self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
         self.qmode = qmode = Signal()
 
-        self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
-        self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
+        # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
+        # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
+        # self.comb += fmrp.adr.eq(addr_next)
+        self.submodules.flash_mem = flash_mem = FlashEmuMem(0x100)
+        fmrp = flash_mem.rp
         self.comb += fmrp.adr.eq(addr_next)
 
         cmd_fsm = FSM(reset_state='get_cmd')
