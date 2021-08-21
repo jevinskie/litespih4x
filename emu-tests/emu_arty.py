@@ -24,7 +24,7 @@ from litespih4x.emu import FlashEmu, QSPISigs, flashemu_pmod_io
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class EmuSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(200e6), with_scope=False):
+    def __init__(self, sys_clk_freq=int(100e6), with_scope=False):
         platform = arty.Platform(variant='a7-100')
 
         # SoCMini ----------------------------------------------------------------------------------
@@ -43,7 +43,8 @@ class EmuSoC(SoCCore):
         self.platform.add_extension(flashemu_pmod_io("pmodd"))
         efp = self.platform.request("flashemu")
         qes = QSPISigs(sclk=efp.clk, rstn=None, csn=efp.cs_n, si=efp.mosi, so=efp.miso, wpn=efp.wp, sio3=efp.hold)
-        self.platform.add_period_constraint(efp.clk, 7.5) # 1e9/133e6)
+        # self.platform.add_period_constraint(efp.clk, 7.5) # 1e9/133e6)
+        self.platform.add_period_constraint(efp.clk, 1e9/105e6) # 1e9/133e6)
         self.platform.add_false_path_constraints(crg.cd_sys.clk, efp.clk)
         self.submodules.emu = emu = FlashEmu(qrs=qrs, qes=qes)
 
@@ -67,15 +68,16 @@ class EmuSoC(SoCCore):
         # scope ------------------------------------------------------------------------------------
         if with_scope:
             from litescope import LiteScopeAnalyzer
+            emu_sigs = emu._signals
             # phy_sigs = self.jtag_phy._signals
             # hello_sigs = set(self.jtag_hello._signals)
             # hello_sigs.remove(self.jtag_hello.hello_code)
             # fsm_sigs = self.jtag_phy.tap_fsm.finalize()
             # fsm_sigs = self.jtag_phy.tap_fsm._signals + self.jtag_phy.tap_fsm.fsm._signals
             analyzer_signals = [
-                # *phy_sigs,
-                # *hello_sigs,
-                # *fsm_sigs,
+                *emu_sigs,
+                *[p[0] for p in rfp.iter_flat()],
+                *[p[0] for p in efp.iter_flat()],
             ]
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                          depth=756,

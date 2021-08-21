@@ -25,14 +25,14 @@ if cocotb.top is not None:
 def flashemu_pmod_io(pmod):
     return [
         ("flashemu", 0,
-             Subsignal("cs_n", Pins(f"{pmod}:1")),
-             Subsignal("rst_n", Pins(f"{pmod}:2")),
-             Subsignal("clk", Pins(f"{pmod}:3")),
-             Subsignal("mosi", Pins(f"{pmod}:4")),
-             Subsignal("miso", Pins(f"{pmod}:5")),
-             Subsignal("wp", Pins(f"{pmod}:6")),
-             Subsignal("hold", Pins(f"{pmod}:7")),
-             IOStandard("LVCMOS33"),
+            Subsignal("cs_n", Pins(f"{pmod}:0")),
+            Subsignal("mosi", Pins(f"{pmod}:1")),
+            Subsignal("miso", Pins(f"{pmod}:2")),
+            Subsignal("clk", Pins(f"{pmod}:3")),
+            Subsignal("rst_n", Pins(f"{pmod}:5")),
+            Subsignal("wp", Pins(f"{pmod}:6")),
+            Subsignal("hold", Pins(f"{pmod}:7")),
+            IOStandard("LVCMOS33"),
          ),
     ]
 
