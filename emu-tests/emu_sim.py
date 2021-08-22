@@ -326,10 +326,12 @@ async def tick_so(dut, q: QSPISigs, nbits: int, write_only=False) -> BitSequence
     so = await tick_si(dut, q, si, write_only=write_only)
     return so
 
-
-async def reset_soc(dut):
+def reset_soc_line(sigs: Sigs):
     sigs.clk <= 0
     sigs.rst <= 0
+
+async def reset_soc(dut):
+    reset_soc_line(sigs)
 
     await tclk
 
@@ -341,12 +343,15 @@ async def reset_soc(dut):
 
     await tclk
 
-async def reset_flash(q: QSPISigs):
+def reset_flash_lines(q: QSPISigs):
     q.sclk <= 0
     q.rstn <= 1
     q.csn <= 1
     q.si <= 0
     q.wpn <= 0
+
+async def reset_flash(q: QSPISigs):
+    reset_flash_lines(q)
 
     await tVSL
 
@@ -368,6 +373,8 @@ async def reset_flash(q: QSPISigs):
 @cocotb.test()
 async def initial_reset(dut):
     fork_clk()
+    reset_soc_line(sigs)
+    reset_flash_lines(sigs.qe)
     await reset_soc(dut)
     await reset_flash(sigs.qe)
 
