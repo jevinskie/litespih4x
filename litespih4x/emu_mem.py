@@ -7,6 +7,7 @@ from __future__ import annotations
 from rich import print
 
 from migen import *
+from migen.genlib.cdc import AsyncClockMux
 from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
 from typing import Final, Optional, Union
@@ -31,12 +32,16 @@ class QSPIMemSigs:
 
 
 class FlashEmuMem(Module):
-    def __init__(self, sz: int):
+    def __init__(self, cd_sys: ClockDomain, cd_spi: ClockDomain, sz: int):
         self.sz = sz
 
-        self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
-        self.rp = self.specials.rp = rp = mem.get_port(clock_domain='spi')
-        self.rp_ext = self.specials.rp_ext = rp_ext = mem.get_port(clock_domain='sys')
+        self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
+        self.clk_sel = clk_sel = Signal()
+        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, ClockDomain('spimem'), clk_sel)
+
+
+        self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
+        self.rp = self.specials.rp = rp = mem.get_port(clock_domain='spimem')
 
         self.comb += rp.adr.eq(0)
 

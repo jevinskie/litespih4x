@@ -137,7 +137,7 @@ class BenchSoC(SoCCore):
         )
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = CRG(platform.request("sys_clk"), rst=platform.request("sys_rst"))
+        self.submodules.crg = crg = CRG(platform.request("sys_clk"), rst=platform.request("sys_rst"))
 
 
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
@@ -147,7 +147,8 @@ class BenchSoC(SoCCore):
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
         self.qpsi_emu_sigs = qes = QSPISigs.from_pads(qe)
-        self.submodules.qspi_emu = FlashEmu(qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
+        cds = crg.clock_domains
+        self.submodules.qspi_emu = FlashEmu(crg.cd_sys, qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
 
 
         self.wb_sim_tap = wb_sim_tap = wishbone.Interface()

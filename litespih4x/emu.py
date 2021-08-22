@@ -70,7 +70,7 @@ CMD_WREN: Final = 0x06
 
 
 class FlashEmu(Module):
-    def __init__(self, qrs: QSPISigs, qes: QSPISigs, sz_mbit: int, idcode: int):
+    def __init__(self, cd_sys: ClockDomain, qrs: QSPISigs, qes: QSPISigs, sz_mbit: int, idcode: int):
         self.qrs = qrs
         self.qes = qes
         self.sz_mbit = sz_mbit
@@ -184,7 +184,7 @@ class FlashEmu(Module):
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
         # self.comb += fmrp.adr.eq(addr_next)
-        self.submodules.flash_mem = flash_mem = FlashEmuMem(0x100)
+        self.submodules.flash_mem = flash_mem = FlashEmuMem(cd_sys, cd_spi, 0x100)
         fmrp = flash_mem.rp
         self.comb += fmrp.adr.eq(addr_next)
 
