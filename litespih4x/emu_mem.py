@@ -37,7 +37,7 @@ class FlashEmuMem(Module):
 
         self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
         self.clk_sel = clk_sel = Signal()
-        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, ClockDomain('spimem'), clk_sel)
+        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, cd_spimem, clk_sel)
 
 
         self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
