@@ -132,7 +132,7 @@ class BenchSoC(SoCCore):
 
         # SoCMini ----------------------------------------------------------------------------------
         SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
-            ident          = "LiteSPIh4x cocotb tristate sim",
+            ident          = f"LiteSPIh4x cocotb {Path(__file__).stem}",
             ident_version  = True
         )
 
@@ -216,6 +216,7 @@ def main():
         run         = args.run,
     )
 
+    print()
 
 
 @attr.s(auto_attribs=True)
@@ -409,7 +410,7 @@ async def read_flash_id(dut):
     cmd = BitSequence(0x9f, msb=True, length=8)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 12*8)
+    so = await tick_so(dut, sigs.qe, 3*8)
     await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
     # print(f'so: {so}')
@@ -426,16 +427,42 @@ async def read_first_four_bytes(dut):
     cmd = BitSequence(0x03000004, msb=True, length=32)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 4*8, write_only=True)
+    so = await tick_so(dut, sigs.qe, 4*8, write_only=False)
     await spi_txfr_end(dut, sigs.qe)
     # so2 = await tick_so(dut, sigs.qe, 8*3)
     # print(f'so: {so}')
     # print(f'so2: {so2}')
-    first_four_bytes = so
+    first_four_bytes = so.tobytes(msb=True)
 
-    dut._log.info(f'first_four_bytes: {first_four_bytes}')
+    dut._log.info(f'first_four_bytes: {first_four_bytes.hex()}')
 
 @cocotb.test(skip=False)
+async def read_first_four_bytes_wb(dut):
+    fork_clk()
+
+    # dut._log.info(f'bus: {wb_bus}')
+    mem = b''
+    mem_region = soc.csr.regions['qspi_emu_flash_mem']
+    # lsoc = soc
+    sel_region = soc.csr.regions['qspi_emu']
+    sel_ptr = sel_region.origin // (sel_region.busword // 8)
+    sel_rd_1st_res = await wb_bus.send_cycle([WBOp(sel_ptr)])
+    dut._log.info(f'sel_rd_1st_res: {sel_rd_1st_res[0].datrd}')
+    sel_wr_res = await wb_bus.send_cycle([WBOp(sel_ptr, dat=1)])
+    sel_rd_2nd_res = await wb_bus.send_cycle([WBOp(sel_ptr)])
+    dut._log.info(f'sel_rd_2nd_res: {sel_rd_2nd_res[0].datrd}')
+    mem_ptr = mem_region.origin // (mem_region.busword // 8)
+    # dut._log.info(f'soc_id_ptr: {soc_id_ptr:x}')
+    for i in range(4):
+        wb_res = await wb_bus.send_cycle([WBOp(mem_ptr)])
+        wb_byte = wb_res[0].datrd
+        mem += bytes([wb_byte])
+        mem_ptr += 1
+    dut._log.info(f'first four bytes WB: {mem.hex()}')
+
+
+
+@cocotb.test(skip=True)
 async def enable_write(dut):
     fork_clk()
 
@@ -446,7 +473,7 @@ async def enable_write(dut):
 
     dut._log.info(f'enabled write mode')
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def read_status_wel(dut):
     fork_clk()
     status = None
@@ -460,7 +487,7 @@ async def read_status_wel(dut):
 
     dut._log.info(f'status WEL: {status}')
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def enable_quad_mode(dut):
     fork_clk()
 
@@ -471,7 +498,7 @@ async def enable_quad_mode(dut):
 
     dut._log.info(f'enabled quad mode')
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def read_status_wip(dut):
     fork_clk()
     status = None
@@ -485,7 +512,7 @@ async def read_status_wip(dut):
 
     dut._log.info(f'status WIP: {status}')
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def read_status_qe(dut):
     fork_clk()
     status = None
@@ -502,7 +529,7 @@ async def read_status_qe(dut):
 
     dut._log.info(f'status QE: {status}')
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def read_first_four_bytes_qmode(dut):
     fork_clk()
     first_four_bytes = None
