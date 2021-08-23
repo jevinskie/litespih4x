@@ -30,22 +30,79 @@ class QSPIMemSigs:
         sig_dict = {p[0]: getattr(pads, p[0]) for p in pads.layout}
         return cls(**sig_dict)
 
+class FakeMemoryPort:
+    def __init__(self, adr: Signal, dat_r: Signal, dat_w: Optional[Signal] = None, we: Optional[Signal] = None):
+        self.adr = adr
+        self.dat_r = dat_r
+        if dat_w is not None:
+            assert we is not None
+            self.dat_w = dat_w
+            self.we = we
+
+class MemoryPortMux(Module):
+    def __init__(self, real_port, sel: Signal):
+        self.p = p = real_port
+        write_capable = getattr(p, 'we', None) is not None
+
+        p0_adr = Signal(p.adr.nbits)
+        p0_dat_r = Signal(p.dat_w.nbits)
+        p1_adr = Signal(p.adr.nbits)
+        p1_dat_r = Signal(p.dat_w.nbits)
+
+        self.comb += [
+            p0_dat_r.eq(p.dat_r),
+            p1_dat_r.eq(p.dat_r),
+            If(~sel,
+                p.adr.eq(p0_adr),
+            ).Else(
+                p.adr.eq(p1_adr),
+            ),
+        ]
+
+        if not write_capable:
+            p0_dat_w = None
+            p0_we = None
+            p1_dat_w = None
+            p1_we = None
+        else:
+            p0_dat_w = Signal(p.dat_w.nbits)
+            p0_we = Signal()
+            p1_dat_w = Signal(p.dat_w.nbits)
+            p1_we = Signal()
+
+            self.comb += [
+                If(~sel,
+                    p.dat_w.eq(p0_dat_w),
+                    p.we.eq(p0_we),
+                ).Else(
+                    p.dat_w.eq(p1_dat_w),
+                    p.we.eq(p1_we),
+                )
+            ]
+
+        self.p0 = FakeMemoryPort(adr=p0_adr, dat_r=p0_dat_r, dat_w=p0_dat_w, we=p0_we)
+        self.p1 = FakeMemoryPort(adr=p1_adr, dat_r=p1_dat_r, dat_w=p1_dat_w, we=p1_we)
+
 
 class FlashEmuMem(Module):
     def __init__(self, cd_sys: ClockDomain, cd_spi: ClockDomain, sz: int):
         self.sz = sz
 
         self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
-        self.clk_sel = clk_sel = Signal(reset=1)
-        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, cd_spimem, clk_sel, cd_sys.rst)
-
+        self.sel = sel = Signal(reset=1)
+        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, cd_spimem, sel, cd_sys.rst)
 
         self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
-        self.rp = self.specials.rp = rp = mem.get_port(clock_domain='spimem')
+        self.specials.real_port = real_port = mem.get_port(clock_domain='spimem', write_capable=True)
 
-        # self.comb += rp.adr.eq(0)
+        self.mpm = self.submodules.mem_port_mux = mpm = MemoryPortMux(real_port, sel)
+        self.loader_port = mpm.p0
+        self.spiemu_port = mpm.p1
 
 
     @staticmethod
     def val4addr(addr: int) -> int:
         return (addr & 0xff) ^ ((addr >> 8) & 0xff) ^ ((addr >> 16) & 0xff) ^ ((addr >> 24) & 0xff)
+
+    def get_memories(self):
+        return [(False, self.mem, self.loader_port)]

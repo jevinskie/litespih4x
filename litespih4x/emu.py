@@ -184,9 +184,10 @@ class FlashEmu(Module):
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
         # self.comb += fmrp.adr.eq(addr_next)
-        self.submodules.flash_mem = flash_mem = FlashEmuMem(cd_sys, cd_spi, 0x100)
-        fmrp = flash_mem.rp
-        self.comb += fmrp.adr.eq(addr_next)
+        self.flash_mem = self.submodules.flash_mem = flash_mem = FlashEmuMem(cd_sys, cd_spi, 0x100)
+        self.fmp = fmp = flash_mem.spiemu_port
+        self.lmp = lmp = flash_mem.loader_port
+        self.comb += fmp.adr.eq(addr_next)
 
         cmd_fsm = FSM(reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
@@ -231,7 +232,7 @@ class FlashEmu(Module):
         self.dr_tmp = dr_tmp = Signal(8)
         cmd_fsm.act('read_get_data',
             If(dr_bit_cnt == 0,
-                dr_tmp.eq(fmrp.dat_r)
+                dr_tmp.eq(fmp.dat_r)
             ).Else(
                 dr_tmp.eq(dr)
             ),
@@ -260,3 +261,6 @@ class FlashEmu(Module):
     @staticmethod
     def val4addr(addr: int) -> int:
         return (addr & 0xff) ^ ((addr >> 8) & 0xff) ^ ((addr >> 16) & 0xff) ^ ((addr >> 24) & 0xff)
+
+    def get_memories(self):
+        return self.flash_mem.get_memories()

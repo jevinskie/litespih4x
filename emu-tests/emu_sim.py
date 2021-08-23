@@ -142,13 +142,15 @@ class BenchSoC(SoCCore):
 
         self.qspi_pads_real = qr = self.platform.request("qspiflash_real")
         self.qpsi_real_sigs = qrs = QSPISigs.from_pads(qr)
-        self.submodules.qspi_model = qm = MacronixModel(self.platform, qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3)
+        self.submodules.qspi_model = qm = MacronixModel(self.platform,
+            qr.sclk, qr.rstn, qr.csn, qr.si, qr.so, qr.wpn, qr.sio3
+        )
 
 
         self.qspi_pads_emu = qe = self.platform.request("qspiflash_emu")
         self.qpsi_emu_sigs = qes = QSPISigs.from_pads(qe)
         cds = crg.clock_domains
-        self.submodules.qspi_emu = FlashEmu(crg.cd_sys, qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
+        self.qspi_emu = self.submodules.qspi_emu = FlashEmu(crg.cd_sys, qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
 
 
         self.wb_sim_tap = wb_sim_tap = wishbone.Interface()
