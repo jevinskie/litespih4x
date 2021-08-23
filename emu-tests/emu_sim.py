@@ -267,6 +267,11 @@ if cocotb.top is not None:
     pads_real = soc.qspi_pads_real
     pads_emu = soc.qspi_pads_emu
 
+    flash_mem_region: Final = soc.csr.regions['qspi_emu_flash_mem']
+    flash_mem_wb_base: Final = flash_mem_region.origin // (flash_mem_region.busword // 8)
+    flash_mem_sel_region: Final = soc.csr.regions['qspi_emu']
+    flash_mem_sel_ptr: Final = flash_mem_sel_region.origin // (flash_mem_sel_region.busword // 8)
+
     d = get_sigs_dict(cocotb.top)
     d['qr'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_real))
     d['qe'] = QSPISigs(**get_qspisigs_dict(cocotb.top, pads_emu))
@@ -373,6 +378,32 @@ async def reset_flash(q: QSPISigs):
     await tRHSL
     await tREADY2_ROLL
 
+async def read_flash_spi(dut, q: QSPISigs, addr: int, sz: int):
+    assert addr < 2**24
+    cmd = BitSequence(0x03, msb=True, length=8) + BitSequence(addr, msb=True, length=24)
+    await spi_txfr_start(dut, q)
+    await tick_si(dut, q, cmd, write_only=True)
+    so = await tick_so(dut, q, sz*8, write_only=False)
+    await spi_txfr_end(dut, q)
+    return so.tobytes(msb=True)
+
+async def read_flash_wb(dut, addr: int, sz: int):
+    sel_wr_on_res = await wb_bus.send_cycle([WBOp(flash_mem_sel_ptr, dat=1)])
+    assert sel_wr_on_res[0].ack
+    mem_ptr = flash_mem_wb_base + addr
+    rd_buf = b''
+    for i in range(sz):
+        wb_rd_res = await wb_bus.send_cycle([WBOp(mem_ptr)])
+        wb_rd_byte = wb_rd_res[0].datrd
+        rd_buf += bytes([wb_rd_byte])
+        mem_ptr += 1
+    sel_wr_off_res = await wb_bus.send_cycle([WBOp(flash_mem_sel_ptr, dat=0)])
+    assert sel_wr_off_res[0].ack
+    return rd_buf
+
+async def write_flash_wb(dut, addr: int, buf: bytes):
+    return
+
 @cocotb.test()
 async def initial_reset(dut):
     fork_clk()
@@ -405,62 +436,24 @@ async def read_wb_soc_id(dut):
 @cocotb.test(skip=False)
 async def read_flash_id(dut):
     fork_clk()
-    flash_id = None
-
     cmd = BitSequence(0x9f, msb=True, length=8)
     await spi_txfr_start(dut, sigs.qe)
     await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 3*8)
+    flash_id = await tick_so(dut, sigs.qe, 3*8)
     await spi_txfr_end(dut, sigs.qe)
-    # so2 = await tick_so(dut, sigs.qe, 8*3)
-    # print(f'so: {so}')
-    # print(f'so2: {so2}')
-    flash_id = so
-
     dut._log.info(f'flash_id: {flash_id}')
 
 @cocotb.test(skip=False)
 async def read_first_four_bytes(dut):
     fork_clk()
-    first_four_bytes = None
-
-    cmd = BitSequence(0x03000004, msb=True, length=32)
-    await spi_txfr_start(dut, sigs.qe)
-    await tick_si(dut, sigs.qe, cmd, write_only=True)
-    so = await tick_so(dut, sigs.qe, 4*8, write_only=False)
-    await spi_txfr_end(dut, sigs.qe)
-    # so2 = await tick_so(dut, sigs.qe, 8*3)
-    # print(f'so: {so}')
-    # print(f'so2: {so2}')
-    first_four_bytes = so.tobytes(msb=True)
-
+    first_four_bytes = await read_flash_spi(dut, sigs.qe, 0x4, 4)
     dut._log.info(f'first_four_bytes: {first_four_bytes.hex()}')
 
 @cocotb.test(skip=False)
 async def read_first_four_bytes_wb(dut):
     fork_clk()
-
-    # dut._log.info(f'bus: {wb_bus}')
-    mem = b''
-    mem_region = soc.csr.regions['qspi_emu_flash_mem']
-    # lsoc = soc
-    sel_region = soc.csr.regions['qspi_emu']
-    sel_ptr = sel_region.origin // (sel_region.busword // 8)
-    sel_rd_1st_res = await wb_bus.send_cycle([WBOp(sel_ptr)])
-    dut._log.info(f'sel_rd_1st_res: {sel_rd_1st_res[0].datrd}')
-    sel_wr_res = await wb_bus.send_cycle([WBOp(sel_ptr, dat=1)])
-    sel_rd_2nd_res = await wb_bus.send_cycle([WBOp(sel_ptr)])
-    dut._log.info(f'sel_rd_2nd_res: {sel_rd_2nd_res[0].datrd}')
-    mem_ptr = mem_region.origin // (mem_region.busword // 8)
-    # dut._log.info(f'soc_id_ptr: {soc_id_ptr:x}')
-    for i in range(4):
-        wb_res = await wb_bus.send_cycle([WBOp(mem_ptr)])
-        wb_byte = wb_res[0].datrd
-        mem += bytes([wb_byte])
-        mem_ptr += 1
-    dut._log.info(f'first four bytes WB: {mem.hex()}')
-
-
+    first_four_bytes_wb = await read_flash_wb(dut, 0x4, 4)
+    dut._log.info(f'first four bytes WB: {first_four_bytes_wb.hex()}')
 
 @cocotb.test(skip=True)
 async def enable_write(dut):

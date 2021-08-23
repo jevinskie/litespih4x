@@ -94,7 +94,7 @@ class FlashEmuMem(Module):
         self.sel = sel = sel_csr.fields.sel
 
         self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
-        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_spi, cd_sys, cd_spimem, sel, cd_sys.rst)
+        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_spi, cd_sys, cd_spimem, sel)
 
         self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
         self.specials.real_port = real_port = mem.get_port(clock_domain='spimem', write_capable=True)
