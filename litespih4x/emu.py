@@ -264,3 +264,6 @@ class FlashEmu(Module):
 
     def get_memories(self):
         return self.flash_mem.get_memories()
+
+    def get_csrs(self):
+        return self.flash_mem.get_csrs()

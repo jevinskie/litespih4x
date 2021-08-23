@@ -10,6 +10,8 @@ from migen import *
 from migen.genlib.cdc import AsyncClockMux
 from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
+from litex.soc.interconnect.csr import *
+
 from typing import Final, Optional, Union
 
 import attr
@@ -96,6 +98,10 @@ class FlashEmuMem(Module):
         self.loader_port = mpm.p0
         self.spiemu_port = mpm.p1
 
+        self.sel_csr = CSRStorage(fields=[
+            CSRField("sel", size=1, offset=0,
+                     description="""Selects the memory interface for use by the SoC, not the SPI controller"""),
+        ])
 
     @staticmethod
     def val4addr(addr: int) -> int:
@@ -103,3 +109,6 @@ class FlashEmuMem(Module):
 
     def get_memories(self):
         return [(False, self.mem, self.loader_port)]
+
+    def get_csrs(self):
+        return [self.sel_csr, ]
