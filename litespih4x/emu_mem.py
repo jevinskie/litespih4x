@@ -87,8 +87,13 @@ class FlashEmuMem(Module):
     def __init__(self, cd_sys: ClockDomain, cd_spi: ClockDomain, sz: int):
         self.sz = sz
 
+        self.sel_csr = sel_csr = CSRStorage(fields=[
+            CSRField("sel", size=1, offset=0, reset=1,
+                     description="""Selects the memory interface for use by the SoC, not the SPI controller"""),
+        ])
+        self.sel = sel = sel_csr.fields.sel
+
         self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
-        self.sel = sel = Signal(reset=1)
         self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, cd_spimem, sel, cd_sys.rst)
 
         self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
@@ -97,11 +102,6 @@ class FlashEmuMem(Module):
         self.mpm = self.submodules.mem_port_mux = mpm = MemoryPortMux(real_port, sel)
         self.loader_port = mpm.p0
         self.spiemu_port = mpm.p1
-
-        self.sel_csr = CSRStorage(fields=[
-            CSRField("sel", size=1, offset=0,
-                     description="""Selects the memory interface for use by the SoC, not the SPI controller"""),
-        ])
 
     @staticmethod
     def val4addr(addr: int) -> int:
