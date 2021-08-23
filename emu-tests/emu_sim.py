@@ -402,7 +402,15 @@ async def read_flash_wb(dut, addr: int, sz: int):
     return rd_buf
 
 async def write_flash_wb(dut, addr: int, buf: bytes):
-    return
+    sel_wr_on_res = await wb_bus.send_cycle([WBOp(flash_mem_sel_ptr, dat=1)])
+    assert sel_wr_on_res[0].ack
+    mem_ptr = flash_mem_wb_base + addr
+    for i in range(len(buf)):
+        wb_wr_res = await wb_bus.send_cycle([WBOp(mem_ptr, dat=buf[i])])
+        assert wb_wr_res[0].ack
+        mem_ptr += 1
+    sel_wr_off_res = await wb_bus.send_cycle([WBOp(flash_mem_sel_ptr, dat=0)])
+    assert sel_wr_off_res[0].ack
 
 @cocotb.test()
 async def initial_reset(dut):
@@ -454,6 +462,23 @@ async def read_first_four_bytes_wb(dut):
     fork_clk()
     first_four_bytes_wb = await read_flash_wb(dut, 0x4, 4)
     dut._log.info(f'first four bytes WB: {first_four_bytes_wb.hex()}')
+
+@cocotb.test(skip=False)
+async def read_first_four_bytes_again(dut):
+    fork_clk()
+    first_four_bytes = await read_flash_spi(dut, sigs.qe, 0x4, 4)
+    dut._log.info(f'first_four_bytes again: {first_four_bytes.hex()}')
+
+@cocotb.test(skip=False)
+async def write_first_four_bytes_wb(dut):
+    fork_clk()
+    await write_flash_wb(dut, 0x4, buf=bytes.fromhex('aa5500ff'))
+
+@cocotb.test(skip=False)
+async def read_first_four_bytes_again_but_different(dut):
+    fork_clk()
+    first_four_bytes = await read_flash_spi(dut, sigs.qe, 0x4, 4)
+    dut._log.info(f'first_four_bytes again but different: {first_four_bytes.hex()}')
 
 @cocotb.test(skip=True)
 async def enable_write(dut):
