@@ -60,10 +60,7 @@ class MemoryPortMux(Module):
         ]
 
         if not write_capable:
-            p0_dat_w = None
-            p0_we = None
-            p1_dat_w = None
-            p1_we = None
+            p0_dat_w = p0_we = p1_dat_w = p1_we = None
         else:
             p0_dat_w = Signal(p.dat_w.nbits)
             p0_we = Signal()
