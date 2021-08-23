@@ -32,7 +32,7 @@ class QSPIMemSigs:
         sig_dict = {p[0]: getattr(pads, p[0]) for p in pads.layout}
         return cls(**sig_dict)
 
-class FakeMemoryPort:
+class FakeMemoryPort(Module):
     def __init__(self, adr: Signal, dat_r: Signal, dat_w: Optional[Signal] = None, we: Optional[Signal] = None):
         self.adr = adr
         self.dat_r = dat_r
@@ -93,8 +93,8 @@ class FlashEmuMem(Module):
         ])
         self.sel = sel = sel_csr.fields.sel
 
-        self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
-        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_spi, cd_sys, cd_spimem, sel)
+        self.cd_spimem = self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
+        self.clk_mux = self.specials.clk_mux = clk_mux = AsyncClockMux(cd_spi, cd_sys, cd_spimem, sel)
 
         self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
         self.specials.real_port = real_port = mem.get_port(clock_domain='spimem', write_capable=True)

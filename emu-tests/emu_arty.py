@@ -49,7 +49,7 @@ class EmuSoC(SoCCore):
         self.submodules.emu = emu = FlashEmu(crg.cd_sys, qrs=qrs, qes=qes, sz_mbit=256, idcode=IDCODE)
 
         # UART -------------------------------------------------------------------------------------
-        self.add_uart('serial', baudrate=3_000_000)
+        # self.add_uart('serial', baudrate=3_000_000)
 
         # Etherbone --------------------------------------------------------------------------------
         # self.submodules.ethphy = LiteEthPHYMII(
@@ -68,7 +68,8 @@ class EmuSoC(SoCCore):
         # scope ------------------------------------------------------------------------------------
         if with_scope:
             from litescope import LiteScopeAnalyzer
-            emu_sigs = emu._signals
+            emu_sigs = emu._signals + emu.flash_mem._signals + emu.flash_mem.spiemu_port._signals + emu.flash_mem.loader_port._signals + [
+                    emu.flash_mem.sel, emu.flash_mem.cd_spimem.clk,]
             # phy_sigs = self.jtag_phy._signals
             # hello_sigs = set(self.jtag_hello._signals)
             # hello_sigs.remove(self.jtag_hello.hello_code)
