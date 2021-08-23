@@ -36,14 +36,14 @@ class FlashEmuMem(Module):
         self.sz = sz
 
         self.clock_domains.cd_spimem = cd_spimem = ClockDomain('spimem')
-        self.clk_sel = clk_sel = Signal()
-        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, cd_spimem, clk_sel)
+        self.clk_sel = clk_sel = Signal(reset=1)
+        self.specials.clk_mux = clk_mux = AsyncClockMux(cd_sys, cd_spi, cd_spimem, clk_sel, cd_sys.rst)
 
 
         self.mem = self.specials.mem = mem = Memory(8, sz, init=[self.val4addr(a) for a in range(sz)], name='flash_mem')
         self.rp = self.specials.rp = rp = mem.get_port(clock_domain='spimem')
 
-        self.comb += rp.adr.eq(0)
+        # self.comb += rp.adr.eq(0)
 
 
     @staticmethod
