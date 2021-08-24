@@ -69,7 +69,7 @@ class EmuSoC(SoCCore):
         if with_scope:
             from litescope import LiteScopeAnalyzer
             emu_sigs = emu._signals + emu.flash_mem._signals + emu.flash_mem.spiemu_port._signals + emu.flash_mem.loader_port._signals + [
-                    emu.flash_mem.sel, emu.flash_mem.cd_spimem.clk,]
+                    emu.flash_mem.sel, emu.flash_mem.cd_spimem.clk, crg.cd_sys.clk, emu.cd_spi.clk]
             # phy_sigs = self.jtag_phy._signals
             # hello_sigs = set(self.jtag_hello._signals)
             # hello_sigs.remove(self.jtag_hello.hello_code)

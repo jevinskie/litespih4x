@@ -88,8 +88,8 @@ class FlashEmu(Module):
         # else if both have reset, wire them up?
 
 
-        self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
-        self.comb += ClockSignal('spi').eq(qes.sclk & ~qes.csn & qes.rstn)
+        self.cd_spi = self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
+        self.comb += ClockSignal('spi').eq(qes.sclk) # & ~qes.csn & qes.rstn
         self.specials.reset_syncer = AsyncResetSingleStageSynchronizer(cd_spi, ~qes.rstn | qes.csn)
 
         self.clock_domains.cd_spi_inv = cd_spi_inv = ClockDomain('spi_inv')
