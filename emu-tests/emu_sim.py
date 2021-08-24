@@ -200,7 +200,7 @@ def main():
     sim_config.add_clocker("sys_clk", freq_hz=1e6)
 
     soc     = BenchSoC(toolchain=args.toolchain, dump=args.dump, sim_debug=args.sim_debug, trace_reset_on=args.trace_start > 0 or args.trace_end > 0)
-    builder = Builder(soc, csr_csv="csr.csv", compile_software=False)
+    builder = Builder(soc, csr_csv="csr.csv", csr_json="csr.json", compile_software=False)
     soc.ns = builder.build(
         sim_config  = sim_config,
         trace       = args.trace,

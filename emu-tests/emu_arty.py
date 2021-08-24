@@ -101,7 +101,7 @@ def main():
     args = parser.parse_args()
 
     soc     = EmuSoC(with_scope=args.scope)
-    builder = Builder(soc, csr_csv="csr.csv")
+    builder = Builder(soc, csr_csv="csr.csv", csr_json="csr.json")
     builder.build(run=args.build)
 
     if args.load:
