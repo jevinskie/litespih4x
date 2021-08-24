@@ -103,6 +103,9 @@ class FlashEmuMem(Module):
         self.spiemu_port = mpm.p0
         self.loader_port = mpm.p1
 
+        self.cnt = cnt = Signal(8)
+        self.sync.spimem += cnt.eq(cnt + 1)
+
     @staticmethod
     def val4addr(addr: int) -> int:
         return (addr & 0xff) ^ ((addr >> 8) & 0xff) ^ ((addr >> 16) & 0xff) ^ ((addr >> 24) & 0xff)
