@@ -30,7 +30,9 @@ class EmuSoC(SoCCore):
         # SoCMini ----------------------------------------------------------------------------------
         SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
             ident          = "LiteSPIH4X emu on Arty",
-            ident_version  = True
+            ident_version  = True,
+            cpu_type="picorv32",
+            cpu_variant="minimal",
         )
 
         # CRG --------------------------------------------------------------------------------------
