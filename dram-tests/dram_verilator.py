@@ -94,7 +94,7 @@ class SimSoC(SoCCore):
 
         # Etherbone --------------------------------------------------------------------------------
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
-        self.add_etherbone(phy=self.ethphy, buffer_depth=255)
+        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
 
 
 # Main ---------------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ def main():
 
     sim_config = SimConfig()
     sim_config.add_clocker("sys_clk", freq_hz=1e6)
-    sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.100.100"})
+    sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
     sim_config.add_module("serial2console", "serial")
 
     soc_kwargs     = soc_core_argdict(args)
