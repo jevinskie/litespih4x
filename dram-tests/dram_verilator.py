@@ -96,11 +96,15 @@ class SimSoC(SoCCore):
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
         self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
 
+        # Trace ------------------------------------------------------------------------------------
+        platform.add_debug(self, reset=1)
 
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description="LiteEth Bench Simulation")
+    parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
+    parser.add_argument("--trace-cycles",         default=128,             help="Number of cycles to trace")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
@@ -120,7 +124,7 @@ def main():
 
     soc     = SimSoC(**soc_kwargs)
     builder = Builder(soc, **builder_kwargs)
-    builder.build(sim_config=sim_config)
+    builder.build(sim_config=sim_config, trace=args.trace, trace_cycles=args.trace_cycles)
 
 if __name__ == "__main__":
     main()
