@@ -6,7 +6,7 @@ from rich import print
 
 dfi_latency = 8
 clk_ratio = 4
-word_width = 4
+word_width = 16
 
 def sys_clk_for_read_n(n):
     return dfi_latency + n

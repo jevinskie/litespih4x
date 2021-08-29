@@ -19,6 +19,8 @@ from litedram.phy.model import SDRAMPHYModel
 
 from liteeth.phy.model import LiteEthPHYModel
 
+from litespih4x.emu_dram import FlashEmuDRAM
+
 # IOs ----------------------------------------------------------------------------------------------
 
 _io = [
@@ -70,6 +72,9 @@ class SimSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = CRG(platform.request("sys_clk"))
 
+        # Trace ------------------------------------------------------------------------------------
+        self.platform.add_debug(self, reset=0)
+
         # DDR3 -------------------------------------------------------------------------------------
         sdram_clk_freq = int(100e6)  # FIXME: use 100MHz timings
         sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
@@ -88,6 +93,10 @@ class SimSoC(SoCCore):
             with_bist = True,
         )
 
+        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
+
+        self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, self.sim_trace.pin)
+
         # Reduce memtest size for simulation speedup
         self.add_constant("MEMTEST_DATA_SIZE", 8 * 1024)
         self.add_constant("MEMTEST_ADDR_SIZE", 8 * 1024)
@@ -96,8 +105,6 @@ class SimSoC(SoCCore):
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
         self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
 
-        # Trace ------------------------------------------------------------------------------------
-        platform.add_debug(self, reset=1)
 
 # Main ---------------------------------------------------------------------------------------------
 
@@ -119,6 +126,8 @@ def main():
 
     soc_kwargs['uart_name'] = 'sim'
     soc_kwargs['integrated_main_ram_size'] = 0
+    # soc_kwargs['cpu_type'] = 'picorv32' # slow
+    # soc_kwargs['cpu_variant'] = 'minimal'
 
     builder_kwargs['csr_csv'] = 'csr.csv'
 
