@@ -93,7 +93,7 @@ class SimSoC(SoCCore):
             with_bist = True,
         )
 
-        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
+        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp", data_width=32)
 
         self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, self.sim_trace.pin)
 

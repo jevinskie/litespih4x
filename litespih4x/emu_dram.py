@@ -26,24 +26,40 @@ class FlashEmuDRAM(Module):
         self.port = p = port
         self.trigger = t = trigger
 
-        self.submodules.ctrl_fsm = cfsm = FSM()
+        self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
+        self.comb += cfsm.reset.eq(~trigger)
         self.idle_flag = idle_flag = Signal()
-        self.cmd_rd_flag = cmd_rd_flag = Signal()
+        self.rd_launch_flag = rd_launch_flag = Signal()
+        self.rd_land_flag = rd_land_flag = Signal()
+        self.reset_flag = reset_flag = Signal()
 
-        cfsm.act("IDLE",
-            idle_flag.eq(1),
+        self.comb += p.rdata.ready.eq(1)
+
+        cfsm.act("RESET",
+            reset_flag.eq(1),
             If(trigger,
-                NextState("RD"),
+                NextState("IDLE"),
             )
         )
-        cfsm.delayed_enter("IDLE", "RD", 4)
-        cfsm.act("RD",
-            cmd_rd_flag.eq(1),
+        cfsm.delayed_enter("RESET", "IDLE", 16)
+        cfsm.act("IDLE",
+            idle_flag.eq(1),
+            NextState("RD_LAUNCH"),
+        )
+        cfsm.delayed_enter("IDLE", "RD_LAUNCH", 16)
+        cfsm.act("RD_LAUNCH",
+            rd_launch_flag.eq(1),
             p.cmd.we.eq(0),
             p.cmd.addr.eq(0xaaa0),
             p.cmd.valid.eq(1),
-            NextState("IDLE"),
+            If(p.cmd.ready,
+                NextState("RD_LAND"),
+            )
         )
-
-    def do_finalize(self):
-        super().do_finalize()
+        cfsm.act("RD_LAND",
+            rd_land_flag.eq(1),
+            p.rdata.ready.eq(1),
+            If(p.rdata.valid,
+                NextState("IDLE"),
+            ),
+        )
