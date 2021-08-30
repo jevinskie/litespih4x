@@ -28,6 +28,8 @@ class FlashEmuDRAM(Module, AutoCSR):
 
         self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
         self.fill_word_storage = fw_storage = fill_word.storage
+        self.fill_addr = fill_addr = CSRStorage(32)
+        self.fill_addr_storage = fa_storage = fill_addr.storage
 
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
         self.comb += cfsm.reset.eq(~trigger)
@@ -56,8 +58,8 @@ class FlashEmuDRAM(Module, AutoCSR):
         cfsm.act("WR_LAUNCH",
             wr_launch_flag.eq(1),
             p.cmd.we.eq(1),
-            p.cmd.addr.eq(0xaaa0),
-            p.wdata.data.eq(0xDEADBEEF),
+            p.cmd.addr.eq(fa_storage),
+            p.wdata.data.eq(fw_storage),
             p.wdata.we.eq(0xF),
             p.cmd.valid.eq(1),
             p.wdata.valid.eq(1),
@@ -79,7 +81,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         cfsm.act("RD_LAUNCH",
             rd_launch_flag.eq(1),
             p.cmd.we.eq(0),
-            p.cmd.addr.eq(0xaaa0),
+            p.cmd.addr.eq(fa_storage),
             p.cmd.valid.eq(1),
             If(p.cmd.ready,
                 NextState("RD_LAND"),
@@ -89,6 +91,6 @@ class FlashEmuDRAM(Module, AutoCSR):
             rd_land_flag.eq(1),
             p.rdata.ready.eq(1),
             If(p.rdata.valid,
-                NextState("IDLE"),
+                NextState("RESET"),
             ),
         )
