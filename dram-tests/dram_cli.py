@@ -19,7 +19,7 @@ def main():
     time.sleep(0.01)
 
     bus.regs.flash_dram_fill_addr.write(0xaaa0//4)
-    bus.regs.flash_dram_rd_cnt.write(4)
+    bus.regs.flash_dram_rd_cnt.write(4-1)
     # bus.regs.flash_dram_fill_word.write(0xaa5500ff)
 
     time.sleep(0.01)
