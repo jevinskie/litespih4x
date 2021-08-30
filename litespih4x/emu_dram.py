@@ -34,7 +34,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         self.readback_word_storage = rbw_storage = rb_word.storage
         self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
         self.rd_cnt_storage = rdc_storage = rd_cnt.storage
-        self.rd_cmt_cnt = rd_cmt_cnt = Signal.like(rd_cnt)
+        self.rd_cmt_cnt = rd_cmt_cnt = Signal.like(rdc_storage)
 
         # self.submodules.ctrl_fsm = cfsm = FSM()
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
@@ -87,13 +87,8 @@ class FlashEmuDRAM(Module, AutoCSR):
             p.cmd.we.eq(0),
             p.cmd.addr.eq(fa_storage),
             p.cmd.valid.eq(1),
-            If(rdc_storage == 0,
-                If(p.cmd.ready,
-                    NextState("RD_LAND"),
-                ),
-            ).Else(
-                NextValue(rdc_storage, rdc_storage - 1),
-                NextValue(fa_storage, fa_storage + 1)
+            If(p.cmd.ready,
+                NextState("RD_LAND"),
             ),
         )
         cfsm.act("RD_LAND",
@@ -101,8 +96,37 @@ class FlashEmuDRAM(Module, AutoCSR):
             p.rdata.ready.eq(1),
             If(p.rdata.valid,
                 NextValue(rbw_storage, p.rdata.data),
-                NextState("RESET"),
+                If(rdc_storage == 0,
+                   NextState("RESET"),
+                ).Else(
+                    NextValue(rdc_storage, rdc_storage - 1),
+                    NextValue(fa_storage, fa_storage + 1),
+                    NextState("RD_LAUNCH"),
+                ),
             ),
         )
-        cfsm.delayed_enter("RD_LAND", "RESET", 64)
+        # cfsm.delayed_enter("RD_LAND", "RESET", 64)
 
+
+        # cfsm.act("RD_LAUNCH",
+        #     rd_launch_flag.eq(1),
+        #     p.cmd.we.eq(0),
+        #     p.cmd.addr.eq(fa_storage),
+        #     p.cmd.valid.eq(1),
+        #     If(rdc_storage == 0,
+        #         If(p.cmd.ready,
+        #             NextState("RD_LAND"),
+        #         ),
+        #     ).Else(
+        #         NextValue(rdc_storage, rdc_storage - 1),
+        #         NextValue(fa_storage, fa_storage + 1)
+        #     ),
+        # )
+        # cfsm.act("RD_LAND",
+        #     rd_land_flag.eq(1),
+        #     p.rdata.ready.eq(1),
+        #     If(p.rdata.valid,
+        #         NextValue(rbw_storage, p.rdata.data),
+        #         NextState("RESET"),
+        #     ),
+        # )
