@@ -21,13 +21,13 @@ if cocotb.top is not None:
     SigType = cocotb.handle.ModifiableObject
 
 
-class FlashEmuDRAM(Module, AutoCSR):
+class FlashEmuDRAM(Module):
     def __init__(self, port: LiteDRAMNativePort, trigger: Signal):
         self.port = p = port
         self.trigger = t = trigger
 
         self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
-        self.fill_word_storage = fw_storage = fill_word.storage
+        # self.fill_word_storage = fw_storage = fill_word.storage
         self.fill_addr = fill_addr = CSRStorage(32)
         self.fill_addr_storage = fa_storage = fill_addr.storage
         self.readback_word = rb_word = CSRStorage(32)
@@ -97,3 +97,6 @@ class FlashEmuDRAM(Module, AutoCSR):
                 NextState("RESET"),
             ),
         )
+
+    def get_csrs(self):
+        return [self.fill_word, self.fill_addr, self.readback_word]
