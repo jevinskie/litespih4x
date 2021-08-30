@@ -21,18 +21,22 @@ if cocotb.top is not None:
     SigType = cocotb.handle.ModifiableObject
 
 
-class FlashEmuDRAM(Module):
+class FlashEmuDRAM(Module, AutoCSR):
     def __init__(self, port: LiteDRAMNativePort, trigger: Signal):
         self.port = p = port
         self.trigger = t = trigger
 
         # self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
         # self.fill_word_storage = fw_storage = fill_word.storage
-        self.fill_addr = fill_addr = CSRStorage(32)
+        self.fill_addr = fill_addr = CSRStorage(32, reset_less=True)
         self.fill_addr_storage = fa_storage = fill_addr.storage
-        self.readback_word = rb_word = CSRStorage(32)
+        self.readback_word = rb_word = CSRStorage(32, reset_less=True)
         self.readback_word_storage = rbw_storage = rb_word.storage
+        self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
+        self.rd_cnt_storage = rdc_storage = rd_cnt.storage
+        self.rd_cmt_cnt = rd_cmt_cnt = Signal.like(rd_cnt)
 
+        # self.submodules.ctrl_fsm = cfsm = FSM()
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
         self.comb += cfsm.reset.eq(~trigger)
         self.idle_flag = idle_flag = Signal()
@@ -42,10 +46,9 @@ class FlashEmuDRAM(Module):
         self.rd_land_flag = rd_land_flag = Signal()
         self.reset_flag = reset_flag = Signal()
 
-        self.comb += p.rdata.ready.eq(1)
-
         cfsm.act("RESET",
             reset_flag.eq(1),
+            NextValue(rd_cmt_cnt, rdc_storage),
             If(trigger,
                 NextState("IDLE"),
             )
@@ -55,7 +58,7 @@ class FlashEmuDRAM(Module):
             idle_flag.eq(1),
             NextState("RD_LAUNCH"),
         )
-        # cfsm.delayed_enter("IDLE", "WR_LAUNCH", 16)
+        cfsm.delayed_enter("IDLE", "RD_LAUNCH", 16)
 
         # cfsm.act("WR_LAUNCH",
         #     wr_launch_flag.eq(1),
@@ -79,15 +82,19 @@ class FlashEmuDRAM(Module):
 
         # cfsm.delayed_enter("WR_LAUNCH", "RD_LAUNCH", 64)
 
-
         cfsm.act("RD_LAUNCH",
             rd_launch_flag.eq(1),
             p.cmd.we.eq(0),
             p.cmd.addr.eq(fa_storage),
             p.cmd.valid.eq(1),
-            If(p.cmd.ready,
-                NextState("RD_LAND"),
-            )
+            If(rdc_storage == 0,
+                If(p.cmd.ready,
+                    NextState("RD_LAND"),
+                ),
+            ).Else(
+                NextValue(rdc_storage, rdc_storage - 1),
+                NextValue(fa_storage, fa_storage + 1)
+            ),
         )
         cfsm.act("RD_LAND",
             rd_land_flag.eq(1),
@@ -97,7 +104,5 @@ class FlashEmuDRAM(Module):
                 NextState("RESET"),
             ),
         )
+        cfsm.delayed_enter("RD_LAND", "RESET", 64)
 
-    def get_csrs(self):
-        # return [self.fill_word, self.fill_addr, self.readback_word]
-        return [self.fill_addr, self.readback_word]
