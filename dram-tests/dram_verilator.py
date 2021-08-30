@@ -80,7 +80,7 @@ class SimSoC(SoCCore):
         sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
         self.submodules.ddrphy = SDRAMPHYModel(
             module = sdram_module,
-            data_width = 32,
+            data_width = 16,
             clk_freq = sdram_clk_freq,
             verbosity = 0,
             init = [],
