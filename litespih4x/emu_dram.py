@@ -30,6 +30,8 @@ class FlashEmuDRAM(Module, AutoCSR):
         self.fill_word_storage = fw_storage = fill_word.storage
         self.fill_addr = fill_addr = CSRStorage(32)
         self.fill_addr_storage = fa_storage = fill_addr.storage
+        self.readback_word = rb_word = CSRStorage(32)
+        self.readback_word_storage = rbw_storage = rb_word.storage
 
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
         self.comb += cfsm.reset.eq(~trigger)
@@ -53,20 +55,20 @@ class FlashEmuDRAM(Module, AutoCSR):
             idle_flag.eq(1),
             NextState("RD_LAUNCH"),
         )
-        cfsm.delayed_enter("IDLE", "WR_LAUNCH", 16)
+        # cfsm.delayed_enter("IDLE", "WR_LAUNCH", 16)
 
-        cfsm.act("WR_LAUNCH",
-            wr_launch_flag.eq(1),
-            p.cmd.we.eq(1),
-            p.cmd.addr.eq(fa_storage),
-            p.wdata.data.eq(fw_storage),
-            p.wdata.we.eq(0xF),
-            p.cmd.valid.eq(1),
-            p.wdata.valid.eq(1),
-            If(p.cmd.ready & p.wdata.ready,
-                NextState("RD_LAUNCH"),
-            )
-        )
+        # cfsm.act("WR_LAUNCH",
+        #     wr_launch_flag.eq(1),
+        #     p.cmd.we.eq(1),
+        #     p.cmd.addr.eq(fa_storage),
+        #     p.wdata.data.eq(fw_storage),
+        #     p.wdata.we.eq(0xF),
+        #     p.cmd.valid.eq(1),
+        #     p.wdata.valid.eq(1),
+        #     If(p.cmd.ready & p.wdata.ready,
+        #         NextState("RD_LAUNCH"),
+        #     )
+        # )
         # cfsm.act("WR_LAND",
         #     wr_land_flag.eq(1),
         #     p.rdata.ready.eq(1),
@@ -75,7 +77,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         #     ),
         # )
 
-        cfsm.delayed_enter("WR_LAUNCH", "RD_LAUNCH", 64)
+        # cfsm.delayed_enter("WR_LAUNCH", "RD_LAUNCH", 64)
 
 
         cfsm.act("RD_LAUNCH",
@@ -91,6 +93,7 @@ class FlashEmuDRAM(Module, AutoCSR):
             rd_land_flag.eq(1),
             p.rdata.ready.eq(1),
             If(p.rdata.valid,
+                NextValue(rbw_storage, p.rdata.data),
                 NextState("RESET"),
             ),
         )

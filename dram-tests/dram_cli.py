@@ -9,14 +9,20 @@ from rich import print
 def main():
     bus = RemoteClient()
     bus.open()
+
+    fill = 0xdeadbeef
+    buf = bus.write(0x4000aaa0, fill)
+
+
     bus.regs.flash_dram_fill_addr.write(0xaaa0//4)
-    bus.regs.flash_dram_fill_word.write(0xaa5500ff)
+    # bus.regs.flash_dram_fill_word.write(0xaa5500ff)
     bus.regs.sim_trace_enable.write(1)
-    time.sleep(0.1)
     bus.regs.sim_trace_enable.write(0)
+    rbw = bus.regs.flash_dram_readback_word.read()
+    print(f'readback word: {rbw:d} 0x{rbw:x}')
 
     buf = bus.read(0x4000aaa0, 4)
-    print(f'buf: {buf}')
+    print(f'buf: {buf} buf[0]: {hex(buf[0])}')
 
 if __name__ == '__main__':
     main()
