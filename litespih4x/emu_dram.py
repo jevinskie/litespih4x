@@ -26,7 +26,7 @@ class FlashEmuDRAM(Module):
         self.port = p = port
         self.trigger = t = trigger
 
-        self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
+        # self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
         # self.fill_word_storage = fw_storage = fill_word.storage
         self.fill_addr = fill_addr = CSRStorage(32)
         self.fill_addr_storage = fa_storage = fill_addr.storage
