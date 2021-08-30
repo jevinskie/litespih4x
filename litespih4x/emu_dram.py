@@ -99,4 +99,5 @@ class FlashEmuDRAM(Module):
         )
 
     def get_csrs(self):
-        return [self.fill_word, self.fill_addr, self.readback_word]
+        # return [self.fill_word, self.fill_addr, self.readback_word]
+        return [self.fill_addr, self.readback_word]
