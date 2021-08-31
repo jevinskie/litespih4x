@@ -30,6 +30,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         # self.fill_word_storage = fw_storage = fill_word.storage
         self.fill_addr = fill_addr = CSRStorage(32, reset_less=True)
         self.fill_addr_storage = fa_storage = fill_addr.storage
+        self.fa_tmp = fa_tmp = Signal.like(fa_storage)
         self.readback_word = rb_word = CSRStorage(32, reset_less=True)
         self.readback_word_storage = rbw_storage = rb_word.storage
         self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
@@ -61,6 +62,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         cfsm.act("IDLE",
             idle_flag.eq(1),
             NextValue(rdc_tmp, rdc_storage),
+            NextValue(fa_tmp, fa_storage),
             NextState("RD_LAUNCH"),
         )
         cfsm.delayed_enter("IDLE", "RD_LAUNCH", 16)
@@ -107,6 +109,8 @@ class FlashEmuDRAM(Module, AutoCSR):
                 NextValue(rbw_storage, p.rdata.data),
                 NextValue(rdc_storage, rdc_storage - 1),
                 If(rdc_storage == 0,
+                    NextValue(rdc_storage, rdc_tmp),
+                    NextValue(fa_storage, fa_tmp),
                     NextState("RESET"),
                 )
             ),
