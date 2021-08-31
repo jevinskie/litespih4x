@@ -34,11 +34,10 @@ class FlashEmuDRAM(Module, AutoCSR):
         self.readback_word_storage = rbw_storage = rb_word.storage
         self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
         self.rd_cnt_storage = rdc_storage = rd_cnt.storage
-        self.rd_cmt_cnt = rd_cmt_cnt = Signal.like(rdc_storage)
         self.rdc_tmp = rdc_tmp = Signal.like(rdc_storage)
 
         # self.submodules.ctrl_fsm = cfsm = FSM()
-        self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
+        self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM(name="ctrl_fsm"))
         self.comb += cfsm.reset.eq(~trigger)
         self.idle_flag = idle_flag = Signal()
         self.wr_launch_flag = wr_launch_flag = Signal()
@@ -49,7 +48,6 @@ class FlashEmuDRAM(Module, AutoCSR):
 
         cfsm.act("RESET",
             reset_flag.eq(1),
-            NextValue(rd_cmt_cnt, rdc_storage),
             If(trigger,
                 NextState("IDLE"),
             )
