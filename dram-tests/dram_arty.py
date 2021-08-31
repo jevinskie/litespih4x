@@ -91,7 +91,11 @@ class DRAMSoC(SoCCore):
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")
-            analyzer_trigger = self.analyzer.trigger.hit
+            hit_d = Signal()
+            self.sync += hit_d.eq(self.analyzer.trigger.hit)
+            enable_dd = Signal()
+            self.sync += enable_dd.eq(self.analyzer.trigger.enable_d)
+            analyzer_trigger = hit_d & enable_dd
             self.comb += trace_sig.eq(analyzer_trigger)
 
         # Leds -------------------------------------------------------------------------------------
