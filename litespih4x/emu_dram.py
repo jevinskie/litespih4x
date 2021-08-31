@@ -35,6 +35,11 @@ class FlashEmuDRAM(Module, AutoCSR):
         self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
         self.rd_cnt_storage = rdc_storage = rd_cnt.storage
         self.rdc_tmp = rdc_tmp = Signal.like(rdc_storage)
+        self.go = go = CSRStorage(1, reset_less=True)
+        self.go_sig = go_sig = go.storage
+
+        self.combo_trigger = combo_trigger = Signal()
+        self.comb += combo_trigger.eq(trigger | go_sig)
 
         # self.submodules.ctrl_fsm = cfsm = FSM()
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM(name="ctrl_fsm"))
