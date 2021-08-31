@@ -95,6 +95,8 @@ class SimSoC(SoCCore):
 
         self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp", data_width=32)
 
+        self.trace_sig = trace_sig = Signal()
+        # self.trace_sig = trace_sig = self.sim_trace.pin
         self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, self.sim_trace.pin)
 
         # Reduce memtest size for simulation speedup
@@ -106,6 +108,20 @@ class SimSoC(SoCCore):
         self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
 
 
+        from litescope import LiteScopeAnalyzer
+
+        flash_dram.ctrl_fsm.finalize()
+        analyzer_signals = \
+            [self.ddrphy.dfi] + \
+            flash_dram._signals + flash_dram.ctrl_fsm._signals + \
+            flash_dram.port._signals + [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata]
+        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
+                                                     depth=256,
+                                                     clock_domain="sys",
+                                                     csr_csv="analyzer.csv")
+        analyzer_trigger = self.analyzer.trigger.enable_d
+        self.comb += trace_sig.eq(analyzer_trigger)
+#
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
@@ -133,7 +149,17 @@ def main():
 
     soc     = SimSoC(**soc_kwargs)
     builder = Builder(soc, **builder_kwargs)
-    builder.build(sim_config=sim_config, trace=args.trace, trace_cycles=args.trace_cycles)
+    for i in range(2):
+        build = (i == 0)
+        run   = (i == 1)
+        builder.build(
+            build=build,
+            run=run,
+            skip_sw_build=run,
+            sim_config=sim_config,
+            trace=args.trace,
+            trace_cycles=args.trace_cycles
+        )
 
 if __name__ == "__main__":
     main()
