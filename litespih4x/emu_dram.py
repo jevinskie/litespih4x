@@ -35,6 +35,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
         self.rd_cnt_storage = rdc_storage = rd_cnt.storage
         self.rd_cmt_cnt = rd_cmt_cnt = Signal.like(rdc_storage)
+        self.rdc_tmp = rdc_tmp = Signal.like(rdc_storage)
 
         # self.submodules.ctrl_fsm = cfsm = FSM()
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM())
@@ -56,6 +57,7 @@ class FlashEmuDRAM(Module, AutoCSR):
         cfsm.delayed_enter("RESET", "IDLE", 16)
         cfsm.act("IDLE",
             idle_flag.eq(1),
+            NextValue(rdc_tmp, rdc_storage),
             NextState("RD_LAUNCH"),
         )
         cfsm.delayed_enter("IDLE", "RD_LAUNCH", 16)
@@ -81,14 +83,18 @@ class FlashEmuDRAM(Module, AutoCSR):
         # )
 
         # cfsm.delayed_enter("WR_LAUNCH", "RD_LAUNCH", 64)
-
         cfsm.act("RD_LAUNCH",
             rd_launch_flag.eq(1),
             p.cmd.we.eq(0),
             p.cmd.addr.eq(fa_storage),
             p.cmd.valid.eq(1),
             If(p.cmd.ready,
-                NextState("RD_LAND"),
+                NextValue(rdc_storage, rdc_storage - 1),
+                NextValue(fa_storage, fa_storage + 1),
+                If(rdc_storage == 0,
+                    NextValue(rdc_storage, rdc_tmp),
+                    NextState("RD_LAND"),
+                )
             ),
         )
         cfsm.act("RD_LAND",
@@ -96,13 +102,10 @@ class FlashEmuDRAM(Module, AutoCSR):
             p.rdata.ready.eq(1),
             If(p.rdata.valid,
                 NextValue(rbw_storage, p.rdata.data),
+                NextValue(rdc_storage, rdc_storage - 1),
                 If(rdc_storage == 0,
-                   NextState("RESET"),
-                ).Else(
-                    NextValue(rdc_storage, rdc_storage - 1),
-                    NextValue(fa_storage, fa_storage + 1),
-                    NextState("RD_LAUNCH"),
-                ),
+                    NextState("RESET"),
+                )
             ),
         )
         # cfsm.delayed_enter("RD_LAND", "RESET", 64)

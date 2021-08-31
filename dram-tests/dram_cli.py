@@ -11,10 +11,6 @@ def main():
     bus.open()
 
     fill = 0xdeadbeef
-    # bus.write(0x4000aaa0+4*0, fill)
-    # bus.write(0x4000aaa0+4*1, fill+1)
-    # bus.write(0x4000aaa0+4*2, fill+2)
-    # bus.write(0x4000aaa0+4*3, fill+3)
     bus.write(0x4000aaa0, [fill, fill+1, fill+2, fill+3])
     time.sleep(0.01)
 
