@@ -88,7 +88,7 @@ class DRAMSoC(SoCCore):
                 flash_dram._signals + flash_dram.ctrl_fsm._signals + \
                 flash_dram.port._signals + [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata]
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                depth        = 256,
+                depth        = 2048,
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")
