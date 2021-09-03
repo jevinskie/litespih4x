@@ -91,12 +91,7 @@ class DRAMSoC(SoCCore):
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")
-            hit_d = Signal()
-            self.sync += hit_d.eq(self.analyzer.trigger.source.hit)
-            enable_d = Signal()
-            self.sync += enable_d.eq(self.analyzer.trigger.enable_sig)
-            analyzer_trigger = hit_d
-            self.comb += trace_sig.eq(analyzer_trigger)
+            self.comb += trace_sig.eq(self.analyzer.storage.run_flag)
 
         # Leds -------------------------------------------------------------------------------------
         from litex.soc.cores.led import LedChaser

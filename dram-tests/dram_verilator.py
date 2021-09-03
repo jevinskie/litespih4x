@@ -97,7 +97,7 @@ class SimSoC(SoCCore):
 
         self.trace_sig = trace_sig = Signal()
         # self.trace_sig = trace_sig = self.sim_trace.pin
-        self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, self.sim_trace.pin)
+        self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
 
         # Reduce memtest size for simulation speedup
         self.add_constant("MEMTEST_DATA_SIZE", 8 * 1024)
@@ -111,15 +111,26 @@ class SimSoC(SoCCore):
         from litescope import LiteScopeAnalyzer
 
         flash_dram.ctrl_fsm.finalize()
+        analyzer_trigger = Signal()
+        anal_enable = Signal()
+        anal_hit = Signal()
+        run_flag = Signal()
         analyzer_signals = \
             [self.ddrphy.dfi] + \
             flash_dram._signals + flash_dram.ctrl_fsm._signals + \
-            flash_dram.port._signals + [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata]
+            flash_dram.port._signals + [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
+            [analyzer_trigger, anal_enable, anal_hit, run_flag]
+        # analyzer_signals = \
+        #     [self.ddrphy.dfi]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=256,
                                                      clock_domain="sys",
                                                      csr_csv="analyzer.csv")
-        analyzer_trigger = self.analyzer.trigger.enable_d
+        # self.add_csr("analyzer")
+        self.comb += run_flag.eq(self.analyzer.storage.run_flag)
+        self.comb += analyzer_trigger.eq(run_flag)
+        self.comb += anal_hit.eq(self.analyzer.trigger.hit)
+        self.comb += anal_enable.eq(self.analyzer.trigger.enable.storage)
         self.comb += trace_sig.eq(analyzer_trigger)
 #
 # Main ---------------------------------------------------------------------------------------------
