@@ -30,7 +30,7 @@ from litespih4x.emu_dram import FlashEmuDRAM
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class DRAMSoC(SoCCore):
-    def __init__(self, uart="crossover", sys_clk_freq=int(200e6), with_bist=False, with_analyzer=False):
+    def __init__(self, uart="serial", sys_clk_freq=int(100e6), with_bist=False, with_analyzer=False):
         platform = arty.Platform(variant='a7-100')
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -58,6 +58,7 @@ class DRAMSoC(SoCCore):
             phy       = self.ddrphy,
             module    = MT41K128M16(sys_clk_freq, "1:4"),
             origin    = self.mem_map["main_ram"],
+            l2_cache_size=0,
             with_bist = with_bist)
 
         self.trace_sig = trace_sig = Signal()
