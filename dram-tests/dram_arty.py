@@ -34,14 +34,10 @@ class DRAMSoC(SoCCore):
         platform = arty.Platform(variant='a7-100')
 
         # SoCCore ----------------------------------------------------------------------------------
-        SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
+        SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
             ident               = "LiteSPIh4x dram test Arty",
             ident_version       = True,
-            cpu_type            = "picorv32",
-            cpu_variant         = "minimal",
-            integrated_rom_size = 0x10000,
-            integrated_rom_mode = "rw",
-            uart_name           = uart)
+        )
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq)
@@ -62,7 +58,7 @@ class DRAMSoC(SoCCore):
             with_bist = with_bist)
 
         self.trace_sig = trace_sig = Signal()
-        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp", data_width=32)
+        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
         self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
 
