@@ -44,7 +44,7 @@ class FlashEmuDRAM(Module, AutoCSR):
 
         # self.submodules.ctrl_fsm = cfsm = FSM()
         self.submodules.ctrl_fsm = cfsm = ResetInserter()(FSM(name="ctrl_fsm"))
-        self.comb += cfsm.reset.eq(~trigger)
+        self.comb += cfsm.reset.eq(~combo_trigger)
         self.idle_flag = idle_flag = Signal()
         self.wr_launch_flag = wr_launch_flag = Signal()
         self.wr_land_flag = wr_land_flag = Signal()
@@ -54,7 +54,7 @@ class FlashEmuDRAM(Module, AutoCSR):
 
         cfsm.act("RESET",
             reset_flag.eq(1),
-            If(trigger,
+            If(combo_trigger,
                 NextState("IDLE"),
             )
         )
