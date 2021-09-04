@@ -30,13 +30,19 @@ from litespih4x.emu_dram import FlashEmuDRAM
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class DRAMSoC(SoCCore):
-    def __init__(self, uart="serial", sys_clk_freq=int(100e6), with_bist=False, with_analyzer=False):
+    def __init__(self, uart="crossover", sys_clk_freq=int(125e6), with_bist=False, with_analyzer=False):
         platform = arty.Platform(variant='a7-100')
 
         # SoCCore ----------------------------------------------------------------------------------
-        SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
+        SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
             ident               = "LiteSPIh4x dram test Arty",
             ident_version       = True,
+            cpu_type            = "picorv32",
+            cpu_variant         = "minimal",
+            integrated_rom_size = 0x10000//2,
+            integrated_sram_size = 4*1024,
+            # integrated_rom_mode = "rw",
+            uart_name           = uart,
         )
 
         # CRG --------------------------------------------------------------------------------------
@@ -44,7 +50,7 @@ class DRAMSoC(SoCCore):
 
         # DDR3 SDRAM -------------------------------------------------------------------------------
         self.submodules.ddrphy = s7ddrphy.A7DDRPHY(
-            pads         = PHYPadsReducer(platform.request("ddram"), [0, 1]),
+            pads         = platform.request("ddram"),
             memtype      = "DDR3",
             nphases      = 4,
             cl           = 8,
@@ -58,7 +64,7 @@ class DRAMSoC(SoCCore):
             with_bist = with_bist)
 
         self.trace_sig = trace_sig = Signal()
-        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
+        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp", data_width=32)
 
         self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
 
