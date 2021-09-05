@@ -28,14 +28,14 @@ class FlashEmuDRAM(Module, AutoCSR):
 
         # self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
         # self.fill_word_storage = fw_storage = fill_word.storage
-        self.fill_addr = fill_addr = CSRStorage(port.address_width, reset_less=True)
-        self.fill_addr_storage = fa_storage = fill_addr.storage
-        self.fa_tmp = fa_tmp = Signal.like(fa_storage)
-        self.readback_word = rb_word = CSRStorage(port.data_width, reset_less=True)
-        self.readback_word_storage = rbw_storage = rb_word.storage
-        self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
-        self.rd_cnt_storage = rdc_storage = rd_cnt.storage
-        self.rdc_tmp = rdc_tmp = Signal.like(rdc_storage)
+        self.fill_addr = fill_addr = CSRStorage(port.address_width, reset_less=True, write_from_dev=True)
+        self.fill_addr_storage = fill_addr.storage
+        self.fa_tmp = fa_tmp = Signal.like(fill_addr.storage)
+        self.readback_word = rb_word = CSRStorage(port.data_width, reset_less=True, write_from_dev=True)
+        self.readback_word_storage = rb_word.storage
+        self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True, write_from_dev=True)
+        self.rd_cnt_storage = rd_cnt.storage
+        self.rdc_tmp = rdc_tmp = Signal.like(rd_cnt.storage)
         self.go = go = CSRStorage(1, reset_less=True)
         self.go_sig = go_sig = go.storage
 
@@ -61,8 +61,8 @@ class FlashEmuDRAM(Module, AutoCSR):
         cfsm.delayed_enter("RESET", "IDLE", 16)
         cfsm.act("IDLE",
             idle_flag.eq(1),
-            NextValue(rdc_tmp, rdc_storage),
-            NextValue(fa_tmp, fa_storage),
+            NextValue(rdc_tmp, rd_cnt.storage),
+            NextValue(fa_tmp, fill_addr.storage),
             NextState("RD_LAUNCH"),
         )
         cfsm.delayed_enter("IDLE", "RD_LAUNCH", 16)
@@ -91,13 +91,16 @@ class FlashEmuDRAM(Module, AutoCSR):
         cfsm.act("RD_LAUNCH",
             rd_launch_flag.eq(1),
             p.cmd.we.eq(0),
-            p.cmd.addr.eq(fa_storage),
+            p.cmd.addr.eq(fill_addr.storage),
             p.cmd.valid.eq(1),
             If(p.cmd.ready,
-                NextValue(rdc_storage, rdc_storage - 1),
-                NextValue(fa_storage, fa_storage + 1),
-                If(rdc_storage == 0,
-                    NextValue(rdc_storage, rdc_tmp),
+                rd_cnt.dat_w.eq(rd_cnt.storage - 1),
+                rd_cnt.we.eq(1),
+                fill_addr.dat_w.eq(fill_addr.storage + 1),
+                fill_addr.we.eq(1),
+                If(rd_cnt.storage == 0,
+                    rd_cnt.dat_w.eq(rdc_tmp),
+                    rd_cnt.we.eq(1),
                     NextState("RD_LAND"),
                 )
             ),
@@ -106,11 +109,15 @@ class FlashEmuDRAM(Module, AutoCSR):
             rd_land_flag.eq(1),
             p.rdata.ready.eq(1),
             If(p.rdata.valid,
-                NextValue(rbw_storage, p.rdata.data),
-                NextValue(rdc_storage, rdc_storage - 1),
-                If(rdc_storage == 0,
-                    NextValue(rdc_storage, rdc_tmp),
-                    NextValue(fa_storage, fa_tmp),
+                rb_word.dat_w.eq(p.rdata.data),
+                rb_word.we.eq(1),
+                rd_cnt.dat_w.eq(rd_cnt.storage - 1),
+                rd_cnt.we.eq(1),
+                If(rd_cnt.storage == 0,
+                    rd_cnt.dat_w.eq(rdc_tmp),
+                    rd_cnt.we.eq(1),
+                    fill_addr.dat_w.eq(fa_tmp),
+                    fill_addr.we.eq(1),
                     NextState("RESET"),
                 )
             ),

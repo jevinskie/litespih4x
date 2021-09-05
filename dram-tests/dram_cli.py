@@ -14,16 +14,17 @@ def main():
     print(f'buf before: {buf} buf[0]: {hex(buf[0])}')
 
     fill = 0xdeadbeef
-    fill_buf = [fill + i for i in range(128)]
+    fill_buf = [fill + i for i in range(16)]
     bus.write(0x4000aaa0, fill_buf)
     time.sleep(0.01)
 
-    bus.regs.flash_dram_fill_addr.write(0xaaa0//4)
+    bus.regs.flash_dram_fill_addr.write(0xaaa0//16)
     bus.regs.flash_dram_rd_cnt.write(4-1)
+    bus.regs.flash_dram_readback_word.write(2**128-1)
     # bus.regs.flash_dram_fill_word.write(0xaa5500ff)
 
     time.sleep(0.01)
-    bus.regs.flash_dram_go.write(1)
+    # bus.regs.flash_dram_go.write(1)
     time.sleep(0.01)
     bus.regs.flash_dram_go.write(0)
     rbw = bus.regs.flash_dram_readback_word.read()
