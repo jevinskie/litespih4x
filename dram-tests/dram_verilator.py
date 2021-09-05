@@ -131,7 +131,7 @@ class SimSoC(SoCCore):
         self.comb += analyzer_trigger.eq(run_flag)
         self.comb += anal_hit.eq(self.analyzer.trigger.hit)
         self.comb += anal_enable.eq(self.analyzer.trigger.enable.storage)
-        self.comb += trace_sig.eq(analyzer_trigger)
+        self.comb += trace_sig.eq(analyzer_trigger | self.sim_trace.pin)
 #
 # Main ---------------------------------------------------------------------------------------------
 
@@ -139,6 +139,7 @@ def main():
     parser = argparse.ArgumentParser(description="LiteEth Bench Simulation")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-cycles",         default=128,             help="Number of cycles to trace")
+    parser.add_argument("--opt-level",            default="O3",            help="Verilator optimization level")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
