@@ -93,7 +93,7 @@ class SimSoC(SoCCore):
             with_bist = True,
         )
 
-        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp", data_width=32)
+        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
         self.trace_sig = trace_sig = Signal()
         # self.trace_sig = trace_sig = self.sim_trace.pin

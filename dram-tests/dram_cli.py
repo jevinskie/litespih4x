@@ -14,7 +14,8 @@ def main():
     print(f'buf before: {buf} buf[0]: {hex(buf[0])}')
 
     fill = 0xdeadbeef
-    bus.write(0x4000aaa0, [fill, fill+1, fill+2, fill+3])
+    fill_buf = [fill + i for i in range(128)]
+    bus.write(0x4000aaa0, fill_buf)
     time.sleep(0.01)
 
     bus.regs.flash_dram_fill_addr.write(0xaaa0//4)

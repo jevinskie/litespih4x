@@ -28,10 +28,10 @@ class FlashEmuDRAM(Module, AutoCSR):
 
         # self.fill_word = fill_word = CSRStorage(32, reset=0xDEADBEEF)
         # self.fill_word_storage = fw_storage = fill_word.storage
-        self.fill_addr = fill_addr = CSRStorage(32, reset_less=True)
+        self.fill_addr = fill_addr = CSRStorage(port.address_width, reset_less=True)
         self.fill_addr_storage = fa_storage = fill_addr.storage
         self.fa_tmp = fa_tmp = Signal.like(fa_storage)
-        self.readback_word = rb_word = CSRStorage(32, reset_less=True)
+        self.readback_word = rb_word = CSRStorage(port.data_width, reset_less=True)
         self.readback_word_storage = rbw_storage = rb_word.storage
         self.rd_cnt = rd_cnt = CSRStorage(8, reset_less=True)
         self.rd_cnt_storage = rdc_storage = rd_cnt.storage
