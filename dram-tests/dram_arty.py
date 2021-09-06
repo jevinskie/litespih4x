@@ -37,8 +37,8 @@ class DRAMSoC(SoCCore):
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
             ident               = "LiteSPIh4x dram test Arty",
             ident_version       = True,
-            cpu_type            = "picorv32",
-            cpu_variant         = "minimal",
+            cpu_type            = "serv",
+            # cpu_variant         = "minimal",
             integrated_rom_size = 0x10000//2,
             integrated_sram_size = 4*1024,
             # integrated_rom_mode = "rw",
@@ -64,7 +64,7 @@ class DRAMSoC(SoCCore):
             with_bist = with_bist)
 
         self.trace_sig = trace_sig = Signal()
-        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp", data_width=32)
+        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
         self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
 

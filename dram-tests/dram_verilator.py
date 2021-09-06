@@ -59,9 +59,9 @@ class Platform(SimPlatform):
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class SimSoC(SoCCore):
-    def __init__(self, **kwargs):
+    def __init__(self, sys_clk_freq = None, **kwargs):
         platform     = Platform()
-        sys_clk_freq = int(1e6)
+        sys_clk_freq = int(sys_clk_freq)
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
@@ -105,7 +105,7 @@ class SimSoC(SoCCore):
 
         # Etherbone --------------------------------------------------------------------------------
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
-        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
+        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.51", buffer_depth=255)
 
 
         from litescope import LiteScopeAnalyzer
@@ -137,6 +137,7 @@ class SimSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteEth Bench Simulation")
+    parser.add_argument("--sys-clk-freq",         default=100e6,           help="System clock frequency (default: 100MHz)")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-cycles",         default=128,             help="Number of cycles to trace")
     parser.add_argument("--opt-level",            default="O3",            help="Verilator optimization level")
@@ -145,13 +146,14 @@ def main():
     args = parser.parse_args()
 
     sim_config = SimConfig()
-    sim_config.add_clocker("sys_clk", freq_hz=1e6)
+    sim_config.add_clocker("sys_clk", freq_hz=args.sys_clk_freq)
     sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
     sim_config.add_module("serial2console", "serial")
 
     soc_kwargs     = soc_core_argdict(args)
     builder_kwargs = builder_argdict(args)
 
+    soc_kwargs['sys_clk_freq'] = int(args.sys_clk_freq)
     soc_kwargs['uart_name'] = 'sim'
     soc_kwargs['integrated_main_ram_size'] = 0
     # soc_kwargs['cpu_type'] = 'picorv32' # slow
@@ -170,7 +172,8 @@ def main():
             skip_sw_build=run,
             sim_config=sim_config,
             trace=args.trace,
-            trace_cycles=args.trace_cycles
+            trace_cycles=args.trace_cycles,
+            opt_level=args.opt_level,
         )
 
 if __name__ == "__main__":
