@@ -6,7 +6,7 @@ from rich import print
 
 dfi_latency = 11
 clk_ratio = 4
-word_width = 16
+word_width = 16 # 128 bits per sys_clk
 
 def sys_clk_for_read_n(n):
     return dfi_latency + n
@@ -23,7 +23,7 @@ for i in range(0):
     num_bytes = word_width * (i+1)
     print(f'latency: {sys_lat} sys clk, {spi_lat} spi clk num bytes: {num_bytes} num guesses: {num_guesses}')
 
-for i in range(10):
+for i in range(14):
     num_guesses = 2**i
     spi_clks = i
     sys_clks = clk_ratio * spi_clks
