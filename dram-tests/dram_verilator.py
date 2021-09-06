@@ -105,7 +105,7 @@ class SimSoC(SoCCore):
 
         # Etherbone --------------------------------------------------------------------------------
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
-        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.51", buffer_depth=16*4096-1)
+        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.51", buffer_depth=255)
 
 
         from litescope import LiteScopeAnalyzer
