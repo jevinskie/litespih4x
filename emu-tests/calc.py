@@ -4,7 +4,7 @@ import math
 
 from rich import print
 
-dfi_latency = 8
+dfi_latency = 11
 clk_ratio = 4
 word_width = 16
 
