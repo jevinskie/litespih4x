@@ -115,7 +115,8 @@ def main():
     args = parser.parse_args()
 
     soc     = DRAMSoC(with_bist=args.with_bist, with_analyzer=args.with_analyzer)
-    soc.platform.toolchain.vivado_post_route_phys_opt_directive = args.phys_opt_dir
+    if args.phys_opt_dir is not None:
+        soc.platform.toolchain.vivado_post_route_phys_opt_directive = args.phys_opt_dir
     builder = Builder(soc, output_dir="build/arty", csr_csv="csr.csv")
     builder.build(run=args.build, enable_retiming=args.enable_retiming)
 

@@ -85,6 +85,7 @@ class SimSoC(SoCCore):
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
             ident         = "litespih4x dram test simulation",
             ident_version = True,
+            cpu_type      = "None",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -93,31 +94,31 @@ class SimSoC(SoCCore):
         # Trace ------------------------------------------------------------------------------------
         self.platform.add_debug(self, reset=0)
 
-        # DDR3 -------------------------------------------------------------------------------------
-        sdram_clk_freq = sys_clk_freq
-        sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
-        sdram_settings = get_sdram_phy_settings(
-            memtype=sdram_module.memtype,
-            data_width=16,
-            clk_freq=sdram_clk_freq,
-            cl = 8,
-            cwl = 7,
-        )
-        self.submodules.ddrphy = SDRAMPHYModel(
-            module = sdram_module,
-            settings = sdram_settings,
-            data_width = 16,
-            clk_freq = sdram_clk_freq,
-            verbosity = 0,
-            init = [],
-        )
-        self.add_sdram("sdram",
-            phy       = self.ddrphy,
-            module    = sdram_module,
-            origin    = self.mem_map["main_ram"],
-            l2_cache_size = 0,
-            with_bist = True,
-        )
+        # # DDR3 -------------------------------------------------------------------------------------
+        # sdram_clk_freq = sys_clk_freq
+        # sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
+        # sdram_settings = get_sdram_phy_settings(
+        #     memtype=sdram_module.memtype,
+        #     data_width=16,
+        #     clk_freq=sdram_clk_freq,
+        #     cl = 8,
+        #     cwl = 7,
+        # )
+        # self.submodules.ddrphy = SDRAMPHYModel(
+        #     module = sdram_module,
+        #     settings = sdram_settings,
+        #     data_width = 16,
+        #     clk_freq = sdram_clk_freq,
+        #     verbosity = 0,
+        #     init = [],
+        # )
+        # self.add_sdram("sdram",
+        #     phy       = self.ddrphy,
+        #     module    = sdram_module,
+        #     origin    = self.mem_map["main_ram"],
+        #     l2_cache_size = 0,
+        #     with_bist = True,
+        # )
 
 
         self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi"))
@@ -128,11 +129,11 @@ class SimSoC(SoCCore):
             sys_clk_freq // 4,
         )
 
-        self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
+        # self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
         self.trace_sig = trace_sig = Signal()
         # self.trace_sig = trace_sig = self.sim_trace.pin
-        self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
+        # self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
 
         # Reduce memtest size for simulation speedup
         self.add_constant("MEMTEST_DATA_SIZE", 8 * 1024)
@@ -145,7 +146,7 @@ class SimSoC(SoCCore):
 
         from litescope import LiteScopeAnalyzer
 
-        flash_dram.ctrl_fsm.finalize()
+        # flash_dram.ctrl_fsm.finalize()
         analyzer_trigger = Signal()
         anal_enable = Signal()
         anal_hit = Signal()
@@ -155,7 +156,7 @@ class SimSoC(SoCCore):
         spi_uart_master_sigs = spi_uart_master._signals + spi_uart_master.master._signals
         analyzer_signals = list(set(
             # [self.ddrphy.dfi] + \
-            flash_dram._signals + flash_dram.ctrl_fsm._signals + \
+            # flash_dram._signals + flash_dram.ctrl_fsm._signals + \
             # flash_dram.port._signals + \
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
