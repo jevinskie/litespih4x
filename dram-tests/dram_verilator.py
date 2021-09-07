@@ -11,6 +11,8 @@ from litex.build.sim.config import SimConfig
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
+from litex.soc.cores.uart import RS232PHYModel, UART
+
 from litedram.modules import MT41K128M16
 from litedram import modules as litedram_modules
 from litedram.modules import parse_spd_hexdump
@@ -27,6 +29,15 @@ _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
     ("serial", 0,
+        Subsignal("source_valid", Pins(1)),
+        Subsignal("source_ready", Pins(1)),
+        Subsignal("source_data",  Pins(8)),
+
+        Subsignal("sink_valid",   Pins(1)),
+        Subsignal("sink_ready",   Pins(1)),
+        Subsignal("sink_data",    Pins(8)),
+    ),
+    ("serial2spi", 0,
         Subsignal("source_valid", Pins(1)),
         Subsignal("source_ready", Pins(1)),
         Subsignal("source_data",  Pins(8)),
@@ -101,6 +112,13 @@ class SimSoC(SoCCore):
             with_bist = True,
         )
 
+
+        self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi"))
+        self.submodules.spi_uart = spi_uart = UART(self.spi_uart_phy,
+                tx_fifo_depth = 255,
+                rx_fifo_depth = 255)
+
+
         self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
         self.trace_sig = trace_sig = Signal()
@@ -114,8 +132,7 @@ class SimSoC(SoCCore):
 
         # Etherbone --------------------------------------------------------------------------------
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
-        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
-
+        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=16*4096-1)
 
         from litescope import LiteScopeAnalyzer
 
@@ -124,11 +141,16 @@ class SimSoC(SoCCore):
         anal_enable = Signal()
         anal_hit = Signal()
         run_flag = Signal()
-        analyzer_signals = \
+
+        spi_uart_phy_sigs = spi_uart_phy._signals
+        spi_uart_sigs = spi_uart._signals
+        analyzer_signals = list(set(
             [self.ddrphy.dfi] + \
             flash_dram._signals + flash_dram.ctrl_fsm._signals + \
             flash_dram.port._signals + [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
-            [analyzer_trigger, anal_enable, anal_hit, run_flag]
+            [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
+            spi_uart_phy_sigs + spi_uart_sigs
+        ))
         # analyzer_signals = \
         #     [self.ddrphy.dfi]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
@@ -158,6 +180,7 @@ def main():
     sim_config.add_clocker("sys_clk", freq_hz=args.sys_clk_freq)
     sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
     sim_config.add_module("serial2console", "serial")
+    sim_config.add_module("serial2tcp", "serial2spi", args={"port": "2442"})
 
     soc_kwargs     = soc_core_argdict(args)
     builder_kwargs = builder_argdict(args)

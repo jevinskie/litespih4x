@@ -25,9 +25,8 @@ def main():
     print(f'readback word cleared: 0x{rbw:x}')
     # bus.regs.flash_dram_fill_word.write(0xaa5500ff)
 
-    time.sleep(0.01)
     bus.regs.flash_dram_go.write(1)
-    time.sleep(0.01)
+    # time.sleep(0.01)
     bus.regs.flash_dram_go.write(0)
     rbw = bus.regs.flash_dram_readback_word.read()
     print(f'readback word: {rbw:d} 0x{rbw:x}')
