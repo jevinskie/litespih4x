@@ -152,15 +152,14 @@ class SimSoC(SoCCore):
         anal_hit = Signal()
         run_flag = Signal()
 
-        spi_uart_phy_sigs = spi_uart_phy._signals
-        spi_uart_master_sigs = spi_uart_master._signals + spi_uart_master.master._signals
+
         analyzer_signals = list(set(
             # [self.ddrphy.dfi] + \
             # flash_dram._signals + flash_dram.ctrl_fsm._signals + \
             # flash_dram.port._signals + \
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
-            spi_uart_phy_sigs + spi_uart_master_sigs
+            spi_uart_phy._signals_recursive + spi_uart_master._signals_recursive
         ))
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=256,
@@ -181,6 +180,7 @@ def main():
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-cycles",         default=128,             help="Number of cycles to trace")
     parser.add_argument("--opt-level",            default="O3",            help="Verilator optimization level")
+    parser.add_argument("--debug-soc-gen",        action="store_true",     help="Don't run simulation")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
@@ -203,19 +203,20 @@ def main():
     builder_kwargs['csr_csv'] = 'csr.csv'
 
     soc     = SimSoC(**soc_kwargs)
-    builder = Builder(soc, **builder_kwargs)
-    for i in range(2):
-        build = (i == 0)
-        run   = (i == 1)
-        builder.build(
-            build=build,
-            run=run,
-            skip_sw_build=run,
-            sim_config=sim_config,
-            trace=args.trace,
-            trace_cycles=args.trace_cycles,
-            opt_level=args.opt_level,
-        )
+    if not args.debug_soc_gen:
+        builder = Builder(soc, **builder_kwargs)
+        for i in range(2):
+            build = (i == 0)
+            run   = (i == 1)
+            builder.build(
+                build=build,
+                run=run,
+                skip_sw_build=run,
+                sim_config=sim_config,
+                trace=args.trace,
+                trace_cycles=args.trace_cycles,
+                opt_level=args.opt_level,
+            )
 
 if __name__ == "__main__":
     main()
