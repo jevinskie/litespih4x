@@ -31,12 +31,12 @@ class EmuSoC(SoCCore):
         SoCMini.__init__(self, platform, clk_freq=sys_clk_freq,
             ident          = "LiteSPIH4X emu on Arty",
             ident_version  = True,
-            cpu_type="picorv32",
-            cpu_variant="minimal",
+            # cpu_type="picorv32",
+            # cpu_variant="minimal",
         )
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = crg = _CRG(platform, sys_clk_freq, with_mapped_flash=False)
+        self.submodules.crg = crg = _CRG(platform, sys_clk_freq)
 
         # SPI Flash Emu  ---------------------------------------------------------------------------
         rfp = self.platform.request("spiflash")
