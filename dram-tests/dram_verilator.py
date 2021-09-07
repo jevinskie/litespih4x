@@ -189,7 +189,7 @@ def main():
     sim_config.add_clocker("sys_clk", freq_hz=args.sys_clk_freq)
     sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
     sim_config.add_module("serial2console", "serial")
-    sim_config.add_module("serial2tcp", "serial2spi", args={"port": "2442"})
+    sim_config.add_module("serial2tcp", "serial2spi", args={"port": "2442", "bind_ip": "127.0.0.1"})
 
     soc_kwargs     = soc_core_argdict(args)
     builder_kwargs = builder_argdict(args)
