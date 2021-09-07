@@ -11,7 +11,8 @@ from litex.build.sim.config import SimConfig
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litex.soc.cores.uart import RS232PHYModel, UART
+from litex.soc.cores.uart import RS232PHYModel
+from litex.soc.cores.spi import SimSPIMaster
 
 from litedram.modules import MT41K128M16
 from litedram import modules as litedram_modules
@@ -45,6 +46,12 @@ _io = [
         Subsignal("sink_valid",   Pins(1)),
         Subsignal("sink_ready",   Pins(1)),
         Subsignal("sink_data",    Pins(8)),
+    ),
+    ("spi", 0,
+        Subsignal("clk",          Pins(1)),
+        Subsignal("cs_n",         Pins(1)),
+        Subsignal("mosi",         Pins(1)),
+        Subsignal("miso",         Pins(1)),
     ),
     ("eth_clocks", 0,
         Subsignal("tx", Pins(1)),
@@ -114,10 +121,12 @@ class SimSoC(SoCCore):
 
 
         self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi"))
-        self.submodules.spi_uart = spi_uart = UART(self.spi_uart_phy,
-                tx_fifo_depth = 255,
-                rx_fifo_depth = 255)
-
+        self.submodules.spi_uart_master = spi_uart_master = SimSPIMaster(
+            self.spi_uart_phy,
+            self.platform.request("spi"),
+            sys_clk_freq,
+            sys_clk_freq // 4,
+        )
 
         self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
@@ -143,16 +152,15 @@ class SimSoC(SoCCore):
         run_flag = Signal()
 
         spi_uart_phy_sigs = spi_uart_phy._signals
-        spi_uart_sigs = spi_uart._signals
+        spi_uart_master_sigs = spi_uart_master._signals + spi_uart_master.master._signals
         analyzer_signals = list(set(
-            [self.ddrphy.dfi] + \
+            # [self.ddrphy.dfi] + \
             flash_dram._signals + flash_dram.ctrl_fsm._signals + \
-            flash_dram.port._signals + [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
+            # flash_dram.port._signals + \
+            # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
-            spi_uart_phy_sigs + spi_uart_sigs
+            spi_uart_phy_sigs + spi_uart_master_sigs
         ))
-        # analyzer_signals = \
-        #     [self.ddrphy.dfi]
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=256,
                                                      clock_domain="sys",
