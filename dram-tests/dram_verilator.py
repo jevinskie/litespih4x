@@ -47,6 +47,19 @@ _io = [
         Subsignal("sink_ready",   Pins(1)),
         Subsignal("sink_data",    Pins(8)),
     ),
+    ("serial2spi_udp", 0,
+        Subsignal("source_valid", Pins(1)),
+        Subsignal("source_ready", Pins(1)),
+        Subsignal("source_first", Pins(1)),
+        Subsignal("source_last",  Pins(1)),
+        Subsignal("source_data",  Pins(8)),
+
+        Subsignal("sink_valid",   Pins(1)),
+        Subsignal("sink_ready",   Pins(1)),
+        Subsignal("sink_data",    Pins(8)),
+        Subsignal("sink_first",   Pins(1)),
+        Subsignal("sink_last",    Pins(1)),
+    ),
     ("spi", 0,
         Subsignal("clk",          Pins(1)),
         Subsignal("cs_n",         Pins(1)),
@@ -121,7 +134,8 @@ class SimSoC(SoCCore):
         # )
 
 
-        self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi"))
+        self.submodules.spi_uart_phy_tcp = spi_uart_phy_tcp = RS232PHYModel(self.platform.request("serial2spi"))
+        self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi_udp"))
         self.submodules.spi_uart_master = spi_uart_master = SimSPIMaster(
             self.spi_uart_phy,
             self.platform.request("spi"),
@@ -190,6 +204,7 @@ def main():
     sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
     sim_config.add_module("serial2console", "serial")
     sim_config.add_module("serial2tcp", "serial2spi", args={"port": "2442", "bind_ip": "127.0.0.1"})
+    sim_config.add_module("serial2udp", "serial2spi_udp", args={"port": "2443", "bind_ip": "127.0.0.1"})
 
     soc_kwargs     = soc_core_argdict(args)
     builder_kwargs = builder_argdict(args)
