@@ -76,10 +76,18 @@ class SimSoC(SoCCore):
         self.platform.add_debug(self, reset=0)
 
         # DDR3 -------------------------------------------------------------------------------------
-        sdram_clk_freq = int(100e6)  # FIXME: use 100MHz timings
+        sdram_clk_freq = sys_clk_freq
         sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
+        sdram_settings = get_sdram_phy_settings(
+            memtype=sdram_module.memtype,
+            data_width=16,
+            clk_freq=sdram_clk_freq,
+            cl = 8,
+            cwl = 7,
+        )
         self.submodules.ddrphy = SDRAMPHYModel(
             module = sdram_module,
+            settings = sdram_settings,
             data_width = 16,
             clk_freq = sdram_clk_freq,
             verbosity = 0,
@@ -102,10 +110,11 @@ class SimSoC(SoCCore):
         # Reduce memtest size for simulation speedup
         self.add_constant("MEMTEST_DATA_SIZE", 8 * 1024)
         self.add_constant("MEMTEST_ADDR_SIZE", 8 * 1024)
+        self.add_constant("CONFIG_DISABLE_DELAYS", 1)
 
         # Etherbone --------------------------------------------------------------------------------
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
-        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.51", buffer_depth=255)
+        self.add_etherbone(phy=self.ethphy, ip_address = "192.168.42.100", buffer_depth=255)
 
 
         from litescope import LiteScopeAnalyzer
@@ -137,7 +146,7 @@ class SimSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteEth Bench Simulation")
-    parser.add_argument("--sys-clk-freq",         default=100e6,           help="System clock frequency (default: 100MHz)")
+    parser.add_argument("--sys-clk-freq",         default=200e6,           help="System clock frequency (default: 200MHz)")
     parser.add_argument("--trace",                action="store_true",     help="Enable Tracing")
     parser.add_argument("--trace-cycles",         default=128,             help="Number of cycles to trace")
     parser.add_argument("--opt-level",            default="O3",            help="Verilator optimization level")
