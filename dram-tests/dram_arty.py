@@ -30,7 +30,7 @@ from litespih4x.emu_dram import FlashEmuDRAM
 # Bench SoC ----------------------------------------------------------------------------------------
 
 class DRAMSoC(SoCCore):
-    def __init__(self, uart="crossover", sys_clk_freq=int(125e6), with_bist=False, with_analyzer=False):
+    def __init__(self, uart="crossover", sys_clk_freq=int(200e6), with_bist=False, with_analyzer=False):
         platform = arty.Platform(variant='a7-100')
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -110,11 +110,14 @@ def main():
     parser.add_argument("--with-bist",     action="store_true", help="Add BIST Generator/Checker")
     parser.add_argument("--with-analyzer", action="store_true", help="Add Analyzer")
     parser.add_argument("--load",          action="store_true", help="Load bitstream")
+    parser.add_argument("--enable-retiming", action="store_true", help="Enable Vivado retiming")
+    parser.add_argument("--phys-opt-dir",  help="Vivado phys_opt directive")
     args = parser.parse_args()
 
     soc     = DRAMSoC(with_bist=args.with_bist, with_analyzer=args.with_analyzer)
+    soc.platform.toolchain.vivado_post_route_phys_opt_directive = args.phys_opt_dir
     builder = Builder(soc, output_dir="build/arty", csr_csv="csr.csv")
-    builder.build(run=args.build)
+    builder.build(run=args.build, enable_retiming=args.enable_retiming)
 
     if args.load:
         prog = soc.platform.create_programmer()
