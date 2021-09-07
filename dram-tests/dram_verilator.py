@@ -126,7 +126,7 @@ class SimSoC(SoCCore):
             self.spi_uart_phy,
             self.platform.request("spi"),
             sys_clk_freq,
-            sys_clk_freq // 4,
+            sys_clk_freq // 2,
         )
 
         # self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
@@ -162,7 +162,7 @@ class SimSoC(SoCCore):
             spi_uart_phy._signals_recursive + spi_uart_master._signals_recursive
         ))
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                                                     depth=256,
+                                                     depth=1024,
                                                      clock_domain="sys",
                                                      csr_csv="analyzer.csv")
         # self.add_csr("analyzer")
