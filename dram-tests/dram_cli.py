@@ -7,7 +7,7 @@ from litex import RemoteClient
 from rich import print
 
 def main():
-    bus = RemoteClient()
+    bus = RemoteClient(with_sim_hack=True)
     bus.open()
 
     buf = bus.read(0x4000aaa0, 4)
