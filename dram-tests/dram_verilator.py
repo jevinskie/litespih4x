@@ -134,7 +134,7 @@ class SimSoC(SoCCore):
         # )
 
 
-        self.submodules.spi_uart_phy_tcp = spi_uart_phy_tcp = RS232PHYModel(self.platform.request("serial2spi"))
+        # self.submodules.spi_uart_phy_tcp = spi_uart_phy_tcp = RS232PHYModel(self.platform.request("serial2spi"))
         self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi_udp"))
         self.submodules.spi_uart_master = spi_uart_master = SimSPIMaster(
             self.spi_uart_phy,
@@ -173,7 +173,9 @@ class SimSoC(SoCCore):
             # flash_dram.port._signals + \
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
-            spi_uart_phy_tcp._signals_recursive + spi_uart_phy._signals_recursive + spi_uart_master._signals_recursive
+            # spi_uart_phy_tcp._signals_recursive + \
+            spi_uart_phy._signals_recursive + \
+            spi_uart_master._signals_recursive
         ))
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=1024,
@@ -203,7 +205,7 @@ def main():
     sim_config.add_clocker("sys_clk", freq_hz=args.sys_clk_freq)
     sim_config.add_module("ethernet", "eth", args={"interface": "tap0", "ip": "192.168.42.100"})
     sim_config.add_module("serial2console", "serial")
-    sim_config.add_module("serial2tcp", "serial2spi", args={"port": "2442", "bind_ip": "127.0.0.1"})
+    # sim_config.add_module("serial2tcp", "serial2spi", args={"port": "2442", "bind_ip": "127.0.0.1"})
     sim_config.add_module("serial2udp", "serial2spi_udp", args={"port": "2443", "bind_ip": "127.0.0.1"})
 
     soc_kwargs     = soc_core_argdict(args)
