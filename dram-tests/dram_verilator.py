@@ -173,7 +173,7 @@ class SimSoC(SoCCore):
             # flash_dram.port._signals + \
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
-            spi_uart_phy._signals_recursive + spi_uart_master._signals_recursive
+            spi_uart_phy_tcp._signals_recursive + spi_uart_phy._signals_recursive + spi_uart_master._signals_recursive
         ))
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=1024,
