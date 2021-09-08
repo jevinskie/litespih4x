@@ -90,7 +90,6 @@ class SimSoC(SoCCore):
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
             ident         = "litespih4x dram test simulation",
             ident_version = True,
-            cpu_type      = "None",
             **kwargs)
 
         # Reduce memtest size for simulation speedup
@@ -179,8 +178,8 @@ class SimSoC(SoCCore):
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
             # spi_uart_phy_tcp._signals_recursive + \
-            spi_uart_phy._signals_recursive + \
-            spi_uart_master._signals_recursive + \
+            # spi_uart_phy._signals_recursive + \
+            spi_uart_master.spi_streamer.master._signals_recursive + \
             self.spi_emu._signals_recursive
         ))
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
@@ -220,6 +219,7 @@ def main():
     soc_kwargs['sys_clk_freq'] = int(args.sys_clk_freq)
     soc_kwargs['uart_name'] = 'sim'
     soc_kwargs['integrated_main_ram_size'] = 0
+    soc_kwargs['cpu_type'] = 'None'
     # soc_kwargs['cpu_type'] = 'picorv32' # slow
     # soc_kwargs['cpu_variant'] = 'minimal'
 
