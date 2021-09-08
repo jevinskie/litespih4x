@@ -22,6 +22,7 @@ from litedram.phy.model import SDRAMPHYModel
 
 from liteeth.phy.model import LiteEthPHYModel
 
+from litespih4x.emu import FlashEmu, FlashEmuLite, QSPISigs, SPISigs, IDCODE
 from litespih4x.emu_dram import FlashEmuDRAM
 
 # IOs ----------------------------------------------------------------------------------------------
@@ -30,15 +31,6 @@ _io = [
     ("sys_clk", 0, Pins(1)),
     ("sys_rst", 0, Pins(1)),
     ("serial", 0,
-        Subsignal("source_valid", Pins(1)),
-        Subsignal("source_ready", Pins(1)),
-        Subsignal("source_data",  Pins(8)),
-
-        Subsignal("sink_valid",   Pins(1)),
-        Subsignal("sink_ready",   Pins(1)),
-        Subsignal("sink_data",    Pins(8)),
-    ),
-    ("serial2spi", 0,
         Subsignal("source_valid", Pins(1)),
         Subsignal("source_ready", Pins(1)),
         Subsignal("source_data",  Pins(8)),
@@ -60,12 +52,6 @@ _io = [
         Subsignal("sink_first",   Pins(1)),
         Subsignal("sink_last",    Pins(1)),
     ),
-    ("spi", 0,
-        Subsignal("clk",          Pins(1)),
-        Subsignal("cs_n",         Pins(1)),
-        Subsignal("mosi",         Pins(1)),
-        Subsignal("miso",         Pins(1)),
-    ),
     ("eth_clocks", 0,
         Subsignal("tx", Pins(1)),
         Subsignal("rx", Pins(1)),
@@ -78,6 +64,12 @@ _io = [
         Subsignal("sink_valid",   Pins(1)),
         Subsignal("sink_ready",   Pins(1)),
         Subsignal("sink_data",    Pins(8)),
+    ),
+    ("spiflash_emu", 0,
+        Subsignal("sclk", Pins(1)),
+        Subsignal("csn", Pins(1)),
+        Subsignal("si", Pins(1)),
+        Subsignal("so", Pins(1)),
     ),
 ]
 
@@ -100,6 +92,11 @@ class SimSoC(SoCCore):
             ident_version = True,
             cpu_type      = "None",
             **kwargs)
+
+        # Reduce memtest size for simulation speedup
+        self.add_constant("MEMTEST_DATA_SIZE", 8 * 1024)
+        self.add_constant("MEMTEST_ADDR_SIZE", 8 * 1024)
+        self.add_constant("CONFIG_DISABLE_DELAYS", 1)
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = CRG(platform.request("sys_clk"))
@@ -134,14 +131,25 @@ class SimSoC(SoCCore):
         # )
 
 
-        # self.submodules.spi_uart_phy_tcp = spi_uart_phy_tcp = RS232PHYModel(self.platform.request("serial2spi"))
+        self.spi_pads_emu = spe = self.platform.request("spiflash_emu")
+        self.spi_sigs_emu = sse = SPISigs.from_pads(spe)
+        pads_master = Record([
+            ("clk", sse.sclk),
+            ("cs_n", sse.csn),
+            ("mosi", sse.si),
+            ("miso", sse.so),
+        ], "spi_master")
+
         self.submodules.spi_uart_phy = spi_uart_phy = RS232PHYModel(self.platform.request("serial2spi_udp"))
         self.submodules.spi_uart_master = spi_uart_master = SimSPIMaster(
             self.spi_uart_phy,
-            self.platform.request("spi"),
+            pads_master,
             sys_clk_freq,
             sys_clk_freq // 2,
         )
+
+        self.submodules.spi_emu = FlashEmuLite(ClockDomain("sys"), sse, sz_mbit=256, idcode=IDCODE)
+
 
         # self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
 
@@ -149,10 +157,7 @@ class SimSoC(SoCCore):
         # self.trace_sig = trace_sig = self.sim_trace.pin
         # self.submodules.flash_dram = flash_dram = FlashEmuDRAM(dram_port, trace_sig)
 
-        # Reduce memtest size for simulation speedup
-        self.add_constant("MEMTEST_DATA_SIZE", 8 * 1024)
-        self.add_constant("MEMTEST_ADDR_SIZE", 8 * 1024)
-        self.add_constant("CONFIG_DISABLE_DELAYS", 1)
+
 
         # Etherbone --------------------------------------------------------------------------------
         self.submodules.ethphy = LiteEthPHYModel(self.platform.request("eth"))
@@ -175,7 +180,8 @@ class SimSoC(SoCCore):
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
             # spi_uart_phy_tcp._signals_recursive + \
             spi_uart_phy._signals_recursive + \
-            spi_uart_master._signals_recursive
+            spi_uart_master._signals_recursive + \
+            self.spi_emu._signals_recursive
         ))
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                                                      depth=1024,

@@ -103,7 +103,7 @@ _io = [
         Subsignal("so", Pins(1)),
         Subsignal("wpn", Pins(1)),
         Subsignal("sio3", Pins(1)),
-     ),
+    ),
     ("qspiflash_emu", 0,
         Subsignal("sclk", Pins(1)),
         Subsignal("rstn", Pins(1)),
@@ -112,7 +112,7 @@ _io = [
         Subsignal("so", Pins(1)),
         Subsignal("wpn", Pins(1)),
         Subsignal("sio3", Pins(1)),
-     ),
+    ),
 ]
 
 # Platform -----------------------------------------------------------------------------------------
