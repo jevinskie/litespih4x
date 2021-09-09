@@ -314,7 +314,7 @@ class FlashEmuLite(Module):
         self.dr = dr = Signal(8)
         self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
         self.partial_addr_valid = paddr_valid = Signal()
-        self.partial_addr = paddr = Signal(addr.nbits - prefetch_bits)
+        self.partial_addr = paddr = Signal(addr_next.nbits - prefetch_bits)
         self.comb += paddr.eq(addr_next[:-prefetch_bits])
 
         self.submodules.paddr_cdc = paddr_cdc = stream.ClockDomainCrossing([("paddr", paddr.nbits)], cd_from='spi', cd_to='sys')
