@@ -30,5 +30,5 @@ def read(addr: int, sz: int):
 
 # get_idcode()
 
-read(0x4, 4)
-
+# read(0x4, 4)
+read(0xEDBEEF, 4)
