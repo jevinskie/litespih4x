@@ -283,10 +283,11 @@ class FlashEmu(Module):
 
 
 class FlashEmuLite(Module):
-    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int):
+    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int, prefetch_bits = 6):
         self.spi_sigs = sigs
         self.sz_mbit = sz_mbit
         self.idcode = idcode = Signal(24, reset=idcode)
+        self.prefetch_bits = prefetch_bits
 
 
         self.cd_spi = self.clock_domains.cd_spi = cd_spi = ClockDomain('spi')
@@ -312,6 +313,7 @@ class FlashEmuLite(Module):
         self.dr = dr = Signal(8)
         self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
         self.qmode = qmode = Signal()
+        self.partial_addr_valid = paddr_valid = Signal()
 
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
@@ -355,9 +357,12 @@ class FlashEmuLite(Module):
             addr_next.eq(Cat(sigs.si, addr[:-1])),
             NextValue(addr, addr_next),
             NextValue(addr_cnt, addr_cnt + 1),
+            If(addr_cnt == 23 - prefetch_bits,
+                paddr_valid.eq(1),
+            ),
             If(addr_cnt == 23,
                NextState('read_get_data'),
-            )
+            ),
         )
 
         self.dr_tmp = dr_tmp = Signal(8)
