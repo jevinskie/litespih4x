@@ -8,7 +8,7 @@ from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
 from litex.soc.interconnect.csr import *
 
-from litedram.core.crossbar import LiteDRAMNativePort
+from litedram.core.crossbar import LiteDRAMNativePort, LiteDRAMNativeReadPort
 
 from typing import Final, Optional, Union
 
@@ -94,5 +94,61 @@ class FlashEmuDRAM(Module, AutoCSR):
                     fill_addr.we.eq(1),
                     NextState("RESET"),
                 )
+            ),
+        )
+
+class FlashEmuDRAMLite(Module):
+    def __init__(self, port: LiteDRAMNativeReadPort, prefetch_bits: int, paddr: Signal, paddr_valid: Signal):
+        self.port = p = port
+
+        self.read_addr = read_addr = Signal(port.address_width)
+
+        prefetch_byte_sz = 2**prefetch_bits
+        prefetch_bit_sz = prefetch_byte_sz * 8
+        num_prefetch_reads = prefetch_bit_sz // port.data_width
+        self.prefetch_regs = pf_regs = Array(Signal(port.data_width, name=f'pf_r{i}') for i in range(num_prefetch_reads))
+        self.rd_cnt = rd_cnt = Signal(max=num_prefetch_reads, reset=num_prefetch_reads)
+        self.rdc_tmp = rdc_tmp = Signal.like(rd_cnt)
+
+        self.submodules.ctrl_fsm = cfsm = FSM(name="ctrl_fsm")
+        self.idle_flag = idle_flag = Signal()
+        self.rd_launch_flag = rd_launch_flag = Signal()
+        self.rd_land_flag = rd_land_flag = Signal()
+
+        self.paddr_tmp = paddr_tmp = Signal.like(paddr)
+
+        cfsm.act("IDLE",
+            idle_flag.eq(1),
+            NextValue(rd_cnt, rd_cnt.reset),
+            If(paddr_valid,
+               NextValue(paddr_tmp, paddr),
+               NextValue(read_addr, paddr),
+               NextState("RD_LAUNCH"),
+            ),
+            NextState("RD_LAUNCH"),
+        )
+        cfsm.act("RD_LAUNCH",
+            rd_launch_flag.eq(1),
+            p.cmd.we.eq(0),
+            p.cmd.addr.eq(read_addr),
+            p.cmd.valid.eq(1),
+            If(p.cmd.ready,
+                NextValue(rd_cnt, rd_cnt - 1),
+                NextValue(read_addr, read_addr + 1),
+                If(rd_cnt == 0,
+                    NextValue(rd_cnt, rd_cnt.reset),
+                    NextState("RD_LAND"),
+                )
+            ),
+        )
+        cfsm.act("RD_LAND",
+            rd_land_flag.eq(1),
+            p.rdata.ready.eq(1),
+            If(p.rdata.valid,
+                NextValue(pf_regs[num_prefetch_reads - rd_cnt], p.rdata.data),
+                NextValue(rd_cnt, rd_cnt - 1),
+                If(rd_cnt == 0,
+                    NextState("IDLE"),
+                ),
             ),
         )
