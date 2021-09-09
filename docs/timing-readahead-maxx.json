@@ -1,0 +1,9 @@
+{signal: [
+  {name: 'sclk', wave: 'P..|.............', period: 4},
+  {name: 'copi', wave: 'x999|999999999xxx', data: ['A24', 'A23', '...', 'A8', 'A7', 'A6', 'A5', 'A4', 'A3', 'A2', 'A1', 'A0'], period: 4, phase: 2},
+  {name: 'cipo', wave: 'x.............666', data: ['D7', 'D6', '...'], period: 4, phase: 2},
+  {},
+  {name: 'mck',  wave: 'P...............|.................................................',},
+  { name: "cmd",  wave: ".............|....x..3xxxxxxxxxxxxxxx4=======77777x...........................", data: "RAS CAS RL1 RL2 RL3 RL4 RL5 RL6 RL7 R00 R01 R02 R03 R04 R05 R06 R07 R08 R09 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R21 R22 R23 R24 R25 R26 R27 R28 R29 R30 R31" },
+]}
+
