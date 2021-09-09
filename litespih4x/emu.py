@@ -285,10 +285,12 @@ class FlashEmu(Module):
 
 
 class FlashEmuLite(Module):
-    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int, prefetch_bits = 6):
+    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int, prefetch_bits = 1):
         self.spi_sigs = sigs
         self.sz_mbit = sz_mbit
         self.idcode = idcode = Signal(24, reset=idcode)
+        if prefetch_bits < 1:
+            raise ValueError('prefetch_bits must be >= 1')
         self.prefetch_bits = prefetch_bits
 
 
@@ -318,8 +320,7 @@ class FlashEmuLite(Module):
         self.partial_addr_valid = paddr_valid = Signal()
         self.partial_addr_valid_sys = paddr_valid_sys = Signal()
         self.specials.paaddr_valid_sync = MultiReg(paddr_valid, paddr_valid_sys, cd_sys.name)
-        self.partial_addr = paddr = Signal(addr_next.nbits - prefetch_bits)
-        self.comb += paddr.eq(addr_next[:-prefetch_bits])
+        self.partial_addr = paddr = Signal(addr.nbits - prefetch_bits)
 
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
@@ -361,6 +362,9 @@ class FlashEmuLite(Module):
             NextValue(addr, addr_next),
             NextValue(addr_cnt, addr_cnt + 1),
             If(addr_cnt == 23 - prefetch_bits,
+                NextValue(paddr, addr_next),
+            ),
+            If(addr_cnt == 23 - (prefetch_bits - 1),
                 paddr_valid.eq(1),
             ),
             If(addr_cnt == 23,

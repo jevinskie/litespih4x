@@ -170,6 +170,8 @@ class SimSoC(SoCCore):
         anal_hit = Signal()
         run_flag = Signal()
 
+        self.spi_emu.finalize()
+
 
         analyzer_signals = list(set(
             # [self.ddrphy.dfi] + \
