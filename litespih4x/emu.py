@@ -312,8 +312,9 @@ class FlashEmuLite(Module):
         self.addr_cnt = addr_cnt = Signal(max=24)
         self.dr = dr = Signal(8)
         self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
-        self.qmode = qmode = Signal()
         self.partial_addr_valid = paddr_valid = Signal()
+        self.partial_addr = paddr = Signal(addr.nbits - prefetch_bits)
+        self.comb += paddr.eq(addr[prefetch_bits:])
 
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
@@ -330,16 +331,13 @@ class FlashEmuLite(Module):
         self.get_cmd_flag = get_cmd_flag = Signal()
         cmd_fsm.act('get_cmd',
             cmd_next.eq(Cat(sigs.si, cmd[:-1])),
-            get_cmd_flag.eq((cmd_bit_cnt == 7) & (cmd_next[0])),
+            get_cmd_flag.eq(1),
             NextValue(cmd, cmd_next),
             NextValue(cmd_bit_cnt, cmd_bit_cnt + 1),
 
             If(cmd_bit_cnt == 7,
                 If(cmd_next == CMD_READ,
                     NextState('read_get_addr'),
-                ).Elif(cmd_next == CMD_QREAD,
-                    NextState('read_get_addr'),
-                    NextValue(qmode, 1),
                 ).Elif(cmd_next == CMD_RDID,
                     NextState('rdid'),
                 ).Else(
@@ -373,13 +371,9 @@ class FlashEmuLite(Module):
                 dr_tmp.eq(dr)
             ),
             addr_next.eq(addr + 1),
-            If(~qmode,
-                NextValue(dr_bit_cnt, dr_bit_cnt + 1),
-            ).Else(
-                NextValue(dr_bit_cnt, dr_bit_cnt + 4),
-            ),
+            NextValue(dr_bit_cnt, dr_bit_cnt + 1),
             NextValue(dr, Cat(0, dr_tmp[:-1])),
-            If((dr_bit_cnt == 7) | ((dr_bit_cnt == 4) & qmode),
+            If(dr_bit_cnt == 7,
                 NextValue(addr, addr_next),
             ),
             eso.eq(dr_tmp[-1]),
