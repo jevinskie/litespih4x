@@ -9,6 +9,7 @@ from .emu_mem import FlashEmuMem
 from rich import print
 
 from migen import *
+from migen.genlib.cdc import MultiReg
 from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
 from litex.build.generic_platform import Subsignal, Pins, IOStandard
@@ -313,12 +314,12 @@ class FlashEmuLite(Module):
         self.addr_cnt = addr_cnt = Signal(max=24)
         self.dr = dr = Signal(8)
         self.dr_bit_cnt = dr_bit_cnt = Signal(max=8)
+
         self.partial_addr_valid = paddr_valid = Signal()
+        self.partial_addr_valid_sys = paddr_valid_sys = Signal()
+        self.specials.paaddr_valid_sync = MultiReg(paddr_valid, paddr_valid_sys, cd_sys.name)
         self.partial_addr = paddr = Signal(addr_next.nbits - prefetch_bits)
         self.comb += paddr.eq(addr_next[:-prefetch_bits])
-
-        self.submodules.paddr_cdc = paddr_cdc = stream.ClockDomainCrossing([("paddr", paddr.nbits)], cd_from='spi', cd_to='sys')
-        self.comb += paddr_cdc.sink.payload.paddr.eq(paddr)
 
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
@@ -361,7 +362,6 @@ class FlashEmuLite(Module):
             NextValue(addr_cnt, addr_cnt + 1),
             If(addr_cnt == 23 - prefetch_bits,
                 paddr_valid.eq(1),
-                paddr_cdc.sink.valid.eq(1),
             ),
             If(addr_cnt == 23,
                NextState('read_get_data'),

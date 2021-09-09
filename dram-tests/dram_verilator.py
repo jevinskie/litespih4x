@@ -144,7 +144,7 @@ class SimSoC(SoCCore):
             self.spi_uart_phy,
             pads_master,
             sys_clk_freq,
-            sys_clk_freq // 2,
+            sys_clk_freq // 4,
         )
 
         self.submodules.spi_emu = FlashEmuLite(ClockDomain("sys"), sse, sz_mbit=256, idcode=IDCODE)
