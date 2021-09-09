@@ -285,7 +285,7 @@ class FlashEmu(Module):
 
 
 class FlashEmuLite(Module):
-    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int, prefetch_bits = 1):
+    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int, prefetch_bits = 6):
         self.spi_sigs = sigs
         self.sz_mbit = sz_mbit
         self.idcode = idcode = Signal(24, reset=idcode)
@@ -321,6 +321,8 @@ class FlashEmuLite(Module):
         self.partial_addr_valid_sys = paddr_valid_sys = Signal()
         self.specials.paaddr_valid_sync = MultiReg(paddr_valid, paddr_valid_sys, cd_sys.name)
         self.partial_addr = paddr = Signal(addr.nbits - prefetch_bits)
+        self.partial_addr_fw = paddr_fw = Signal(addr.nbits)
+        self.comb += paddr_fw.eq(Cat(C(0, prefetch_bits), paddr))
 
         # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
         # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
