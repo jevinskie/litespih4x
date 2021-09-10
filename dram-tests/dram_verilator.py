@@ -126,7 +126,7 @@ class SimSoC(SoCCore):
             module    = sdram_module,
             origin    = self.mem_map["main_ram"],
             l2_cache_size = 0,
-            with_bist = True,
+            # with_bist = True,
         )
 
 
@@ -148,8 +148,8 @@ class SimSoC(SoCCore):
         )
 
 
-        self.dram_port = dram_port = self.sdram.crossbar.get_port("read", name="fdp")
-        self.submodules.spi_emu = FlashEmuLite(ClockDomain("sys"), sse, dram_port, sz_mbit=256, idcode=IDCODE)
+        self.flash_dram_port = fdp = self.sdram.crossbar.get_port("read", name="fdp")
+        self.submodules.spi_emu = FlashEmuLite(ClockDomain("sys"), sse, fdp, sz_mbit=256, idcode=IDCODE)
 
         self.trace_sig = trace_sig = Signal()
         # self.trace_sig = trace_sig = self.sim_trace.pin
@@ -171,14 +171,16 @@ class SimSoC(SoCCore):
 
         self.spi_emu.finalize()
 
-        port_sigs = dram_port._signals_recursive
+        fdp_port_sigs = fdp._signals_recursive
+        soc_port_sigs = self.dram_port._signals_recursive
 
         analyzer_signals = list(set(
-            [self.ddrphy.dfi] + \
+            # [self.ddrphy.dfi] + \
             # flash_dram._signals + flash_dram.ctrl_fsm._signals + \
-            port_sigs + \
+            fdp_port_sigs + \
+            # soc_port_sigs + \
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
-            [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
+            # [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
             # spi_uart_phy_tcp._signals_recursive + \
             # spi_uart_phy._signals_recursive + \
             spi_uart_master.spi_streamer.master._signals_recursive + \

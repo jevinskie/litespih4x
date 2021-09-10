@@ -107,7 +107,7 @@ class FlashEmuDRAMLite(Module):
         prefetch_bit_sz = prefetch_byte_sz * 8
         num_prefetch_reads = prefetch_bit_sz // port.data_width
         self.prefetch_regs = pf_regs = Array(Signal(port.data_width, name=f'pf_r{i}') for i in range(num_prefetch_reads))
-        self.rd_cnt = rd_cnt = Signal(max=num_prefetch_reads, reset=num_prefetch_reads)
+        self.rd_cnt = rd_cnt = Signal(max=num_prefetch_reads, reset=num_prefetch_reads-1) # CAREFUL WITH RESET MAX VAL!
 
         self.submodules.ctrl_fsm = cfsm = FSM(name="dram_fsm", reset_state="IDLE")
         self.idle_flag = idle_flag = Signal()
