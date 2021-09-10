@@ -108,9 +108,8 @@ class FlashEmuDRAMLite(Module):
         num_prefetch_reads = prefetch_bit_sz // port.data_width
         self.prefetch_regs = pf_regs = Array(Signal(port.data_width, name=f'pf_r{i}') for i in range(num_prefetch_reads))
         self.rd_cnt = rd_cnt = Signal(max=num_prefetch_reads, reset=num_prefetch_reads)
-        self.rdc_tmp = rdc_tmp = Signal.like(rd_cnt)
 
-        self.submodules.ctrl_fsm = cfsm = FSM(name="ctrl_fsm")
+        self.submodules.ctrl_fsm = cfsm = FSM(name="dram_fsm", reset_state="IDLE")
         self.idle_flag = idle_flag = Signal()
         self.rd_launch_flag = rd_launch_flag = Signal()
         self.rd_land_flag = rd_land_flag = Signal()
@@ -122,10 +121,9 @@ class FlashEmuDRAMLite(Module):
             NextValue(rd_cnt, rd_cnt.reset),
             If(paddr_valid,
                NextValue(paddr_tmp, paddr),
-               NextValue(read_addr, paddr),
+               NextValue(read_addr, paddr[4:]),
                NextState("RD_LAUNCH"),
             ),
-            NextState("RD_LAUNCH"),
         )
         cfsm.act("RD_LAUNCH",
             rd_launch_flag.eq(1),

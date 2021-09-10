@@ -14,6 +14,8 @@ from migen.genlib.resetsync import AsyncResetSingleStageSynchronizer
 
 from litex.build.generic_platform import Subsignal, Pins, IOStandard
 from litex.soc.interconnect import stream
+from litedram.core.crossbar import LiteDRAMNativeReadPort
+from litespih4x.emu_dram import FlashEmuDRAMLite
 
 from typing import Final, Optional, Union
 
@@ -285,8 +287,10 @@ class FlashEmu(Module):
 
 
 class FlashEmuLite(Module):
-    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, sz_mbit: int, idcode: int, prefetch_bits = 6):
+    def __init__(self, cd_sys: ClockDomain, sigs: SPISigs, dram_port: LiteDRAMNativeReadPort,
+                 sz_mbit: int, idcode: int, prefetch_bits = 6):
         self.spi_sigs = sigs
+        self.dram_port = dram_port
         self.sz_mbit = sz_mbit
         self.idcode = idcode = Signal(24, reset=idcode)
         if prefetch_bits < 1:
@@ -319,20 +323,26 @@ class FlashEmuLite(Module):
 
         self.partial_addr_valid = paddr_valid = Signal()
         self.partial_addr_valid_sys = paddr_valid_sys = Signal()
-        self.specials.paaddr_valid_sync = MultiReg(paddr_valid, paddr_valid_sys, cd_sys.name)
+        self.specials.paddr_valid_sync = MultiReg(paddr_valid, paddr_valid_sys, cd_sys.name)
         self.partial_addr = paddr = Signal(addr.nbits - prefetch_bits)
         self.partial_addr_fw = paddr_fw = Signal(addr.nbits)
         self.comb += paddr_fw.eq(Cat(C(0, prefetch_bits), paddr))
 
-        # self.specials.flash_mem = flash_mem = Memory(8, 0x100, init=[self.val4addr(a) for a in range(0x100)], name='flash_mem')
-        # self.specials.fmrp = fmrp = flash_mem.get_port(clock_domain='spi')
-        # self.comb += fmrp.adr.eq(addr_next)
-        self.flash_mem = self.submodules.flash_mem = flash_mem = FlashEmuMem(cd_sys, cd_spi, 0x100)
-        self.fmp = fmp = flash_mem.spiemu_port
-        self.lmp = lmp = flash_mem.loader_port
-        self.comb += fmp.adr.eq(addr_next)
+        self.submodules.flash_mem = flash_mem = FlashEmuDRAMLite(dram_port, prefetch_bits, paddr_fw, paddr_valid_sys)
+        self.pfr_idx = pfr_idx = Signal(max=prefetch_bits)
+        self.pfr_sel = pfr_sel = Signal(dram_port.data_width)
+        self.nbytes_per_mt = dram_port.data_width//8
+        self.byte_idx = byte_idx = Signal(max=self.nbytes_per_mt)
+        self.byte_arr = byte_arr = Array([pfr_sel[i*8:(i+1)*8] for i in range(self.nbytes_per_mt)])
+        self.byte_sel = byte_sel = Signal(8)
+        self.comb += [
+            pfr_idx.eq(addr[byte_idx.nbits:]),
+            pfr_sel.eq(flash_mem.prefetch_regs[pfr_idx]),
+            byte_idx.eq(addr[:byte_idx.nbits]),
+            byte_sel.eq(byte_arr[byte_idx]),
+        ]
 
-        cmd_fsm = FSM(reset_state='get_cmd')
+        cmd_fsm = FSM(name='cmd_fsm', reset_state='get_cmd')
         cmd_fsm = ClockDomainsRenamer('spi')(cmd_fsm)
         self.submodules.cmd_fsm = cmd_fsm
 
@@ -377,7 +387,7 @@ class FlashEmuLite(Module):
         self.dr_tmp = dr_tmp = Signal(8)
         cmd_fsm.act('read_get_data',
             If(dr_bit_cnt == 0,
-                dr_tmp.eq(fmp.dat_r)
+                dr_tmp.eq(byte_sel)
             ).Else(
                 dr_tmp.eq(dr)
             ),
@@ -401,9 +411,3 @@ class FlashEmuLite(Module):
     @staticmethod
     def val4addr(addr: int) -> int:
         return (addr & 0xff) ^ ((addr >> 8) & 0xff) ^ ((addr >> 16) & 0xff) ^ ((addr >> 24) & 0xff)
-
-    def get_memories(self):
-        return self.flash_mem.get_memories()
-
-    def get_csrs(self):
-        return self.flash_mem.get_csrs()

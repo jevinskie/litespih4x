@@ -104,30 +104,30 @@ class SimSoC(SoCCore):
         self.platform.add_debug(self, reset=0)
 
         # # DDR3 -------------------------------------------------------------------------------------
-        # sdram_clk_freq = sys_clk_freq
-        # sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
-        # sdram_settings = get_sdram_phy_settings(
-        #     memtype=sdram_module.memtype,
-        #     data_width=16,
-        #     clk_freq=sdram_clk_freq,
-        #     cl = 8,
-        #     cwl = 7,
-        # )
-        # self.submodules.ddrphy = SDRAMPHYModel(
-        #     module = sdram_module,
-        #     settings = sdram_settings,
-        #     data_width = 16,
-        #     clk_freq = sdram_clk_freq,
-        #     verbosity = 0,
-        #     init = [],
-        # )
-        # self.add_sdram("sdram",
-        #     phy       = self.ddrphy,
-        #     module    = sdram_module,
-        #     origin    = self.mem_map["main_ram"],
-        #     l2_cache_size = 0,
-        #     with_bist = True,
-        # )
+        sdram_clk_freq = sys_clk_freq
+        sdram_module = MT41K128M16(sdram_clk_freq, "1:4")
+        sdram_settings = get_sdram_phy_settings(
+            memtype=sdram_module.memtype,
+            data_width=16,
+            clk_freq=sdram_clk_freq,
+            cl = 8,
+            cwl = 7,
+        )
+        self.submodules.ddrphy = SDRAMPHYModel(
+            module = sdram_module,
+            settings = sdram_settings,
+            data_width = 16,
+            clk_freq = sdram_clk_freq,
+            verbosity = 0,
+            init = [],
+        )
+        self.add_sdram("sdram",
+            phy       = self.ddrphy,
+            module    = sdram_module,
+            origin    = self.mem_map["main_ram"],
+            l2_cache_size = 0,
+            with_bist = True,
+        )
 
 
         self.spi_pads_emu = spe = self.platform.request("spiflash_emu")
@@ -147,10 +147,9 @@ class SimSoC(SoCCore):
             sys_clk_freq // 4,
         )
 
-        self.submodules.spi_emu = FlashEmuLite(ClockDomain("sys"), sse, sz_mbit=256, idcode=IDCODE)
 
-
-        # self.dram_port = dram_port = self.sdram.crossbar.get_port(name="fdp")
+        self.dram_port = dram_port = self.sdram.crossbar.get_port("read", name="fdp")
+        self.submodules.spi_emu = FlashEmuLite(ClockDomain("sys"), sse, dram_port, sz_mbit=256, idcode=IDCODE)
 
         self.trace_sig = trace_sig = Signal()
         # self.trace_sig = trace_sig = self.sim_trace.pin
@@ -172,11 +171,12 @@ class SimSoC(SoCCore):
 
         self.spi_emu.finalize()
 
+        port_sigs = dram_port._signals_recursive
 
         analyzer_signals = list(set(
-            # [self.ddrphy.dfi] + \
+            [self.ddrphy.dfi] + \
             # flash_dram._signals + flash_dram.ctrl_fsm._signals + \
-            # flash_dram.port._signals + \
+            port_sigs + \
             # [flash_dram.port.cmd, flash_dram.port.rdata, flash_dram.port.wdata] + \
             [analyzer_trigger, anal_enable, anal_hit, run_flag] + \
             # spi_uart_phy_tcp._signals_recursive + \
